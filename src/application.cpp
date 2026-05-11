@@ -22,8 +22,10 @@ void Application::initVulkan() {
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
+
     createSwapChain();
     createImageViews();
+    
     createDescriptorSetLayout();
     
     initMaxUsableSampleCount();
@@ -31,13 +33,17 @@ void Application::initVulkan() {
     createCommandPool();
     createColorResources();
     createDepthResources();
+
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
     loadModel();
+
     createVertexBuffer();
     createIndexBuffer();
+
     createUniformBuffers();
+
     createDescriptorPool();
     createDescriptorSets();
     createCommandBuffers();
@@ -513,7 +519,7 @@ void Application::createImageViews() {
     };
 
     // Could use createImageView in this for loop, but won't, because it could be creating multiple
-    // copiies of imageViewCreateInfo unnecessarily.
+    // copies of imageViewCreateInfo unnecessarily.
     for (vk::Image & image : swapChainImages) {
         imageViewCreateInfo.image = image;
         swapChainImageViews.emplace_back(vk::raii::ImageView(device, imageViewCreateInfo));
