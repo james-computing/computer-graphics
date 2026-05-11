@@ -1,4 +1,6 @@
+.vscode
+obj
+models
+textures
 main
-**/obj
-**/.vscode
-vulkan/
+libraries
