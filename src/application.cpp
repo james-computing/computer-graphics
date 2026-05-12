@@ -62,7 +62,9 @@ void Application::initVulkan() {
     createColorResources(); // For MSAA. Color resources are used only in recordCommandBuffer.
     createDepthResources(); // Depth resources are used only in recordCommandBuffer.
 
-    // For model //
+    // Model loading
+    // Should separate loading the actual model information, such as vertices, indices and textures, from the rest.
+
     // texture resources
     createTextureImage();
     // depends on textureImage and mipLevels
@@ -70,8 +72,9 @@ void Application::initVulkan() {
     // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
     createDescriptorSets();
 
+    // loadModel initializes vertices and indices.
+    // The actual model loading is this function call together with the previous calls for the the texture.
     loadModel();
-
     // both vertex and index buffers are made to store data from the specific model loaded.
     createVertexBuffer();
     createIndexBuffer();
