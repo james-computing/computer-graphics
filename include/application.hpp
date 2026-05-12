@@ -155,7 +155,7 @@ private:
     uint32_t chooseSwapImageCount(vk::SurfaceCapabilitiesKHR const & surfaceCapabilities) const;
     void createSwapChain();
 
-    void createImageViews();
+    void createSwapChainImageViews();
 
     void createGraphicsPipeline();
 

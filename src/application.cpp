@@ -18,36 +18,62 @@ void Application::run() {
 
 void Application::initVulkan() {
     createInstance();
-    setupDebugMessenger();
-    createSurface();
+
+    // depends on instance
+    setupDebugMessenger(); // make debug messenger first, because we want to be able to debug early
     pickPhysicalDevice();
+    createSurface();
+
+    // depends on physical device
+    initMaxUsableSampleCount();
+    
+    // depends on physicalDevice and surface
     createLogicalDevice();
 
+    // depends on physicalDevice and surface
     createSwapChain();
-    createImageViews();
+    // depends on logical device and swap chain surface format,
+    // which is chosen in chooseSwapSurfaceFormat, which is called in createSwapChain
+    createSwapChainImageViews();
     
+    // depends on logical device
     createDescriptorSetLayout();
-    
-    initMaxUsableSampleCount();
-    createGraphicsPipeline();
+    // depends on logical device and MAX_FRAMES_IN_FLIGHT
+    createDescriptorPool();
+
+    // depends on logical device and queueFamilyIndex, but this is obtained when creating the logical device
     createCommandPool();
+
+    // Depends on logical device, MAX_FRAMES_IN_FLIGHT and swapChainImages.size()
+    createSyncObjects();
+
+    // depends on descriptorSetLayout
+    createGraphicsPipeline();
+
     createColorResources();
     createDepthResources();
 
+    // texture resources
     createTextureImage();
+    // depends on textureImage and mipLevels
     createTextureImageView();
+    // depends on the logical and physical devices
     createTextureSampler();
+
     loadModel();
 
+    // both vertex and index buffers are made to store data from the specific model loaded.
     createVertexBuffer();
     createIndexBuffer();
 
     createUniformBuffers();
 
-    createDescriptorPool();
+    // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler...
     createDescriptorSets();
+
     createCommandBuffers();
-    createSyncObjects();
+
+    
 }
 
 void Application::mainLoop() {
@@ -503,7 +529,7 @@ void Application::createSwapChain() {
     swapChainImages = swapChain.getImages();
 }
 
-void Application::createImageViews() {
+void Application::createSwapChainImageViews() {
     assert(swapChainImageViews.empty());
 
     vk::ImageViewCreateInfo imageViewCreateInfo {
@@ -1000,7 +1026,7 @@ void Application::recreateSwapChain() {
 
     cleanupSwapChain();
     createSwapChain();
-    createImageViews();
+    createSwapChainImageViews();
     createColorResources();
     createDepthResources();
 }
