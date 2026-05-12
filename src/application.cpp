@@ -24,11 +24,16 @@ void Application::initVulkan() {
     pickPhysicalDevice();
     createSurface();
 
-    // depends on physical device
+    // depends on physical device.
+    // msaaSamples is used when creating the graphics pipeline and the color and depth resources.
     initMaxUsableSampleCount();
     
     // depends on physicalDevice and surface
     createLogicalDevice();
+
+    // depends on the logical and physical devices.
+    // Used in createDescriptorSets.
+    createTextureSampler();
 
     // depends on physicalDevice and surface
     createSwapChain();
@@ -40,6 +45,7 @@ void Application::initVulkan() {
     createDescriptorSetLayout();
     // depends on logical device and MAX_FRAMES_IN_FLIGHT
     createDescriptorPool();
+
     // depends on MAX_FRAMES_IN_FLIGHT. Also calls createBuffer, which depends on the logical device.
     createUniformBuffers();
 
@@ -53,24 +59,22 @@ void Application::initVulkan() {
 
     // depends on descriptorSetLayout
     createGraphicsPipeline();
-    createDepthResources();
+    createColorResources(); // For MSAA. Color resources are used only in recordCommandBuffer.
+    createDepthResources(); // Depth resources are used only in recordCommandBuffer.
 
     // For model //
     // texture resources
     createTextureImage();
     // depends on textureImage and mipLevels
     createTextureImageView();
-    // depends on the logical and physical devices
-    createTextureSampler();
+    // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
+    createDescriptorSets();
+
     loadModel();
+
     // both vertex and index buffers are made to store data from the specific model loaded.
     createVertexBuffer();
     createIndexBuffer();
-
-    // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler...
-    createDescriptorSets();
-    
-    createColorResources(); // for MSAA. Color resources are used only in recordCommandBuffer
 }
 
 void Application::mainLoop() {
