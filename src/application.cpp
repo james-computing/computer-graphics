@@ -40,40 +40,37 @@ void Application::initVulkan() {
     createDescriptorSetLayout();
     // depends on logical device and MAX_FRAMES_IN_FLIGHT
     createDescriptorPool();
+    // depends on MAX_FRAMES_IN_FLIGHT. Also calls createBuffer, which depends on the logical device.
+    createUniformBuffers();
 
     // depends on logical device and queueFamilyIndex, but this is obtained when creating the logical device
     createCommandPool();
+    // depends on logical device, MAX_FRAMES_IN_FLIGHT and commandPool
+    createCommandBuffers();
 
     // Depends on logical device, MAX_FRAMES_IN_FLIGHT and swapChainImages.size()
     createSyncObjects();
 
     // depends on descriptorSetLayout
     createGraphicsPipeline();
-
-    createColorResources();
     createDepthResources();
 
+    // For model //
     // texture resources
     createTextureImage();
     // depends on textureImage and mipLevels
     createTextureImageView();
     // depends on the logical and physical devices
     createTextureSampler();
-
     loadModel();
-
     // both vertex and index buffers are made to store data from the specific model loaded.
     createVertexBuffer();
     createIndexBuffer();
 
-    createUniformBuffers();
-
     // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler...
     createDescriptorSets();
-
-    createCommandBuffers();
-
     
+    createColorResources(); // for MSAA. Color resources are used only in recordCommandBuffer
 }
 
 void Application::mainLoop() {
