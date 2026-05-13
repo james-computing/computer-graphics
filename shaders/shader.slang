@@ -1,6 +1,6 @@
 struct VSInput {
     float3 position;
-    float3 color;
+    //float3 color;
     float2 textureCoord;
 };
 
@@ -22,7 +22,7 @@ VSOutput vertMain(VSInput input) {
     VSOutput output;
     float4 vertexPosition = float4(input.position, 1.0);
     output.sv_position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, vertexPosition)));
-    output.color = input.color;
+    //output.color = input.color;
     output.textureCoord = input.textureCoord;
     return output;
 }

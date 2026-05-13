@@ -60,7 +60,7 @@ void Model::loadVertices() {
             };
 
             // Do we need a color?
-            vertex.color = {1.0f, 1.0f, 1.0f};
+            //vertex.color = {1.0f, 1.0f, 1.0f};
 
             // If the vertex is new, store it in uniqueVertices and give it an index
             if (uniqueVertices.count(vertex) == 0) {

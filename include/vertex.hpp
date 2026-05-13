@@ -20,7 +20,7 @@ import vulkan_hpp;
 
 struct Vertex {
     glm::vec3 position;
-    glm::vec3 color;
+    //glm::vec3 color;
     glm::vec2 textureCoord;
 
     static vk::VertexInputBindingDescription constexpr getBindingDescription() {
@@ -31,7 +31,7 @@ struct Vertex {
         };
     }
 
-    static std::array<vk::VertexInputAttributeDescription, 3> constexpr getAttributeDescriptions() {
+    static std::array<vk::VertexInputAttributeDescription, 2> constexpr getAttributeDescriptions() {
         return {
             vk::VertexInputAttributeDescription {
                 .location = 0,
@@ -39,14 +39,16 @@ struct Vertex {
                 .format = vk::Format::eR32G32B32Sfloat, // float3
                 .offset = offsetof(Vertex, position),
             },
+            /*
             vk::VertexInputAttributeDescription {
                 .location = 1,
                 .binding = 0,
                 .format = vk::Format::eR32G32B32Sfloat, // float3
                 .offset = offsetof(Vertex, color),
             },
+            */
             vk::VertexInputAttributeDescription {
-                .location = 2,
+                .location = 1,
                 .binding = 0,
                 .format = vk::Format::eR32G32Sfloat, // float1
                 .offset = offsetof(Vertex, textureCoord)
