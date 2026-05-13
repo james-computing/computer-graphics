@@ -1,12 +1,32 @@
 #include "../include/model.hpp"
 
-
+// Include here to avoid multiple implementation.
+// STB is for loading the texture image.
+#define STB_IMAGE_IMPLEMENTATION
+#include "../libraries/stb/stb_image.h"
 
 // Tiny obj loader is for loading the 3d model.
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../libraries/tinyobjloader/tiny_obj_loader.h"
 
-void Model::load() {
+Model::~Model() {
+    // cleanup
+    stbi_image_free(pixels);
+}
+
+void Model::loadTexture() {
+    std::cout << "Loading texture" << std::endl;
+    pixels = stbi_load(texturePath.c_str(), &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
+    if (!pixels) {
+        throw std::runtime_error("Failed to load texture.");
+    }
+    std::cout << "textureWidth = " << textureWidth
+    << ", textureHeight = " << textureHeight
+    << ", textureChannels = " << textureChannels
+    << std::endl;
+}
+
+void Model::loadVertices() {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -56,4 +76,9 @@ void Model::load() {
             indices.emplace_back(uniqueVertices[vertex]);
         }
     }
+}
+
+void Model::load() {
+    loadTexture();
+    loadVertices();
 }

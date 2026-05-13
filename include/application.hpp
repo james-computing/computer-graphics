@@ -99,8 +99,6 @@ private:
     vk::raii::DescriptorPool descriptorPool {nullptr};
     std::vector<vk::raii::DescriptorSet> descriptorSets;
 
-    std::string const texturePath {"./textures/viking_room.png"};
-
     vk::raii::Image textureImage {nullptr};
     vk::raii::DeviceMemory textureImageMemory {nullptr};
     vk::raii::ImageView textureImageView {nullptr};

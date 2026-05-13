@@ -1,10 +1,5 @@
 #include "../include/application.hpp"
 
-// Include here to avoid multiple implementation.
-// STB is for loading the texture image.
-#define STB_IMAGE_IMPLEMENTATION
-#include "../libraries/stb/stb_image.h"
-
 void Application::run() {
     initWindow();
     initVulkan();
@@ -59,7 +54,8 @@ void Application::initVulkan() {
     createDepthResources(); // Depth resources are used only in recordCommandBuffer.
 
     // Model loading
-    // Should separate loading the actual model information, such as vertices, indices and textures, from the rest.
+    // Loads the texture and vertices.
+    model.load();
 
     // texture resources
     createTextureImage();
@@ -67,10 +63,7 @@ void Application::initVulkan() {
     createTextureImageView();
     // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
     createDescriptorSets();
-
-    // loadModel initializes vertices and indices.
-    // The actual model loading is this function call together with the previous calls for the the texture.
-    model.load();
+    
     // both vertex and index buffers are made to store data from the specific model loaded.
     createVertexBuffer();
     createIndexBuffer();
@@ -1354,15 +1347,9 @@ void Application::createDescriptorSets() {
 }
 
 void Application::createTextureImage() {
-    int textureWidth, textureHeight, textureChannels;
-    stbi_uc * pixels {stbi_load(texturePath.c_str(), &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha)};
-    if (!pixels) {
-        throw std::runtime_error("Failed to load texture.");
-    }
-    
-    vk::DeviceSize const imageSize {(vk::DeviceSize) (textureWidth * textureHeight * 4)};
+    vk::DeviceSize const imageSize {(vk::DeviceSize) (model.textureWidth * model.textureHeight * 4)};
     // sum 1 for the original image to have a mip level
-    mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(textureWidth, textureHeight)))) + 1;
+    mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(model.textureWidth, model.textureHeight)))) + 1;
 
     // Create a staging buffer to receive the image
     vk::raii::Buffer stagingBuffer {nullptr};
@@ -1382,12 +1369,9 @@ void Application::createTextureImage() {
 
     // Transfer the image to the staging buffer
     void * data {stagingBufferMemory.mapMemory(0, imageSize)};
-    memcpy(data, pixels, imageSize);
+    memcpy(data, model.pixels, imageSize);
     stagingBufferMemory.unmapMemory();
     data = nullptr;
-
-    // cleanup
-    stbi_image_free(pixels);
 
     vk::ImageTiling constexpr imageTiling {vk::ImageTiling::eOptimal};
     vk::ImageUsageFlags constexpr imageUsage {
@@ -1397,8 +1381,8 @@ void Application::createTextureImage() {
     };
     vk::MemoryPropertyFlags constexpr imageMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
     createImage(
-        static_cast<uint32_t>(textureWidth),
-        static_cast<uint32_t>(textureHeight),
+        static_cast<uint32_t>(model.textureWidth),
+        static_cast<uint32_t>(model.textureHeight),
         mipLevels,
         vk::SampleCountFlagBits::e1,
         vk::Format::eR8G8B8A8Srgb,
@@ -1417,7 +1401,7 @@ void Application::createTextureImage() {
         mipLevels
     );
     // Copy texture from staging buffer to image
-    copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
+    copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(model.textureWidth), static_cast<uint32_t>(model.textureHeight));
     // Transition image layout to be read from shader.
     // This transition will be done in generateMipmaps.
     /*
@@ -1429,7 +1413,7 @@ void Application::createTextureImage() {
     );
     */
 
-    generateMipmaps(textureImage, vk::Format::eR8G8B8A8Srgb, textureWidth, textureHeight, mipLevels);
+    generateMipmaps(textureImage, vk::Format::eR8G8B8A8Srgb, model.textureWidth, model.textureHeight, mipLevels);
 }
 
 void Application::createImage(
