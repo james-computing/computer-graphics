@@ -84,8 +84,6 @@ private:
     bool frameBufferResized {false};
 
     Model model;
-    //std::vector<Vertex> vertices;
-    //std::vector<uint32_t> indices;
 
     vk::raii::Buffer vertexBuffer {nullptr};
     vk::raii::DeviceMemory vertexBufferMemory {nullptr};
