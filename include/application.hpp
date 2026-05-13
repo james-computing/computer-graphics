@@ -26,6 +26,7 @@ import vulkan_hpp;
 #include <unordered_map>
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
+#include "../include/model.hpp"
 
 class Application {
 public:
@@ -82,8 +83,9 @@ private:
 
     bool frameBufferResized {false};
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    Model model;
+    //std::vector<Vertex> vertices;
+    //std::vector<uint32_t> indices;
 
     vk::raii::Buffer vertexBuffer {nullptr};
     vk::raii::DeviceMemory vertexBufferMemory {nullptr};
@@ -100,7 +102,6 @@ private:
     std::vector<vk::raii::DescriptorSet> descriptorSets;
 
     std::string const texturePath {"./textures/viking_room.png"};
-    std::string const modelPath {"./models/viking_room.obj"};
 
     vk::raii::Image textureImage {nullptr};
     vk::raii::DeviceMemory textureImageMemory {nullptr};
@@ -261,8 +262,6 @@ private:
     vk::Format findDepthFormat() const;
     bool hasStencilComponent(vk::Format format) const;
     void createDepthResources();
-
-    void loadModel();
 
     void generateMipmaps(
         vk::raii::Image & image,

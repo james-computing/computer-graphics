@@ -5,10 +5,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../libraries/stb/stb_image.h"
 
-// Tiny obj loader is for loading the 3d model.
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "../libraries/tinyobjloader/tiny_obj_loader.h"
-
 void Application::run() {
     initWindow();
     initVulkan();
@@ -74,7 +70,7 @@ void Application::initVulkan() {
 
     // loadModel initializes vertices and indices.
     // The actual model loading is this function call together with the previous calls for the the texture.
-    loadModel();
+    model.load();
     // both vertex and index buffers are made to store data from the specific model loaded.
     createVertexBuffer();
     createIndexBuffer();
@@ -901,7 +897,7 @@ void Application::recordCommandBuffer(uint32_t imageIndex) {
 
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, *(descriptorSets[frameIndex]), nullptr);
 
-    commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
+    commandBuffer.drawIndexed(model.indices.size(), 1, 0, 0, 0);
 
     commandBuffer.endRendering();
 
@@ -1042,7 +1038,7 @@ void Application::frameBufferResizeCallback(GLFWwindow * window, int width, int 
 
 void Application::createVertexBuffer() {
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {vertices.size() * sizeof(vertices[0])};
+    vk::DeviceSize const bufferSize {model.vertices.size() * sizeof(model.vertices[0])};
 
     // Create a staging buffer to transfer data from the host to the device
     vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
@@ -1061,7 +1057,7 @@ void Application::createVertexBuffer() {
 
     // Copy the data from the vertices vector to the staging buffer memory
     void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, vertices.data(), bufferSize);
+    memcpy(data, model.vertices.data(), bufferSize);
     stagingBufferMemory.unmapMemory();
     data = nullptr;
 
@@ -1146,7 +1142,7 @@ void Application::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffe
 
 void Application::createIndexBuffer() {
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {indices.size() * sizeof(indices[0])};
+    vk::DeviceSize const bufferSize {model.indices.size() * sizeof(model.indices[0])};
 
     // Create a staging buffer to transfer data from the host to the device
     vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
@@ -1165,7 +1161,7 @@ void Application::createIndexBuffer() {
 
     // Copy the data from the indices vector to the staging buffer memory
     void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, indices.data(), bufferSize);
+    memcpy(data, model.indices.data(), bufferSize);
     stagingBufferMemory.unmapMemory();
     data = nullptr;
 
@@ -1702,57 +1698,7 @@ void Application::createDepthResources() {
     depthImageView = createImageView(depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
 }
 
-void Application::loadModel() {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str())) {
-        std::cerr << "Failed to load model" << std::endl;
-        throw std::runtime_error(warn + err);
-    }
-
-    size_t triple_vertex_index;
-    size_t double_texture_index;
-    // Make a map to store a vertex and the index attribute to it in its first appearance
-    std::unordered_map<Vertex, uint32_t> uniqueVertices {};
-    uint32_t newVertexIndex;
-    for (tinyobj::shape_t const & shape : shapes) {
-        for (auto const & index : shape.mesh.indices) {
-            Vertex vertex;
-
-            triple_vertex_index = 3 * index.vertex_index;
-            vertex.position = {
-                attrib.vertices[triple_vertex_index],
-                attrib.vertices[triple_vertex_index + 1],
-                attrib.vertices[triple_vertex_index + 2]
-            };
-
-            double_texture_index = 2 * index.texcoord_index;
-            vertex.textureCoord = {
-                attrib.texcoords[double_texture_index],
-                1.0f - attrib.texcoords[double_texture_index + 1]
-            };
-
-            // Do we need a color?
-            vertex.color = {1.0f, 1.0f, 1.0f};
-
-            // If the vertex is new, store it in uniqueVertices and give it an index
-            if (uniqueVertices.count(vertex) == 0) {
-                // Create an index
-                newVertexIndex = static_cast<uint32_t>(vertices.size());
-                // Store the vertex and its index in the map
-                uniqueVertices[vertex] = newVertexIndex;
-                // Store the vertex is the vertices vector
-                vertices.emplace_back(vertex);
-            }
-            
-            // Store the index of the vector
-            indices.emplace_back(uniqueVertices[vertex]);
-        }
-    }
-}
 
 void Application::generateMipmaps(
     vk::raii::Image & image,
