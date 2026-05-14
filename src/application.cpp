@@ -65,7 +65,10 @@ void Application::initVulkan() {
     // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
     createDescriptorSets();
     
-    // both vertex and index buffers are made to store data from the specific model loaded.
+    // Both vertex and index buffers are made to store data from the specific model loaded. This must be changed.
+    // We can reuse the same vertex and index buffers for different models.
+    // Just load multiple model data into the same vertex and index buffers, but with offsets.
+    // Instancing can be used to use the same vertex data, but changing the position by something like uniform buffers.
     createVertexBuffer();
     createIndexBuffer();
 }
