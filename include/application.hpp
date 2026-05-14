@@ -182,9 +182,6 @@ private:
 
     static void frameBufferResizeCallback(GLFWwindow * window, int width, int height);
 
-    void createVertexBuffer();
-    void copyVerticesToVertexBuffer(std::vector<Vertex> & vertices);
-
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
     void createBuffer(
@@ -197,8 +194,11 @@ private:
 
     void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize bufferSize) const;
 
+    void createVertexBuffer();
     void createIndexBuffer();
-    void copyIndicesToIndexBuffer(std::vector<uint32_t> indices);
+
+    void copyVerticesToVertexBuffer(std::vector<Vertex> & vertices);
+    void copyIndicesToIndexBuffer(std::vector<uint32_t> & indices);
 
     void createDescriptorSetLayout();
     void createUniformBuffers();

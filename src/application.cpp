@@ -1118,7 +1118,7 @@ void Application::createIndexBuffer() {
     );
 }
 
-void Application::copyIndicesToIndexBuffer(std::vector<uint32_t> indices) {
+void Application::copyIndicesToIndexBuffer(std::vector<uint32_t> & indices) {
     vk::DeviceSize bufferSize {indices.size() * sizeof(uint32_t)};
 
     // Create a staging buffer to transfer data from the host to the device
