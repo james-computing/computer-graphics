@@ -996,7 +996,7 @@ void Application::frameBufferResizeCallback(GLFWwindow * window, int width, int 
 void Application::createVertexBuffer() {
     // Should change the buffer size to something else, but still with enough space for the vertex data.
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {model.vertices.size() * sizeof(Vertex)};
+    vk::DeviceSize const bufferSize {MAX_VERTICES * sizeof(Vertex)};
 
     // Create the vertex buffer
     vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
@@ -1104,7 +1104,7 @@ void Application::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffe
 
 void Application::createIndexBuffer() {
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {model.indices.size() * sizeof(model.indices[0])};
+    vk::DeviceSize const bufferSize {MAX_INDICES * sizeof(uint32_t)};
 
     // Create the index buffer
     vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};

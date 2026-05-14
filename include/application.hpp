@@ -85,6 +85,9 @@ private:
 
     Model model;
 
+    size_t MAX_VERTICES {4000};
+    size_t MAX_INDICES {12000};
+
     vk::raii::Buffer vertexBuffer {nullptr};
     vk::raii::DeviceMemory vertexBufferMemory {nullptr};
     vk::raii::Buffer indexBuffer {nullptr};
