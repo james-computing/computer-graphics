@@ -70,8 +70,9 @@ void Application::initVulkan() {
     // Just load multiple model data into the same vertex and index buffers, but with offsets.
     // Instancing can be used to use the same vertex data, but changing the position by something like uniform buffers.
     createVertexBuffer();
-    copyVerticesToVertexBuffer(model.vertices);
     createIndexBuffer();
+    copyVerticesToVertexBuffer(model.vertices);
+    copyIndicesToIndexBuffer(model.indices);
 }
 
 void Application::mainLoop() {
@@ -1115,6 +1116,10 @@ void Application::createIndexBuffer() {
         indexBuffer,
         indexBufferMemory
     );
+}
+
+void Application::copyIndicesToIndexBuffer(std::vector<uint32_t> indices) {
+    vk::DeviceSize bufferSize {indices.size() * sizeof(uint32_t)};
 
     // Create a staging buffer to transfer data from the host to the device
     vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
@@ -1133,7 +1138,7 @@ void Application::createIndexBuffer() {
 
     // Copy the data from the indices vector to the staging buffer memory
     void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, model.indices.data(), bufferSize);
+    memcpy(data, indices.data(), bufferSize);
     stagingBufferMemory.unmapMemory();
     data = nullptr;
 

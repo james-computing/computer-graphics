@@ -198,6 +198,7 @@ private:
     void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize bufferSize) const;
 
     void createIndexBuffer();
+    void copyIndicesToIndexBuffer(std::vector<uint32_t> indices);
 
     void createDescriptorSetLayout();
     void createUniformBuffers();
