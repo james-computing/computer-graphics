@@ -546,12 +546,12 @@ void Application::createSwapChainImageViews() {
 }
 
 void Application::createGraphicsPipeline() {
-    std::vector<char> const shaderCode {readFile("shaders/slang.spv")};
+    std::vector<char> const shaderCode {Shader::readFile("shaders/slang.spv")};
     std::cout << "Shader code size = " << shaderCode.size() << " bytes" << std::endl;
 
     // The shader module is only needed during the pipeline creation,
     // so we can keep it as a local variable for this method.
-    vk::raii::ShaderModule const shaderModule = createShaderModule(shaderCode);
+    vk::raii::ShaderModule const shaderModule = Shader::createShaderModule(device, shaderCode);
 
     vk::PipelineShaderStageCreateInfo const vertShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -686,45 +686,6 @@ void Application::createGraphicsPipeline() {
 
     // try catch?
     graphicsPipeline = vk::raii::Pipeline(device, nullptr, graphicsPipelineCreateInfo);
-}
-
-std::vector<char> Application::readFile(std::string const & filename) {
-    // ate = start reading at the end of the file. This is used to get the file size.
-    // binary is to read as binary, avoiding text transformations.
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file");
-    }
-
-    // Create a buffer with the file size
-    size_t const fileSize {(size_t) file.tellg()};
-    std::vector<char> buffer(fileSize);
-    // Go to beggining of the file
-    file.seekg(0);
-    // Read the whole file to the buffer
-    file.read(buffer.data(), fileSize);
-    file.close();
-
-    return buffer;
-}
-
-[[nodiscard]] vk::raii::ShaderModule Application::createShaderModule(std::vector<char> const & code) const {
-    // Size of type used for code, in bytes.
-    // If the type is char, then typeSizeInBytes = 1.
-    size_t constexpr typeSizeInBytes {sizeof(*code.data())};
-
-    // The code must be passed as a pointer of type uint32_t
-    uint32_t const * const codeReinterpreted = reinterpret_cast<uint32_t const *>(code.data());
-
-    vk::ShaderModuleCreateInfo const shaderModuleCreateInfo {
-        // code size is the size in bytes
-        .codeSize = code.size() * typeSizeInBytes,
-        .pCode = codeReinterpreted
-    };
-
-    vk::raii::ShaderModule shaderModule {vk::raii::ShaderModule(device, shaderModuleCreateInfo)};
-    return shaderModule;
 }
 
 void Application::createCommandPool() {

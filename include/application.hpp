@@ -17,7 +17,6 @@ import vulkan_hpp;
 #include <cstdlib> // For uint32_t
 #include <limits> // for std::numeric_limits
 #include <algorithm> // for std::clamp
-#include <fstream> // read shader file
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
@@ -27,6 +26,7 @@ import vulkan_hpp;
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/model.hpp"
+#include "../include/shader.hpp"
 
 class Application {
 public:
@@ -155,10 +155,6 @@ private:
     void createSwapChainImageViews();
 
     void createGraphicsPipeline();
-
-    static std::vector<char> readFile(std::string const & filename);
-
-    [[nodiscard]] vk::raii::ShaderModule createShaderModule(std::vector<char> const & code) const;
 
     void createCommandPool();
 
