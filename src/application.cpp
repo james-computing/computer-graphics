@@ -54,12 +54,15 @@ void Application::initVulkan() {
     createColorResources(); // For MSAA. Color resources are used only in recordCommandBuffer.
     createDepthResources(); // Depth resources are used only in recordCommandBuffer.
 
+    // depends on logical device
     createVertexBuffer();
     createIndexBuffer();
 
     // Model loading
     // Loads the texture and vertices.
     model.load();
+    copyVerticesToVertexBuffer(model.vertices);
+    copyIndicesToIndexBuffer(model.indices);
 
     // texture resources
     createTextureImage();
@@ -67,14 +70,6 @@ void Application::initVulkan() {
     createTextureImageView();
     // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
     createDescriptorSets();
-    
-    // Both vertex and index buffers are made to store data from the specific model loaded. This must be changed.
-    // We can reuse the same vertex and index buffers for different models.
-    // Just load multiple model data into the same vertex and index buffers, but with offsets.
-    // Instancing can be used to use the same vertex data, but changing the position by something like uniform buffers.
-    
-    copyVerticesToVertexBuffer(model.vertices);
-    copyIndicesToIndexBuffer(model.indices);
 }
 
 void Application::mainLoop() {
