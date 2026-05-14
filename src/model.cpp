@@ -76,6 +76,8 @@ void Model::loadVertices() {
             indices.emplace_back(uniqueVertices[vertex]);
         }
     }
+    std::cout << "number of vertices = " << vertices.size() << std::endl;
+    std::cout << "number of indices = " << indices.size() << std::endl;
 }
 
 void Model::load() {
