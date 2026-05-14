@@ -18,6 +18,7 @@ void Application::initVulkan() {
     // depends on physical device.
     // msaaSamples is used when creating the graphics pipeline and the color and depth resources.
     initMaxUsableSampleCount();
+    initDepthFormat();
     
     // depends on physicalDevice and surface
     createLogicalDevice();
@@ -648,9 +649,6 @@ void Application::createGraphicsPipeline() {
     };
 
     pipelineLayout = vk::raii::PipelineLayout(device, pipelineLayoutCreateInfo);
-
-    // Maybe the depth resources should be created before the graphics pipeline?
-    depthFormat = findDepthFormat();
 
     vk::PipelineRenderingCreateInfo const pipelineRenderingCreateInfo {
         .colorAttachmentCount = 1,
@@ -1607,14 +1605,14 @@ vk::Format Application::findSupportedFormat(
     throw std::runtime_error("Failed to find supported format");
 }
 
-vk::Format Application::findDepthFormat() const {
+void Application::initDepthFormat() {
     std::vector<vk::Format> const candidateFormats {
         vk::Format::eD32Sfloat,
         vk::Format::eD32SfloatS8Uint,
         vk::Format::eD24UnormS8Uint
     };
 
-    return findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+    depthFormat = findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
 }
 
 bool Application::hasStencilComponent(vk::Format format) const {

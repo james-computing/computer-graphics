@@ -251,7 +251,7 @@ private:
         vk::ImageTiling tiling,
         vk::FormatFeatureFlags features
     ) const;
-    vk::Format findDepthFormat() const;
+    void initDepthFormat();
     bool hasStencilComponent(vk::Format format) const;
     void createDepthResources();
 
