@@ -995,6 +995,17 @@ void Application::createVertexBuffer() {
     // Size of both staging and vertex buffers
     vk::DeviceSize const bufferSize {model.vertices.size() * sizeof(model.vertices[0])};
 
+    // Create the vertex buffer
+    vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
+    vk::MemoryPropertyFlags constexpr vertexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    createBuffer(
+        bufferSize,
+        vertexbufferUsage,
+        vertexBufferMemoryProperties,
+        vertexBuffer,
+        vertexBufferMemory
+    );
+
     // Create a staging buffer to transfer data from the host to the device
     vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
     vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
@@ -1015,17 +1026,6 @@ void Application::createVertexBuffer() {
     memcpy(data, model.vertices.data(), bufferSize);
     stagingBufferMemory.unmapMemory();
     data = nullptr;
-
-    // Create the vertex buffer
-    vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
-    vk::MemoryPropertyFlags constexpr vertexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    createBuffer(
-        bufferSize,
-        vertexbufferUsage,
-        vertexBufferMemoryProperties,
-        vertexBuffer,
-        vertexBufferMemory
-    );
 
     // Copy data from staging buffer to vertex buffer
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
@@ -1098,6 +1098,17 @@ void Application::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffe
 void Application::createIndexBuffer() {
     // Size of both staging and vertex buffers
     vk::DeviceSize const bufferSize {model.indices.size() * sizeof(model.indices[0])};
+    
+    // Create the index buffer
+    vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
+    vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    createBuffer(
+        bufferSize,
+        indexbufferUsage,
+        indexBufferMemoryProperties,
+        indexBuffer,
+        indexBufferMemory
+    );
 
     // Create a staging buffer to transfer data from the host to the device
     vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
@@ -1120,18 +1131,7 @@ void Application::createIndexBuffer() {
     stagingBufferMemory.unmapMemory();
     data = nullptr;
 
-    // Create the vertex buffer
-    vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
-    vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    createBuffer(
-        bufferSize,
-        indexbufferUsage,
-        indexBufferMemoryProperties,
-        indexBuffer,
-        indexBufferMemory
-    );
-
-    // Copy data from staging buffer to vertex buffer
+    // Copy data from staging buffer to index buffer
     copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 }
 
