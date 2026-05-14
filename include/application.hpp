@@ -183,6 +183,7 @@ private:
     static void frameBufferResizeCallback(GLFWwindow * window, int width, int height);
 
     void createVertexBuffer();
+    void copyVerticesToVertexBuffer(std::vector<Vertex> & vertices);
 
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 

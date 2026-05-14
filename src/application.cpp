@@ -70,6 +70,7 @@ void Application::initVulkan() {
     // Just load multiple model data into the same vertex and index buffers, but with offsets.
     // Instancing can be used to use the same vertex data, but changing the position by something like uniform buffers.
     createVertexBuffer();
+    copyVerticesToVertexBuffer(model.vertices);
     createIndexBuffer();
 }
 
@@ -992,8 +993,9 @@ void Application::frameBufferResizeCallback(GLFWwindow * window, int width, int 
 }
 
 void Application::createVertexBuffer() {
+    // Should change the buffer size to something else, but still with enough space for the vertex data.
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {model.vertices.size() * sizeof(model.vertices[0])};
+    vk::DeviceSize const bufferSize {model.vertices.size() * sizeof(Vertex)};
 
     // Create the vertex buffer
     vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
@@ -1005,6 +1007,10 @@ void Application::createVertexBuffer() {
         vertexBuffer,
         vertexBufferMemory
     );
+}
+
+void Application::copyVerticesToVertexBuffer(std::vector<Vertex> & vertices) {
+    vk::DeviceSize bufferSize {vertices.size() * sizeof(Vertex)};
 
     // Create a staging buffer to transfer data from the host to the device
     vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
@@ -1023,7 +1029,7 @@ void Application::createVertexBuffer() {
 
     // Copy the data from the vertices vector to the staging buffer memory
     void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, model.vertices.data(), bufferSize);
+    memcpy(data, vertices.data(), bufferSize);
     stagingBufferMemory.unmapMemory();
     data = nullptr;
 
@@ -1098,7 +1104,7 @@ void Application::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffe
 void Application::createIndexBuffer() {
     // Size of both staging and vertex buffers
     vk::DeviceSize const bufferSize {model.indices.size() * sizeof(model.indices[0])};
-    
+
     // Create the index buffer
     vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
     vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
