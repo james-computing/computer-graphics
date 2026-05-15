@@ -10,7 +10,7 @@ void Application::init() {
     core.createTextureSampler(textureSampler);
     
     std::cout << "model load" << std::endl;
-    model.load(core);
+    model.load(core, modelPath, texturePath);
 
     // depends on MAX_FRAMES_IN_FLIGHT. Also calls createBuffer, which depends on the logical device.
     createUniformBuffers();

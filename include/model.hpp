@@ -12,9 +12,6 @@
 class Model {
     // VARIABLES //
 private:
-    std::string const modelPath {"./models/viking_room.obj"};
-    std::string const texturePath {"./textures/viking_room.png"};
-
     // Data to access vertex data in vertex and index buffers
     size_t vertexBufferLocation;
     size_t numVertices;
@@ -25,8 +22,8 @@ public:
 
 private:
     // METHODS //
-    void loadVertices(Core & core);
+    void loadVertices(Core & core, std::string_view modelPath);
 
 public:
-    void load(Core & core);
+    void load(Core & core, std::string_view modelPath, std::string_view texturePath);
 };

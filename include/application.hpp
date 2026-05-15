@@ -7,6 +7,8 @@ class Application {
 private:
     Core core;
     Model model;
+    std::string const modelPath {"./models/viking_room.obj"};
+    std::string const texturePath {"./textures/viking_room.png"};
     
     std::vector<vk::raii::Buffer> uniformBuffers; // model view projection matrices are stored in uniform buffers
     std::vector<vk::raii::DeviceMemory> uniformBuffersMemories;
