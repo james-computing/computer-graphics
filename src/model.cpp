@@ -83,7 +83,7 @@ void Model::loadTexture(Core & core) {
     << ", textureChannels = " << textureChannels
     << std::endl;
 
-    mipLevels = core.mipLevels(textureWidth, textureHeight);
+    mipLevels = Texture::mipLevels(textureWidth, textureHeight);
 
     // copy pixels data to texture image
     // texture resources

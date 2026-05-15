@@ -14,7 +14,7 @@ import vulkan_hpp;
 
 #include <iostream>
 #include <stdexcept>
-#include <cstdlib> // For uint32_t
+#include <cstdint> // For uint32_t
 #include <limits> // for std::numeric_limits
 #include <algorithm> // for std::clamp
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -247,7 +247,6 @@ private:
     ) const;
 
 public:
-    uint32_t mipLevels(int textureWidth, int textureHeight);
 
     void createTextureImage(
         int textureWidth,

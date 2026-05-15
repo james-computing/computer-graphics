@@ -1188,11 +1188,6 @@ void Core::createDescriptorPool() {
     descriptorPool = vk::raii::DescriptorPool(device, descriptorPoolCreateInfo);
 }
 
-uint32_t Core::mipLevels(int textureWidth, int textureHeight) {
-    // sum 1 for the original image to have a mip level
-    return static_cast<uint32_t>(std::floor(std::log2(std::max(textureWidth, textureHeight)))) + 1;
-}
-
 void Core::createTextureImage(
     int textureWidth,
     int textureHeight,

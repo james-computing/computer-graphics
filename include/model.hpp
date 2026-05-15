@@ -2,10 +2,12 @@
 
 #include <iostream>
 #include <vector>
-#include "vertex.hpp"
 
 #include "../libraries/stb/stb_image.h"
+
+#include "vertex.hpp"
 #include "core.hpp"
+#include "texture.hpp"
 
 class Model {
 private:
