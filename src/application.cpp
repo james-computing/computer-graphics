@@ -16,7 +16,7 @@ void Application::init() {
     createUniformBuffers();
 
     // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
-    core.createDescriptorSets(descriptorSets, uniformBuffers, textureSampler, model.textureImageView);
+    createDescriptorSets();
 }
 
 void Application::run() {
@@ -90,4 +90,61 @@ void Application::updateUniformBuffer(uint32_t frameIndex) {
     // Copy the ubo to the corresponding uniform buffer memory.
     // It would be more efficient to use push constants.
     memcpy(uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
+}
+
+void Application::allocateDescriptorSets() {
+    core.allocateDescriptorSets(core.MAX_FRAMES_IN_FLIGHT, descriptorSets);
+}
+
+void Application::updateDescriptorSets() const {
+    // Configure descriptor sets.
+    // Maybe could build an array of vk::WriteDescriptorSet and call device.updateDescriptorSets once.
+    for (size_t i {0}; i < core.MAX_FRAMES_IN_FLIGHT; ++i) {
+        // uniform buffer
+
+        vk::DescriptorBufferInfo const descriptorBufferInfo {
+            .buffer = uniformBuffers[i],
+            .offset = 0,
+            .range = sizeof(UniformBufferObject)
+        };
+
+        vk::WriteDescriptorSet const uniformBufferWriteDescriptorSet {
+            .dstSet = descriptorSets[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &descriptorBufferInfo
+        };
+
+        // Combined image sampler
+
+        vk::DescriptorImageInfo const descriptorImageInfo {
+            .sampler = textureSampler,
+            .imageView = model.texture.textureImageView,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
+        };
+
+        vk::WriteDescriptorSet const combinedImageSamplerWriteDescriptorSet {
+            .dstSet = descriptorSets[i],
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+            .pImageInfo = &descriptorImageInfo
+        };
+
+        std::vector<vk::WriteDescriptorSet> writeDescriptorSets {
+            uniformBufferWriteDescriptorSet,
+            combinedImageSamplerWriteDescriptorSet
+        };
+
+        // update
+        core.updateDescriptorSets(writeDescriptorSets);
+    }
+}
+
+void Application::createDescriptorSets() {
+    allocateDescriptorSets();
+    updateDescriptorSets();
 }

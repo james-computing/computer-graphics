@@ -10,27 +10,23 @@
 #include "texture.hpp"
 
 class Model {
+    // VARIABLES //
 private:
     std::string const modelPath {"./models/viking_room.obj"};
     std::string const texturePath {"./textures/viking_room.png"};
-
-    vk::raii::Image textureImage {nullptr};
-    vk::raii::DeviceMemory textureImageMemory {nullptr};
-
-    void loadVertices(Core & core);
-    void loadTexture(Core & core);
-public:
-    vk::raii::ImageView textureImageView {nullptr};
-    int textureWidth;
-    int textureHeight;
-    int textureChannels;
-    uint32_t mipLevels;
 
     // Data to access vertex data in vertex and index buffers
     size_t vertexBufferLocation;
     size_t numVertices;
     size_t indexBufferLocation;
     size_t numIndices;
+public:
+    Texture texture;
 
+private:
+    // METHODS //
+    void loadVertices(Core & core);
+
+public:
     void load(Core & core);
 };

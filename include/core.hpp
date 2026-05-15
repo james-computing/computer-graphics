@@ -237,6 +237,7 @@ private:
         uint32_t height
     ) const;
 
+public:
     vk::raii::ImageView createImageView(
         vk::raii::Image const & image,
         vk::Format format,
@@ -244,19 +245,12 @@ private:
         uint32_t mipLevels
     ) const;
 
-public:
-
     void createTextureImage(
         int textureWidth,
         int textureHeight,
         stbi_uc * pixels,
         vk::raii::Image & textureImage,
         vk::raii::DeviceMemory & textureImageMemory,
-        uint32_t mipLevels
-    );
-    void createTextureImageView(
-        vk::raii::Image & textureImage,
-        vk::raii::ImageView & textureImageView,
         uint32_t mipLevels
     );
 
@@ -284,22 +278,13 @@ private:
 
     void createColorResources();
 
-    void allocateDescriptorSets(std::vector<vk::raii::DescriptorSet> & descriptorSets) const;
-
-    void updateDescriptorSets(
-        std::vector<vk::raii::DescriptorSet> & descriptorSets,
-        std::vector<vk::raii::Buffer> & uniformBuffers,
-        vk::raii::Sampler & textureSampler,
-        vk::raii::ImageView & textureImageView
-    ) const;
-
 public:
-    void createDescriptorSets(
-        std::vector<vk::raii::DescriptorSet> & descriptorSets,
-        std::vector<vk::raii::Buffer> & uniformBuffers,
-        vk::raii::Sampler & textureSampler,
-        vk::raii::ImageView & textureImageView
+    void allocateDescriptorSets(
+        uint32_t const descriptorSetCount,
+        std::vector<vk::raii::DescriptorSet> & descriptorSets
     ) const;
+
+    void updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const;
 
     uint32_t getSwapChainExtentWidth() const;
     uint32_t getSwapChainExtentHeight() const;

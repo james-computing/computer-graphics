@@ -1437,14 +1437,6 @@ vk::raii::ImageView Core::createImageView(
     return vk::raii::ImageView(device, imageViewCreateInfo);
 }
 
-void Core::createTextureImageView(
-    vk::raii::Image & textureImage,
-    vk::raii::ImageView & textureImageView,
-    uint32_t mipLevels
-) {
-    textureImageView = createImageView(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
-}
-
 void Core::createTextureSampler(vk::raii::Sampler & textureSampler) {
     vk::PhysicalDeviceProperties physicalDeviceProperties {physicalDevice.getProperties()};
 
@@ -1726,82 +1718,26 @@ void Core::createColorResources() {
     colorImageView = createImageView(colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
 }
 
-void Core::allocateDescriptorSets(std::vector<vk::raii::DescriptorSet> & descriptorSets) const {
-    // Vector with MAX_FRAMES_IN_FLIGHT copies of *descriptorSetLayout.
+void Core::allocateDescriptorSets(
+    uint32_t const descriptorSetCount,
+    std::vector<vk::raii::DescriptorSet> & descriptorSets
+) const {
+    // Vector with descriptorSetCount copies of *descriptorSetLayout.
     // It is needed because descriptorSetAllocateInfo receives an array of layouts.
-    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(MAX_FRAMES_IN_FLIGHT, *descriptorSetLayout)};
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptorSetLayout)};
 
     // Allocate descriptor sets
     vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
         .descriptorPool = descriptorPool,
-        .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
+        .descriptorSetCount = descriptorSetCount,
         .pSetLayouts = descriptorSetLayouts.data()
     };
 
     descriptorSets = device.allocateDescriptorSets(descriptorSetAllocateInfo);
 }
 
-void Core::updateDescriptorSets(
-    std::vector<vk::raii::DescriptorSet> & descriptorSets,
-    std::vector<vk::raii::Buffer> & uniformBuffers,
-    vk::raii::Sampler & textureSampler,
-    vk::raii::ImageView & textureImageView
-) const {
-    // Configure descriptor sets.
-    // Maybe could build an array of vk::WriteDescriptorSet and call device.updateDescriptorSets once.
-    for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-        // uniform buffer
-
-        vk::DescriptorBufferInfo const descriptorBufferInfo {
-            .buffer = uniformBuffers[i],
-            .offset = 0,
-            .range = sizeof(UniformBufferObject)
-        };
-
-        vk::WriteDescriptorSet const uniformBufferWriteDescriptorSet {
-            .dstSet = descriptorSets[i],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &descriptorBufferInfo
-        };
-
-        // Combined image sampler
-
-        vk::DescriptorImageInfo const descriptorImageInfo {
-            .sampler = textureSampler,
-            .imageView = textureImageView,
-            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
-        };
-
-        vk::WriteDescriptorSet const combinedImageSamplerWriteDescriptorSet {
-            .dstSet = descriptorSets[i],
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = &descriptorImageInfo
-        };
-
-        std::array<vk::WriteDescriptorSet, 2> writeDescriptorSets {
-            uniformBufferWriteDescriptorSet,
-            combinedImageSamplerWriteDescriptorSet
-        };
-
-        // update
-        device.updateDescriptorSets(writeDescriptorSets, {});
-    }
-}
-
-void Core::createDescriptorSets(
-    std::vector<vk::raii::DescriptorSet> & descriptorSets,
-    std::vector<vk::raii::Buffer> & uniformBuffers,
-    vk::raii::Sampler & textureSampler,
-    vk::raii::ImageView & textureImageView
-) const {
-    allocateDescriptorSets(descriptorSets);
-    updateDescriptorSets(descriptorSets, uniformBuffers, textureSampler, textureImageView);
+void Core::updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const {
+    device.updateDescriptorSets(writeDescriptorSets, {});
 }
 
 uint32_t Core::getSwapChainExtentWidth() const {

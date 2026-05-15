@@ -19,6 +19,9 @@ public:
 private:
     void init(); 
     void createUniformBuffers();
-    
-    void updateUniformBuffer(uint32_t currentImage);
+    void updateUniformBuffer(uint32_t frameIndex);
+
+    void allocateDescriptorSets();
+    void updateDescriptorSets() const;
+    void createDescriptorSets();
 };

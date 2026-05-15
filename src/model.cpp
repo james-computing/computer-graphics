@@ -72,33 +72,9 @@ void Model::loadVertices(Core & core) {
     core.copyIndicesToIndexBuffer(indices);
 }
 
-void Model::loadTexture(Core & core) {
-    std::cout << "Loading texture" << std::endl;
-    stbi_uc * pixels = stbi_load(texturePath.c_str(), &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
-    if (!pixels) {
-        throw std::runtime_error("Failed to load texture.");
-    }
-    std::cout << "textureWidth = " << textureWidth
-    << ", textureHeight = " << textureHeight
-    << ", textureChannels = " << textureChannels
-    << std::endl;
-
-    mipLevels = Texture::mipLevels(textureWidth, textureHeight);
-
-    // copy pixels data to texture image
-    // texture resources
-    core.createTextureImage(textureWidth, textureHeight, pixels, textureImage, textureImageMemory, mipLevels);
-
-    // cleanup
-    stbi_image_free(pixels);
-
-    // depends on textureImage and mipLevels
-    core.createTextureImageView(textureImage, textureImageView, mipLevels);
-}
-
 void Model::load(Core & core) {
     std::cout << "load texture" << std::endl;
-    loadTexture(core);
+    texture.load(core, texturePath.c_str());
     std::cout << "load vertices" << std::endl;
     loadVertices(core);
 }
