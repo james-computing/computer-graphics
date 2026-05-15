@@ -95,7 +95,6 @@ private:
     vk::raii::DeviceMemory indexBufferMemory {nullptr};
 
     vk::raii::DescriptorSetLayout descriptorSetLayout {nullptr}; // for model view projection, which uses uniform buffers
-
     vk::raii::DescriptorPool descriptorPool {nullptr};
 
     vk::raii::Image depthImage {nullptr};
@@ -103,9 +102,8 @@ private:
     vk::raii::ImageView depthImageView {nullptr};
     vk::Format depthFormat;
 
-    vk::SampleCountFlagBits msaaSamples {vk::SampleCountFlagBits::e1};
-
     // For MSAA
+    vk::SampleCountFlagBits msaaSamples {vk::SampleCountFlagBits::e1};
     vk::raii::Image colorImage {nullptr};
     vk::raii::DeviceMemory colorImageMemory {nullptr};
     vk::raii::ImageView colorImageView {nullptr};

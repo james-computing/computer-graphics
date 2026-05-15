@@ -913,8 +913,6 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> & descriptorSets) {
         .pSignalSemaphores = &*renderFinishedSemaphore
     };
 
-    //updateUniformBuffer(frameIndex);
-
     device.resetFences(*drawFence);
     queue.submit(submitInfo, drawFence);
 
