@@ -9,24 +9,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../libraries/tinyobjloader/tiny_obj_loader.h"
 
-Model::~Model() {
-    // cleanup
-    stbi_image_free(pixels);
-}
-
-void Model::loadTexture() {
-    std::cout << "Loading texture" << std::endl;
-    pixels = stbi_load(texturePath.c_str(), &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
-    if (!pixels) {
-        throw std::runtime_error("Failed to load texture.");
-    }
-    std::cout << "textureWidth = " << textureWidth
-    << ", textureHeight = " << textureHeight
-    << ", textureChannels = " << textureChannels
-    << std::endl;
-}
-
-void Model::loadVertices() {
+void Model::loadVertices(Core & core) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -36,6 +19,9 @@ void Model::loadVertices() {
         std::cerr << "Failed to load model" << std::endl;
         throw std::runtime_error(warn + err);
     }
+
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
     size_t triple_vertex_index;
     size_t double_texture_index;
@@ -76,11 +62,43 @@ void Model::loadVertices() {
             indices.emplace_back(uniqueVertices[vertex]);
         }
     }
-    std::cout << "number of vertices = " << vertices.size() << std::endl;
-    std::cout << "number of indices = " << indices.size() << std::endl;
+
+    numVertices = vertices.size();
+    numIndices = indices.size();
+    std::cout << "number of vertices = " << numVertices << std::endl;
+    std::cout << "number of indices = " << numIndices << std::endl;
+
+    core.copyVerticesToVertexBuffer(vertices);
+    core.copyIndicesToIndexBuffer(indices);
 }
 
-void Model::load() {
-    loadTexture();
-    loadVertices();
+void Model::loadTexture(Core & core) {
+    std::cout << "Loading texture" << std::endl;
+    stbi_uc * pixels = stbi_load(texturePath.c_str(), &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
+    if (!pixels) {
+        throw std::runtime_error("Failed to load texture.");
+    }
+    std::cout << "textureWidth = " << textureWidth
+    << ", textureHeight = " << textureHeight
+    << ", textureChannels = " << textureChannels
+    << std::endl;
+
+    mipLevels = core.mipLevels(textureWidth, textureHeight);
+
+    // copy pixels data to texture image
+    // texture resources
+    core.createTextureImage(textureWidth, textureHeight, pixels, textureImage, textureImageMemory, mipLevels);
+
+    // cleanup
+    stbi_image_free(pixels);
+
+    // depends on textureImage and mipLevels
+    core.createTextureImageView(textureImage, textureImageView, mipLevels);
+}
+
+void Model::load(Core & core) {
+    std::cout << "load texture" << std::endl;
+    loadTexture(core);
+    std::cout << "load vertices" << std::endl;
+    loadVertices(core);
 }
