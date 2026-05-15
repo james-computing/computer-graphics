@@ -1512,9 +1512,6 @@ bool Core::hasStencilComponent(vk::Format format) const {
 }
 
 void Core::createDepthResources() {
-    // Initialized in pipeline creation
-    //depthFormat = findDepthFormat();
-
     // Create depth image, allocate memory for it and bind it
     createImage(
         swapChainExtent.width,
