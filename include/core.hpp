@@ -116,11 +116,12 @@ public:
     void cleanup();
 
 private:
-    void initWindow();
-    void initVulkan();
-
     std::vector<char const *> getRequiredGLFWExtensions() const;
     std::vector<char const *> getRequiredValidationLayers() const;
+    void initWindow();
+
+    void initVulkan();
+
     void createInstance();
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
@@ -144,13 +145,11 @@ private:
     vk::Extent2D chooseSwapExtent(vk::SurfaceCapabilitiesKHR const & capabilities) const;
     uint32_t chooseSwapImageCount(vk::SurfaceCapabilitiesKHR const & surfaceCapabilities) const;
     void createSwapChain();
-
     void createSwapChainImageViews();
 
     void createGraphicsPipeline();
 
     void createCommandPool();
-
     void createCommandBuffers();
 
     void transitionImageLayout(
@@ -204,7 +203,6 @@ public:
 
 private:
     void createDescriptorSetLayout();
-
     void createDescriptorPool();
 
 public:
