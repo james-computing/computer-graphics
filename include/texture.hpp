@@ -12,19 +12,19 @@ private:
     int textureChannels;
     uint32_t mipLevels;
 public:
-    vk::raii::Image textureImage {nullptr};
-    vk::raii::DeviceMemory textureImageMemory {nullptr};
-    vk::raii::ImageView textureImageView {nullptr};
+    vk::raii::Image image {nullptr};
+    vk::raii::DeviceMemory imageMemory {nullptr};
+    vk::raii::ImageView imageView {nullptr};
 
     // METHODS //
-    void computeMipLevels(int textureWidth, int textureHeight);
-
-    void createTextureImageView(
+    void computeMipLevels(int const textureWidth, int const textureHeight);
+    void transitionTextureImageLayout(
         Core const & core,
-        vk::raii::Image & textureImage,
-        vk::raii::ImageView & textureImageView,
-        uint32_t mipLevels
-    );
-
-    void load(Core & core, char const * texturePath);
+        vk::ImageLayout const oldLayout,
+        vk::ImageLayout const newLayout
+    ) const;
+    void generateMipmaps(Core const & core, vk::Format imageFormat) const;
+    void createTextureImage(Core const & core, stbi_uc const * const pixels);
+    void createTextureImageView(Core const & core);
+    void load(Core const & core, char const * const texturePath);
 };

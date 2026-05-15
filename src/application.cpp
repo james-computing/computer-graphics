@@ -121,7 +121,7 @@ void Application::updateDescriptorSets() const {
 
         vk::DescriptorImageInfo const descriptorImageInfo {
             .sampler = textureSampler,
-            .imageView = model.texture.textureImageView,
+            .imageView = model.texture.imageView,
             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
 

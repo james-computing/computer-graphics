@@ -207,6 +207,7 @@ private:
 
     void createDescriptorPool();
 
+public:
     void createImage(
         uint32_t width,
         uint32_t height,
@@ -218,17 +219,10 @@ private:
         vk::MemoryPropertyFlags imageMemoryProperties,
         vk::raii::Image & image,
         vk::raii::DeviceMemory & imageMemory
-    );
+    ) const;
 
     void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const;
     void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const;
-
-    void transitionTextureImageLayout(
-        vk::raii::Image const & image,
-        vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout,
-        uint32_t mipLevels
-    ) const;
 
     void copyBufferToImage(
         vk::raii::Buffer const & buffer,
@@ -237,22 +231,12 @@ private:
         uint32_t height
     ) const;
 
-public:
     vk::raii::ImageView createImageView(
         vk::raii::Image const & image,
         vk::Format format,
         vk::ImageAspectFlags aspectFlags,
         uint32_t mipLevels
     ) const;
-
-    void createTextureImage(
-        int textureWidth,
-        int textureHeight,
-        stbi_uc * pixels,
-        vk::raii::Image & textureImage,
-        vk::raii::DeviceMemory & textureImageMemory,
-        uint32_t mipLevels
-    );
 
     void createTextureSampler(vk::raii::Sampler & textureSampler);
 
@@ -266,16 +250,7 @@ private:
     bool hasStencilComponent(vk::Format format) const;
     void createDepthResources();
 
-    void generateMipmaps(
-        vk::raii::Image & image,
-        vk::Format imageFormat,
-        int32_t textureWidth,
-        int32_t textureHeight,
-        uint32_t mipLevels
-    ) const;
-
     void initMaxUsableSampleCount();
-
     void createColorResources();
 
 public:
@@ -290,4 +265,6 @@ public:
     uint32_t getSwapChainExtentHeight() const;
 
     uint32_t getFrameIndex() const;
+
+    vk::FormatProperties getFormatProperties(vk::Format imageFormat) const;
 };
