@@ -691,13 +691,13 @@ void Core::createCommandBuffers() {
 
 void Core::transitionImageLayout(
     vk::Image const & image,
-    vk::ImageLayout oldLayout,
-    vk::ImageLayout newLayout,
-    vk::AccessFlags2 srcAccessMask,
-    vk::AccessFlags2 dstAccessMask,
-    vk::PipelineStageFlags2 srcStageMask,
-    vk::PipelineStageFlags2 dstStageMask,
-    vk::ImageAspectFlags imageAspectFlags
+    vk::ImageLayout const oldLayout,
+    vk::ImageLayout const newLayout,
+    vk::AccessFlags2 const srcAccessMask,
+    vk::AccessFlags2 const dstAccessMask,
+    vk::PipelineStageFlags2 const srcStageMask,
+    vk::PipelineStageFlags2 const dstStageMask,
+    vk::ImageAspectFlags const imageAspectFlags
 ) const {
     // Use a barrier to change the image layout
     vk::ImageMemoryBarrier2 const barrier {
@@ -728,7 +728,11 @@ void Core::transitionImageLayout(
     commandBuffers[frameIndex].pipelineBarrier2(dependencyInfo);
 }
 
-void Core::recordCommandBuffer(uint32_t imageIndex, std::vector<vk::raii::DescriptorSet> & descriptorSets) {
+void Core::recordCommandBuffer(
+    uint32_t const imageIndex,
+    std::vector<vk::raii::DescriptorSet> const & descriptorSets,
+    uint32_t const indexCount
+) const {
     vk::raii::CommandBuffer const & commandBuffer {commandBuffers[frameIndex]};
 
     commandBuffer.begin({});
@@ -833,7 +837,7 @@ void Core::recordCommandBuffer(uint32_t imageIndex, std::vector<vk::raii::Descri
     // descriptorSet = *(descriptorSets[frameIndex])
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, *(descriptorSets[frameIndex]), nullptr);
 
-    commandBuffer.drawIndexed(numIndices, 1, 0, 0, 0);
+    commandBuffer.drawIndexed(indexCount, 1, 0, 0, 0);
 
     commandBuffer.endRendering();
 
@@ -870,7 +874,7 @@ void Core::createSyncObjects() {
     }
 }
 
-void Core::drawFrame(std::vector<vk::raii::DescriptorSet> & descriptorSets) {
+void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) {
     vk::raii::CommandBuffer & commandBuffer {commandBuffers[frameIndex]};
     vk::raii::Semaphore & presentCompleteSemaphore {presentCompleteSemaphores[frameIndex]};
     vk::raii::Fence & drawFence {inFlightFences[frameIndex]};
@@ -899,7 +903,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> & descriptorSets) {
     uint32_t const imageIndex {resultValueAcquireNextImage.value};
 
     commandBuffer.reset();
-    recordCommandBuffer(imageIndex, descriptorSets);
+    recordCommandBuffer(imageIndex, descriptorSets, indexCount);
 
     vk::raii::Semaphore const & renderFinishedSemaphore {renderFinishedSemaphores[imageIndex]}; // imageIndex, not frameIndex
     vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -970,7 +974,7 @@ void Core::frameBufferResizeCallback(GLFWwindow * window, int width, int height)
     app->frameBufferResized = true;
 }
 
-uint32_t Core::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const {
+uint32_t Core::findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const {
     vk::PhysicalDeviceMemoryProperties const memoryProperties {physicalDevice.getMemoryProperties()};
 
     for (uint32_t i {0}; i < memoryProperties.memoryTypeCount; ++i) {
@@ -986,9 +990,9 @@ uint32_t Core::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags prope
 }
 
 void Core::createBuffer(
-    vk::DeviceSize bufferSize,
-    vk::BufferUsageFlags bufferUsage,
-    vk::MemoryPropertyFlags memoryProperties,
+    vk::DeviceSize const bufferSize,
+    vk::BufferUsageFlags const bufferUsage,
+    vk::MemoryPropertyFlags const memoryProperties,
     vk::raii::Buffer & buffer,
     vk::raii::DeviceMemory & bufferMemory
 ) const {
@@ -1052,7 +1056,7 @@ void Core::createIndexBuffer() {
     );
 }
 
-void Core::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize bufferSize) const {
+void Core::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize const bufferSize) const {
     vk::raii::CommandBuffer commandCopyBuffer {nullptr};
     beginSingleTimeCommands(commandCopyBuffer);
 
@@ -1068,8 +1072,8 @@ void Core::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const
 }
 
 void Core::copyVerticesToVertexBuffer(
-    std::vector<Vertex> & vertices
-) {
+    std::vector<Vertex> const & vertices
+) const {
     vk::DeviceSize bufferSize {vertices.size() * sizeof(Vertex)};
 
     // Create a staging buffer to transfer data from the host to the device
@@ -1098,8 +1102,8 @@ void Core::copyVerticesToVertexBuffer(
 }
 
 void Core::copyIndicesToIndexBuffer(
-    std::vector<uint32_t> & indices
-) {
+    std::vector<uint32_t> const & indices
+) const {
     vk::DeviceSize bufferSize {indices.size() * sizeof(uint32_t)};
 
     // Create a staging buffer to transfer data from the host to the device
@@ -1125,9 +1129,6 @@ void Core::copyIndicesToIndexBuffer(
 
     // Copy data from staging buffer to index buffer
     copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-    // Change later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    numIndices = indices.size();
 }
 
 void Core::createDescriptorSetLayout() {
@@ -1187,14 +1188,14 @@ void Core::createDescriptorPool() {
 }
 
 void Core::createImage(
-    uint32_t width,
-    uint32_t height,
-    uint32_t mipLevels,
-    vk::SampleCountFlagBits numSamples,
-    vk::Format imageFormat,
-    vk::ImageTiling imageTiling,
-    vk::ImageUsageFlags imageUsage,
-    vk::MemoryPropertyFlags imageMemoryProperties,
+    uint32_t const width,
+    uint32_t const height,
+    uint32_t const mipLevels,
+    vk::SampleCountFlagBits const numSamples,
+    vk::Format const imageFormat,
+    vk::ImageTiling const imageTiling,
+    vk::ImageUsageFlags const imageUsage,
+    vk::MemoryPropertyFlags const imageMemoryProperties,
     vk::raii::Image & image,
     vk::raii::DeviceMemory & imageMemory
 ) const {
@@ -1258,8 +1259,8 @@ void Core::endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) 
 void Core::copyBufferToImage(
     vk::raii::Buffer const & buffer,
     vk::raii::Image const & image,
-    uint32_t width,
-    uint32_t height
+    uint32_t const width,
+    uint32_t const height
 ) const {
     vk::raii::CommandBuffer commandBuffer {nullptr};
     beginSingleTimeCommands(commandBuffer);
@@ -1296,9 +1297,9 @@ void Core::copyBufferToImage(
 
 vk::raii::ImageView Core::createImageView(
     vk::raii::Image const & image,
-    vk::Format format,
-    vk::ImageAspectFlags aspectFlags,
-    uint32_t mipLevels
+    vk::Format const format,
+    vk::ImageAspectFlags const aspectFlags,
+    uint32_t const mipLevels
 ) const {
     vk::ImageViewCreateInfo const imageViewCreateInfo {
         .image = image,
@@ -1342,8 +1343,8 @@ void Core::createTextureSampler(vk::raii::Sampler & textureSampler) {
 
 vk::Format Core::findSupportedFormat(
     std::vector<vk::Format> const & candidateFormats,
-    vk::ImageTiling tiling,
-    vk::FormatFeatureFlags features
+    vk::ImageTiling const tiling,
+    vk::FormatFeatureFlags const features
 ) const {
     switch (tiling) {
         case vk::ImageTiling::eLinear:
@@ -1376,7 +1377,7 @@ void Core::initDepthFormat() {
     depthFormat = findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
 }
 
-bool Core::hasStencilComponent(vk::Format format) const {
+bool Core::hasStencilComponent(vk::Format const format) const {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 
@@ -1492,6 +1493,6 @@ uint32_t Core::getFrameIndex() const {
     return frameIndex;
 }
 
-vk::FormatProperties Core::getFormatProperties(vk::Format imageFormat) const {
+vk::FormatProperties Core::getFormatProperties(vk::Format const imageFormat) const {
     return physicalDevice.getFormatProperties(imageFormat);
 }

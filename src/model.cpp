@@ -9,7 +9,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../libraries/tinyobjloader/tiny_obj_loader.h"
 
-void Model::loadVertices(Core & core, std::string_view modelPath) {
+void Model::loadVertices(Core const & core, std::string_view const modelPath) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -72,9 +72,13 @@ void Model::loadVertices(Core & core, std::string_view modelPath) {
     core.copyIndicesToIndexBuffer(indices);
 }
 
-void Model::load(Core & core, std::string_view modelPath, std::string_view texturePath) {
+void Model::load(Core const & core, std::string_view const modelPath, std::string_view const texturePath) {
     std::cout << "load texture" << std::endl;
     texture.load(core, texturePath.data());
     std::cout << "load vertices" << std::endl;
     loadVertices(core, modelPath.data());
+}
+
+uint32_t Model::getNumIndices() const {
+    return numIndices;
 }

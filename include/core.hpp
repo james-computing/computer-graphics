@@ -150,21 +150,25 @@ private:
 
     void transitionImageLayout(
         vk::Image const & image, // not vk::raii::Image, because swapChain.getImages returns vk::Image
-        vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout,
-        vk::AccessFlags2 srcAccessMask,
-        vk::AccessFlags2 dstAccessMask,
-        vk::PipelineStageFlags2 srcStageMask,
-        vk::PipelineStageFlags2 dstStageMask,
-        vk::ImageAspectFlags imageAspectFlags
+        vk::ImageLayout const oldLayout,
+        vk::ImageLayout const newLayout,
+        vk::AccessFlags2 const srcAccessMask,
+        vk::AccessFlags2 const dstAccessMask,
+        vk::PipelineStageFlags2 const srcStageMask,
+        vk::PipelineStageFlags2 const dstStageMask,
+        vk::ImageAspectFlags const imageAspectFlags
     ) const;
 
-    void recordCommandBuffer(uint32_t imageIndex, std::vector<vk::raii::DescriptorSet> & descriptorSets);
+    void recordCommandBuffer(
+        uint32_t const imageIndex,
+        std::vector<vk::raii::DescriptorSet> const & descriptorSets,
+        uint32_t const indexCount
+    ) const;
 
     void createSyncObjects();
 
 public:
-    void drawFrame(std::vector<vk::raii::DescriptorSet> & descriptorSets);
+    void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount);
 
 private:
     void cleanupSwapChain();
@@ -172,18 +176,18 @@ private:
 
     static void frameBufferResizeCallback(GLFWwindow * window, int width, int height);
 
-    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
+    uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
 
 public:
     void createBuffer(
-        vk::DeviceSize bufferSize,
-        vk::BufferUsageFlags bufferUsage,
-        vk::MemoryPropertyFlags memoryProperties,
+        vk::DeviceSize const bufferSize,
+        vk::BufferUsageFlags const bufferUsage,
+        vk::MemoryPropertyFlags const memoryProperties,
         vk::raii::Buffer & buffer,
         vk::raii::DeviceMemory & bufferMemory
     ) const;
 
-    void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize bufferSize) const;
+    void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize const bufferSize) const;
 
 private:
     void createVertexBuffer();
@@ -191,11 +195,11 @@ private:
 
 public:
     void copyVerticesToVertexBuffer(
-        std::vector<Vertex> & vertices
-    );
+        std::vector<Vertex> const & vertices
+    ) const;
     void copyIndicesToIndexBuffer(
-        std::vector<uint32_t> & indices
-    );
+        std::vector<uint32_t> const & indices
+    ) const;
 
 private:
     void createDescriptorSetLayout();
@@ -203,14 +207,14 @@ private:
 
 public:
     void createImage(
-        uint32_t width,
-        uint32_t height,
-        uint32_t mipLevels,
-        vk::SampleCountFlagBits numSamples,
-        vk::Format imageFormat,
-        vk::ImageTiling imageTiling,
-        vk::ImageUsageFlags imageUsage,
-        vk::MemoryPropertyFlags imageMemoryProperties,
+        uint32_t const width,
+        uint32_t const height,
+        uint32_t const mipLevels,
+        vk::SampleCountFlagBits const numSamples,
+        vk::Format const imageFormat,
+        vk::ImageTiling const imageTiling,
+        vk::ImageUsageFlags const imageUsage,
+        vk::MemoryPropertyFlags const imageMemoryProperties,
         vk::raii::Image & image,
         vk::raii::DeviceMemory & imageMemory
     ) const;
@@ -221,15 +225,15 @@ public:
     void copyBufferToImage(
         vk::raii::Buffer const & buffer,
         vk::raii::Image const & image,
-        uint32_t width,
-        uint32_t height
+        uint32_t const width,
+        uint32_t const height
     ) const;
 
     vk::raii::ImageView createImageView(
         vk::raii::Image const & image,
-        vk::Format format,
-        vk::ImageAspectFlags aspectFlags,
-        uint32_t mipLevels
+        vk::Format const format,
+        vk::ImageAspectFlags const  aspectFlags,
+        uint32_t const mipLevels
     ) const;
 
     void createTextureSampler(vk::raii::Sampler & textureSampler);
@@ -237,11 +241,11 @@ public:
 private:
     vk::Format findSupportedFormat(
         std::vector<vk::Format> const & candidateFormats,
-        vk::ImageTiling tiling,
-        vk::FormatFeatureFlags features
+        vk::ImageTiling const tiling,
+        vk::FormatFeatureFlags const features
     ) const;
     void initDepthFormat();
-    bool hasStencilComponent(vk::Format format) const;
+    bool hasStencilComponent(vk::Format const format) const;
     void createDepthResources();
 
     void initMaxUsableSampleCount();
@@ -261,5 +265,5 @@ public:
     uint32_t getMaxFramesInFlight() const;
     uint32_t getFrameIndex() const;
 
-    vk::FormatProperties getFormatProperties(vk::Format imageFormat) const;
+    vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const;
 };

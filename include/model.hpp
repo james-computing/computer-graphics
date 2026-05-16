@@ -16,14 +16,15 @@ private:
     size_t vertexBufferLocation;
     size_t numVertices;
     size_t indexBufferLocation;
-    size_t numIndices;
+    uint32_t numIndices;
 public:
     Texture texture;
 
 private:
     // METHODS //
-    void loadVertices(Core & core, std::string_view modelPath);
+    void loadVertices(Core const & core, std::string_view const modelPath);
 
 public:
-    void load(Core & core, std::string_view modelPath, std::string_view texturePath);
+    void load(Core const & core, std::string_view const modelPath, std::string_view const texturePath);
+    uint32_t getNumIndices() const;
 };

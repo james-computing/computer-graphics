@@ -25,7 +25,7 @@ void Application::run() {
     while (core.shouldContinue()) {
         core.pollEvents();
         updateUniformBuffer(core.getFrameIndex());
-        core.drawFrame(descriptorSets);
+        core.drawFrame(descriptorSets, model.getNumIndices());
     }
 
     core.cleanup();
