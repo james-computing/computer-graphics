@@ -20,8 +20,8 @@ private:
 public:
     Texture texture;
 
-private:
     // METHODS //
+private:
     void loadVertices(Core const & core, std::string_view const modelPath);
 
 public:
