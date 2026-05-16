@@ -1317,7 +1317,7 @@ vk::raii::ImageView Core::createImageView(
     return vk::raii::ImageView(device, imageViewCreateInfo);
 }
 
-void Core::createTextureSampler(vk::raii::Sampler & textureSampler) {
+void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
     vk::PhysicalDeviceProperties physicalDeviceProperties {physicalDevice.getProperties()};
 
     vk::SamplerCreateInfo const samplerCreateInfo {

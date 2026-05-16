@@ -160,7 +160,7 @@ public:
         uint32_t const mipLevels
     ) const;
 
-    void createTextureSampler(vk::raii::Sampler & textureSampler);
+    void createTextureSampler(vk::raii::Sampler & textureSampler) const;
 
     void allocateDescriptorSets(
         uint32_t const descriptorSetCount,
