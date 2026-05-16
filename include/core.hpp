@@ -77,12 +77,8 @@ private:
     std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
     std::vector<vk::raii::Fence> inFlightFences;
 
-public:
     uint32_t const MAX_FRAMES_IN_FLIGHT {2};
-
-private:
     uint32_t frameIndex {0};
-
     bool frameBufferResized {false};
 
     size_t MAX_VERTICES {4000};
@@ -262,6 +258,7 @@ public:
     uint32_t getSwapChainExtentWidth() const;
     uint32_t getSwapChainExtentHeight() const;
 
+    uint32_t getMaxFramesInFlight() const;
     uint32_t getFrameIndex() const;
 
     vk::FormatProperties getFormatProperties(vk::Format imageFormat) const;

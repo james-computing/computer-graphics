@@ -1484,6 +1484,10 @@ uint32_t Core::getSwapChainExtentHeight() const {
     return swapChainExtent.height;
 }
 
+uint32_t Core::getMaxFramesInFlight() const {
+    return MAX_FRAMES_IN_FLIGHT;
+}
+
 uint32_t Core::getFrameIndex() const {
     return frameIndex;
 }

@@ -32,7 +32,8 @@ void Application::run() {
 }
 
 void Application::createUniformBuffers() {
-    for (size_t i {0}; i < core.MAX_FRAMES_IN_FLIGHT; ++i) {
+    uint32_t const MAX_FRAMES_IN_FLIGHT {core.getMaxFramesInFlight()};
+    for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         // Create uniform buffer, allocate memory for it and bind it
         vk::DeviceSize constexpr bufferSize {sizeof(UniformBufferObject)};
         vk::BufferUsageFlags constexpr bufferUsage {vk::BufferUsageFlagBits::eUniformBuffer};
@@ -93,13 +94,14 @@ void Application::updateUniformBuffer(uint32_t frameIndex) {
 }
 
 void Application::allocateDescriptorSets() {
-    core.allocateDescriptorSets(core.MAX_FRAMES_IN_FLIGHT, descriptorSets);
+    core.allocateDescriptorSets(core.getMaxFramesInFlight(), descriptorSets);
 }
 
 void Application::updateDescriptorSets() const {
     // Configure descriptor sets.
     // Maybe could build an array of vk::WriteDescriptorSet and call device.updateDescriptorSets once.
-    for (size_t i {0}; i < core.MAX_FRAMES_IN_FLIGHT; ++i) {
+    uint32_t const MAX_FRAMES_IN_FLIGHT {core.getMaxFramesInFlight()};
+    for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         // uniform buffer
 
         vk::DescriptorBufferInfo const descriptorBufferInfo {
