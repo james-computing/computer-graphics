@@ -1056,13 +1056,18 @@ void Core::createIndexBuffer() {
     );
 }
 
-void Core::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize const bufferSize) const {
+void Core::copyBuffer(
+    vk::raii::Buffer const & srcBuffer,
+    vk::raii::Buffer const & dstBuffer,
+    vk::DeviceSize const & dstOffset,
+    vk::DeviceSize const bufferSize
+) const {
     vk::raii::CommandBuffer commandCopyBuffer {nullptr};
     beginSingleTimeCommands(commandCopyBuffer);
 
     vk::BufferCopy const region {
         .srcOffset = 0,
-        .dstOffset = 0,
+        .dstOffset = dstOffset,
         .size = bufferSize
     };
 
@@ -1072,7 +1077,8 @@ void Core::copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const
 }
 
 void Core::copyVerticesToVertexBuffer(
-    std::vector<Vertex> const & vertices
+    std::vector<Vertex> const & vertices,
+    vk::DeviceSize const & dstOffset
 ) const {
     vk::DeviceSize bufferSize {vertices.size() * sizeof(Vertex)};
 
@@ -1098,11 +1104,12 @@ void Core::copyVerticesToVertexBuffer(
     data = nullptr;
 
     // Copy data from staging buffer to vertex buffer
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, vertexBuffer, dstOffset, bufferSize);
 }
 
 void Core::copyIndicesToIndexBuffer(
-    std::vector<uint32_t> const & indices
+    std::vector<uint32_t> const & indices,
+    vk::DeviceSize const & dstOffset
 ) const {
     vk::DeviceSize bufferSize {indices.size() * sizeof(uint32_t)};
 
@@ -1128,7 +1135,7 @@ void Core::copyIndicesToIndexBuffer(
     data = nullptr;
 
     // Copy data from staging buffer to index buffer
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, indexBuffer, dstOffset, bufferSize);
 }
 
 void Core::createDescriptorSetLayout() {

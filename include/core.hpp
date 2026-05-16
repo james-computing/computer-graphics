@@ -121,13 +121,20 @@ public:
         vk::raii::DeviceMemory & bufferMemory
     ) const;
 
-    void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize const bufferSize) const;
+    void copyBuffer(
+        vk::raii::Buffer const & srcBuffer,
+        vk::raii::Buffer const & dstBuffer,
+        vk::DeviceSize const & dstOffset,
+        vk::DeviceSize const bufferSize
+    ) const;
 
     void copyVerticesToVertexBuffer(
-        std::vector<Vertex> const & vertices
+        std::vector<Vertex> const & vertices,
+        vk::DeviceSize const & dstOffset
     ) const;
     void copyIndicesToIndexBuffer(
-        std::vector<uint32_t> const & indices
+        std::vector<uint32_t> const & indices,
+        vk::DeviceSize const & dstOffset
     ) const;
 
     void createImage(

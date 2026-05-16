@@ -68,8 +68,8 @@ void Model::loadVertices(Core const & core, std::string_view const modelPath) {
     std::cout << "number of vertices = " << numVertices << std::endl;
     std::cout << "number of indices = " << numIndices << std::endl;
 
-    core.copyVerticesToVertexBuffer(vertices);
-    core.copyIndicesToIndexBuffer(indices);
+    core.copyVerticesToVertexBuffer(vertices, 0);
+    core.copyIndicesToIndexBuffer(indices, 0);
 }
 
 void Model::load(Core const & core, std::string_view const modelPath, std::string_view const texturePath) {
