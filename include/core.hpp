@@ -111,6 +111,72 @@ public:
     void pollEvents();
     void cleanup();
 
+    void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount);
+
+    void createBuffer(
+        vk::DeviceSize const bufferSize,
+        vk::BufferUsageFlags const bufferUsage,
+        vk::MemoryPropertyFlags const memoryProperties,
+        vk::raii::Buffer & buffer,
+        vk::raii::DeviceMemory & bufferMemory
+    ) const;
+
+    void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize const bufferSize) const;
+
+    void copyVerticesToVertexBuffer(
+        std::vector<Vertex> const & vertices
+    ) const;
+    void copyIndicesToIndexBuffer(
+        std::vector<uint32_t> const & indices
+    ) const;
+
+    void createImage(
+        uint32_t const width,
+        uint32_t const height,
+        uint32_t const mipLevels,
+        vk::SampleCountFlagBits const numSamples,
+        vk::Format const imageFormat,
+        vk::ImageTiling const imageTiling,
+        vk::ImageUsageFlags const imageUsage,
+        vk::MemoryPropertyFlags const imageMemoryProperties,
+        vk::raii::Image & image,
+        vk::raii::DeviceMemory & imageMemory
+    ) const;
+
+    void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const;
+    void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const;
+
+    void copyBufferToImage(
+        vk::raii::Buffer const & buffer,
+        vk::raii::Image const & image,
+        uint32_t const width,
+        uint32_t const height
+    ) const;
+
+    vk::raii::ImageView createImageView(
+        vk::raii::Image const & image,
+        vk::Format const format,
+        vk::ImageAspectFlags const  aspectFlags,
+        uint32_t const mipLevels
+    ) const;
+
+    void createTextureSampler(vk::raii::Sampler & textureSampler);
+
+    void allocateDescriptorSets(
+        uint32_t const descriptorSetCount,
+        std::vector<vk::raii::DescriptorSet> & descriptorSets
+    ) const;
+
+    void updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const;
+
+    uint32_t getSwapChainExtentWidth() const;
+    uint32_t getSwapChainExtentHeight() const;
+
+    uint32_t getMaxFramesInFlight() const;
+    uint32_t getFrameIndex() const;
+
+    vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const;
+
 private:
     std::vector<char const *> getRequiredGLFWExtensions() const;
     std::vector<char const *> getRequiredValidationLayers() const;
@@ -167,10 +233,6 @@ private:
 
     void createSyncObjects();
 
-public:
-    void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount);
-
-private:
     void cleanupSwapChain();
     void recreateSwapChain();
 
@@ -178,67 +240,12 @@ private:
 
     uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
 
-public:
-    void createBuffer(
-        vk::DeviceSize const bufferSize,
-        vk::BufferUsageFlags const bufferUsage,
-        vk::MemoryPropertyFlags const memoryProperties,
-        vk::raii::Buffer & buffer,
-        vk::raii::DeviceMemory & bufferMemory
-    ) const;
-
-    void copyBuffer(vk::raii::Buffer const & srcBuffer, vk::raii::Buffer const & dstBuffer, vk::DeviceSize const bufferSize) const;
-
-private:
     void createVertexBuffer();
     void createIndexBuffer();
 
-public:
-    void copyVerticesToVertexBuffer(
-        std::vector<Vertex> const & vertices
-    ) const;
-    void copyIndicesToIndexBuffer(
-        std::vector<uint32_t> const & indices
-    ) const;
-
-private:
     void createDescriptorSetLayout();
     void createDescriptorPool();
 
-public:
-    void createImage(
-        uint32_t const width,
-        uint32_t const height,
-        uint32_t const mipLevels,
-        vk::SampleCountFlagBits const numSamples,
-        vk::Format const imageFormat,
-        vk::ImageTiling const imageTiling,
-        vk::ImageUsageFlags const imageUsage,
-        vk::MemoryPropertyFlags const imageMemoryProperties,
-        vk::raii::Image & image,
-        vk::raii::DeviceMemory & imageMemory
-    ) const;
-
-    void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const;
-    void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const;
-
-    void copyBufferToImage(
-        vk::raii::Buffer const & buffer,
-        vk::raii::Image const & image,
-        uint32_t const width,
-        uint32_t const height
-    ) const;
-
-    vk::raii::ImageView createImageView(
-        vk::raii::Image const & image,
-        vk::Format const format,
-        vk::ImageAspectFlags const  aspectFlags,
-        uint32_t const mipLevels
-    ) const;
-
-    void createTextureSampler(vk::raii::Sampler & textureSampler);
-
-private:
     vk::Format findSupportedFormat(
         std::vector<vk::Format> const & candidateFormats,
         vk::ImageTiling const tiling,
@@ -250,20 +257,4 @@ private:
 
     void initMaxUsableSampleCount();
     void createColorResources();
-
-public:
-    void allocateDescriptorSets(
-        uint32_t const descriptorSetCount,
-        std::vector<vk::raii::DescriptorSet> & descriptorSets
-    ) const;
-
-    void updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const;
-
-    uint32_t getSwapChainExtentWidth() const;
-    uint32_t getSwapChainExtentHeight() const;
-
-    uint32_t getMaxFramesInFlight() const;
-    uint32_t getFrameIndex() const;
-
-    vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const;
 };
