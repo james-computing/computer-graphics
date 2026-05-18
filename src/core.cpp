@@ -973,8 +973,8 @@ void Core::recreateSwapChain() {
     createDepthResources();
 }
 
-void Core::frameBufferResizeCallback(GLFWwindow * window, int width, int height) {
-    Core * const app {reinterpret_cast<Core *>(glfwGetWindowUserPointer(window))};
+void Core::frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height) {
+    Core * const app {reinterpret_cast<Core *>(glfwGetWindowUserPointer(glfwWindow))};
     app->frameBufferResized = true;
 }
 

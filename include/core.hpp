@@ -275,7 +275,7 @@ private:
     void cleanupSwapChain();
     void recreateSwapChain();
 
-    static void frameBufferResizeCallback(GLFWwindow * window, int width, int height);
+    static void frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height);
 
     uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
 
