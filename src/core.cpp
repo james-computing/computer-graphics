@@ -54,12 +54,14 @@ void Core::init() {
     initVulkan();
 }
 
-bool Core::shouldContinue() {
-    return !glfwWindowShouldClose(window.glfw);
-}
+bool Core::step() const {
+    if (window.shouldClose()) {
+        return false;
+    }
+    
+    window.pollEvents();
 
-void Core::pollEvents() {
-    glfwPollEvents();
+    return true;
 }
 
 void Core::cleanup() {

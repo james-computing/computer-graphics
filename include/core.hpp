@@ -131,8 +131,7 @@ private:
     /////////////////////////////////////// METHODS //////////////////////////////////////////////////
 public:
     void init();
-    bool shouldContinue();
-    void pollEvents();
+    bool step() const;
     void cleanup();
 
     void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount);

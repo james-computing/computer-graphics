@@ -23,3 +23,11 @@ void Window::frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int h
 bool Window::getFrameBufferResized() const {
     return frameBufferResized;    
 }
+
+bool Window::shouldClose() const {
+    return glfwWindowShouldClose(glfw);
+}
+
+void Window::pollEvents() const {
+    glfwPollEvents();
+}
