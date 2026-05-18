@@ -19,7 +19,9 @@ void Core::initVulkan() {
     createInstance();
 
     // depends on instance
-    setupDebugMessenger(); // make debug messenger first, because we want to be able to debug early
+    if (validationLayers.enable) {
+        debugMessenger.setup(instance); // make debug messenger first, because we want to be able to debug early
+    }
     pickPhysicalDevice();
     createSurface();
 
@@ -184,7 +186,7 @@ void Core::createInstance() {
     instance = vk::raii::Instance(context, createInfo);
 }
 
-VKAPI_ATTR vk::Bool32 VKAPI_CALL Core::debugCallback(
+VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugMessenger::debugCallback(
     vk::DebugUtilsMessageSeverityFlagBitsEXT        severity,
     vk::DebugUtilsMessageTypeFlagsEXT               type,
     vk::DebugUtilsMessengerCallbackDataEXT const *  pCallBackData,
@@ -197,33 +199,6 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL Core::debugCallback(
         throw std::runtime_error("Vulkan error!");
     }
     return vk::False;
-}
-
-void Core::setupDebugMessenger() {
-    if (!validationLayers.enable) {
-        return;
-    }
-
-    vk::DebugUtilsMessageSeverityFlagsEXT constexpr severityFlags(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
-    );
-
-    vk::DebugUtilsMessageTypeFlagsEXT constexpr messageTypeFlags(
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-    );
-
-    vk::DebugUtilsMessengerCreateInfoEXT const debugUtilsMessengerCreateInfoEXT{
-        .messageSeverity = severityFlags,
-        .messageType = messageTypeFlags,
-        .pfnUserCallback = &debugCallback
-    };
-
-    // try catch?
-    debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
 }
 
 void Core::pickPhysicalDevice() {

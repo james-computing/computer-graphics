@@ -23,6 +23,8 @@ import vulkan_hpp;
 #include <glm/gtc/matrix_transform.hpp> // for model view projection
 #include <chrono> // for model view projection
 #include <unordered_map>
+
+#include "../include/debugMessenger.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/shader.hpp"
@@ -102,8 +104,7 @@ private:
     vk::raii::Instance instance {nullptr};
 
     ValidationLayers validationLayers;
-
-    vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
+    DebugMessenger debugMessenger;
 
     vk::raii::PhysicalDevice physicalDevice {nullptr};
 
@@ -224,15 +225,6 @@ private:
     void initVulkan();
 
     void createInstance();
-
-    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT        severity,
-        vk::DebugUtilsMessageTypeFlagsEXT               type,
-        vk::DebugUtilsMessengerCallbackDataEXT const *  pCallBackData,
-        void *                                          pUserData
-    );
-
-    void setupDebugMessenger();
 
     void pickPhysicalDevice();
     bool isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice) const;
