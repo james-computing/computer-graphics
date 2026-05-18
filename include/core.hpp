@@ -22,6 +22,7 @@ import vulkan_hpp;
 #include <unordered_map>
 
 #include "../include/validationLayers.hpp"
+#include "../include/glfwExtensions.hpp"
 #include "../include/debugMessenger.hpp"
 #include "../include/window.hpp"
 #include "../include/vertex.hpp"

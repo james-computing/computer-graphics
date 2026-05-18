@@ -69,54 +69,8 @@ void Core::cleanup() {
     window.cleanup();
 }
 
-std::vector<char const *> Core::getRequiredGLFWExtensions() const {
-    // Get the required instance extensions from GLFW
-    uint32_t glfwExtensionCount;
-    char const ** glfwExtensions;
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-    // Replace glfwExtensions by a vector
-    std::vector<char const *> requiredGLFWExtensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-    // Also require the extension necessary for the message callback
-    if(validationLayers.enable) {
-        requiredGLFWExtensions.push_back(vk::EXTDebugUtilsExtensionName);
-    }
-
-    // Check if the required GLFW extensions are supported by the Vulkan implementation
-    
-    // try catch?
-    std::vector<vk::ExtensionProperties> const extensionProperties {context.enumerateInstanceExtensionProperties()};
-
-    // Print available extensions
-    std::cout << "available extensions:\n";
-    for (vk::ExtensionProperties const & extensionProperty : extensionProperties) {
-        std::cout << '\t' << extensionProperty.extensionName << '\n';
-    }
-
-    // Find if there is a required GLFW extension which is none of the extension properties
-    auto unsupportedIterator {
-        std::ranges::find_if(
-            requiredGLFWExtensions,
-            [extensionProperties](char const * const & requiredGLFWExtension) -> bool {
-                return std::ranges::none_of(
-                extensionProperties,
-                [requiredGLFWExtension](vk::ExtensionProperties const & extensionProperty) -> bool {
-                    return strcmp(extensionProperty.extensionName, requiredGLFWExtension) == 0;
-                });
-            }
-        )
-    };
-
-    if (unsupportedIterator != requiredGLFWExtensions.end()) {
-        std::cerr << "Required GLFW extension not supported: " + std::string(*unsupportedIterator);
-    }
-
-    return requiredGLFWExtensions;
-}
-
 void Core::createInstance() {
-    std::vector<char const *> const requiredGLFWExtensions = getRequiredGLFWExtensions();
+    std::vector<char const *> const requiredGLFWExtensions = GLFWExtensions::getRequiredGLFWExtensions(context, validationLayers.enable);
     std::vector<char const *> const requiredValidationLayers = validationLayers.getRequiredValidationLayers(context);
 
     vk::ApplicationInfo constexpr appInfo {
