@@ -323,13 +323,13 @@ void Core::createLogicalDevice() {
     // Find first queue with graphics support which is also capable of presenting to the window,
     // and store its index.
     bool foundSuitableQueue {false};
-    queueIndex = 0;
+    queue.index = 0;
     size_t const queueFamilyPropertiesSize {queueFamilyProperties.size()};
-    for (; queueIndex < queueFamilyPropertiesSize; ++queueIndex) {
-        bool supportsGraphics = (queueFamilyProperties[queueIndex].queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+    for (; queue.index < queueFamilyPropertiesSize; ++queue.index) {
+        bool supportsGraphics = (queueFamilyProperties[queue.index].queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
         
         // try catch?
-        bool supportsWindowPresentation = physicalDevice.getSurfaceSupportKHR(queueIndex, *surface);
+        bool supportsWindowPresentation = physicalDevice.getSurfaceSupportKHR(queue.index, *surface);
 
         if (supportsGraphics && supportsWindowPresentation) {
             foundSuitableQueue = true;
@@ -343,7 +343,7 @@ void Core::createLogicalDevice() {
 
     float constexpr queuePriority {0.5f};
     vk::DeviceQueueCreateInfo const deviceQueueCreateInfo {
-        .queueFamilyIndex = queueIndex,
+        .queueFamilyIndex = queue.index,
         .queueCount = 1,
         .pQueuePriorities = &queuePriority
     };
@@ -383,7 +383,7 @@ void Core::createLogicalDevice() {
     // try catch?
     device = vk::raii::Device(physicalDevice, deviceCreateInfo);
 
-    queue = vk::raii::Queue(device, queueIndex, 0);
+    queue.vkraii = vk::raii::Queue(device, queue.index, 0);
 }
 
 void Core::createSurface() {
@@ -676,7 +676,7 @@ void Core::createGraphicsPipeline() {
 void Core::createCommandPool() {
     vk::CommandPoolCreateInfo const commandPoolCreateInfo {
         .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-        .queueFamilyIndex = queueIndex
+        .queueFamilyIndex = queue.index
     };
 
     commandPool = vk::raii::CommandPool(device, commandPoolCreateInfo);
@@ -922,7 +922,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     };
 
     device.resetFences(*drawFence);
-    queue.submit(submitInfo, drawFence);
+    queue.vkraii.submit(submitInfo, drawFence);
 
     vk::PresentInfoKHR const presentInfoKHR {
         .waitSemaphoreCount = 1,
@@ -933,7 +933,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
         .pResults = nullptr // optional
     };
 
-    vk::Result const resultPresent {queue.presentKHR(presentInfoKHR)};
+    vk::Result const resultPresent {queue.vkraii.presentKHR(presentInfoKHR)};
     if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || frameBufferResized) {
         recreateSwapChain();
         return;
@@ -1239,8 +1239,8 @@ void Core::endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) 
         .commandBufferCount = 1,
         .pCommandBuffers = &*commandBuffer
     };
-    queue.submit(submitInfo, {});
-    queue.waitIdle();
+    queue.vkraii.submit(submitInfo, {});
+    queue.vkraii.waitIdle();
 }
 
 void Core::copyBufferToImage(

@@ -55,6 +55,11 @@ struct SwapChain {
     std::vector<vk::raii::ImageView> imageViews;
 };
 
+struct Queue {
+    uint32_t index;
+    vk::raii::Queue vkraii {nullptr};
+};
+
 struct DepthStencil {
     vk::raii::Image depthImage {nullptr};
     vk::raii::DeviceMemory depthImageMemory {nullptr};
@@ -104,8 +109,7 @@ private:
 
     vk::raii::Device device {nullptr}; // logical device
 
-    uint32_t queueIndex;
-    vk::raii::Queue queue {nullptr};
+    Queue queue;
 
     vk::raii::SurfaceKHR surface {nullptr};
 
