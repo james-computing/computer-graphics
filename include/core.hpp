@@ -29,6 +29,14 @@ import vulkan_hpp;
 
 #include "../libraries/stb/stb_image.h"
 
+struct SwapChain {
+    vk::Extent2D extent;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::raii::SwapchainKHR vkraii {nullptr};
+    std::vector<vk::Image> images;
+    std::vector<vk::raii::ImageView> imageViews;
+};
+
 struct DepthStencil {
     vk::raii::Image depthImage {nullptr};
     vk::raii::DeviceMemory depthImageMemory {nullptr};
@@ -88,11 +96,7 @@ private:
 
     vk::raii::SurfaceKHR surface {nullptr};
 
-    vk::Extent2D swapChainExtent;
-    vk::SurfaceFormatKHR swapChainSurfaceFormat;
-    vk::raii::SwapchainKHR swapChain {nullptr};
-    std::vector<vk::Image> swapChainImages;
-    std::vector<vk::raii::ImageView> swapChainImageViews;
+    SwapChain swapChain;
 
     vk::raii::PipelineLayout pipelineLayout {nullptr};
     vk::raii::Pipeline graphicsPipeline {nullptr};

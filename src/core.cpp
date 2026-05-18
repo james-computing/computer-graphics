@@ -475,13 +475,13 @@ void Core::createSwapChain() {
     // Same from createLogicalDevice
     // try catch?
     vk::SurfaceCapabilitiesKHR const surfaceCapabilities {physicalDevice.getSurfaceCapabilitiesKHR(*surface)};
-    swapChainExtent = chooseSwapExtent(surfaceCapabilities);
+    swapChain.extent = chooseSwapExtent(surfaceCapabilities);
     uint32_t const minImageCount {chooseSwapImageCount(surfaceCapabilities)};
 
     // Same from createLogicalDevice
     // try catch?
     std::vector<vk::SurfaceFormatKHR> const availableFormats {physicalDevice.getSurfaceFormatsKHR(*surface)};
-    swapChainSurfaceFormat = chooseSwapSurfaceFormat(availableFormats);
+    swapChain.surfaceFormat = chooseSwapSurfaceFormat(availableFormats);
 
     // try catch?
     std::vector<vk::PresentModeKHR> const availablePresentModes = physicalDevice.getSurfacePresentModesKHR(*surface);
@@ -490,9 +490,9 @@ void Core::createSwapChain() {
     vk::SwapchainCreateInfoKHR const swapChainCreateInfo {
         .surface = *surface,
         .minImageCount = minImageCount,
-        .imageFormat = swapChainSurfaceFormat.format,
-        .imageColorSpace = swapChainSurfaceFormat.colorSpace,
-        .imageExtent = swapChainExtent,
+        .imageFormat = swapChain.surfaceFormat.format,
+        .imageColorSpace = swapChain.surfaceFormat.colorSpace,
+        .imageExtent = swapChain.extent,
         .imageArrayLayers = 1, // because not a stereoscopic 3D application
         .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
         .imageSharingMode = vk::SharingMode::eExclusive,
@@ -503,17 +503,17 @@ void Core::createSwapChain() {
     };
     
     // try catch?
-    swapChain = vk::raii::SwapchainKHR(device, swapChainCreateInfo);
+    swapChain.vkraii = vk::raii::SwapchainKHR(device, swapChainCreateInfo);
     // try catch?
-    swapChainImages = swapChain.getImages();
+    swapChain.images = swapChain.vkraii.getImages();
 }
 
 void Core::createSwapChainImageViews() {
-    assert(swapChainImageViews.empty());
+    assert(swapChain.imageViews.empty());
 
     vk::ImageViewCreateInfo imageViewCreateInfo {
         .viewType = vk::ImageViewType::e2D,
-        .format = swapChainSurfaceFormat.format,
+        .format = swapChain.surfaceFormat.format,
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -525,9 +525,9 @@ void Core::createSwapChainImageViews() {
 
     // Could use createImageView in this for loop, but won't, because it could be creating multiple
     // copies of imageViewCreateInfo unnecessarily.
-    for (vk::Image & image : swapChainImages) {
+    for (vk::Image & image : swapChain.images) {
         imageViewCreateInfo.image = image;
-        swapChainImageViews.emplace_back(vk::raii::ImageView(device, imageViewCreateInfo));
+        swapChain.imageViews.emplace_back(vk::raii::ImageView(device, imageViewCreateInfo));
     }
 }
 
@@ -580,15 +580,15 @@ void Core::createGraphicsPipeline() {
     vk::Viewport const viewport {
         .x = 0,
         .y = 0,
-        .width = static_cast<float>(swapChainExtent.width),
-        .height = static_cast<float>(swapChainExtent.height),
+        .width = static_cast<float>(swapChain.extent.width),
+        .height = static_cast<float>(swapChain.extent.height),
         .minDepth = 0,
         .maxDepth = 1
     };
 
     vk::Rect2D const rect2D {
         .offset = vk::Offset2D{0,0},
-        .extent = swapChainExtent
+        .extent = swapChain.extent
     };
 
     vk::PipelineViewportStateCreateInfo constexpr pipelineViewportStateCreateInfo {
@@ -637,7 +637,7 @@ void Core::createGraphicsPipeline() {
 
     vk::PipelineRenderingCreateInfo const pipelineRenderingCreateInfo {
         .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &swapChainSurfaceFormat.format,
+        .pColorAttachmentFormats = &swapChain.surfaceFormat.format,
         .depthAttachmentFormat = depthStencil.depthFormat
     };
 
@@ -743,7 +743,7 @@ void Core::recordCommandBuffer(
 
     // Before start rendering, transition the swap chain image layout to COLOR_ATTACHMENT_OPTIMAL
     transitionImageLayout(
-        swapChainImages[imageIndex],
+        swapChain.images[imageIndex],
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::AccessFlagBits2::eNone, // don't wait on previous operations
@@ -784,7 +784,7 @@ void Core::recordCommandBuffer(
         .imageView = *msaa.colorImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .resolveMode = vk::ResolveModeFlagBits::eAverage,
-        .resolveImageView = swapChainImageViews[imageIndex],
+        .resolveImageView = swapChain.imageViews[imageIndex],
         .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -804,7 +804,7 @@ void Core::recordCommandBuffer(
     vk::RenderingInfo const renderingInfo {
         .renderArea = vk::Rect2D {
             .offset = {0, 0},
-            .extent = swapChainExtent
+            .extent = swapChain.extent
         },
         .layerCount = 1,
         .colorAttachmentCount = 1,
@@ -823,8 +823,8 @@ void Core::recordCommandBuffer(
     vk::Viewport const viewport {
         .x = 0.0f,
         .y = 0.0f,
-        .width = static_cast<float>(swapChainExtent.width),
-        .height = static_cast<float>(swapChainExtent.height),
+        .width = static_cast<float>(swapChain.extent.width),
+        .height = static_cast<float>(swapChain.extent.height),
         .minDepth = 0.0f,
         .maxDepth = 1.0f
     };
@@ -833,7 +833,7 @@ void Core::recordCommandBuffer(
 
     vk::Rect2D const scissor {
         .offset = vk::Offset2D(0, 0),
-        .extent = swapChainExtent
+        .extent = swapChain.extent
     };
 
     commandBuffer.setScissor(0, scissor);
@@ -847,7 +847,7 @@ void Core::recordCommandBuffer(
 
     // After rendering, transition the swapchain image to PRESENT_SRC
     transitionImageLayout(
-        swapChainImages[imageIndex],
+        swapChain.images[imageIndex],
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
         vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -867,7 +867,7 @@ void Core::createSyncObjects() {
         .flags = vk::FenceCreateFlagBits::eSignaled
     };
 
-    size_t const numberOfImages {swapChainImages.size()};
+    size_t const numberOfImages {swapChain.images.size()};
     for (size_t i {0}; i < numberOfImages; ++i) {
         renderFinishedSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
     }
@@ -890,7 +890,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     }
 
     // Timeout is in nanoseconds. Use UINT64_MAX to effectivelly disable it.
-    vk::ResultValue<uint32_t> const resultValueAcquireNextImage {swapChain.acquireNextImage(UINT64_MAX, *presentCompleteSemaphore, {})};
+    vk::ResultValue<uint32_t> const resultValueAcquireNextImage {swapChain.vkraii.acquireNextImage(UINT64_MAX, *presentCompleteSemaphore, {})};
     switch (resultValueAcquireNextImage.result) {
         case vk::Result::eErrorOutOfDateKHR:
         case vk::Result::eSuboptimalKHR: // resultValueAcquireNextImage.has_value() is giving false in this case, so must treat as error
@@ -928,7 +928,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = &*renderFinishedSemaphore,
         .swapchainCount = 1,
-        .pSwapchains = &*swapChain,
+        .pSwapchains = &*swapChain.vkraii,
         .pImageIndices = &imageIndex,
         .pResults = nullptr // optional
     };
@@ -949,8 +949,8 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
 
 void Core::cleanupSwapChain() {
     device.waitIdle();
-    swapChainImageViews.clear();
-    swapChain = nullptr;
+    swapChain.imageViews.clear();
+    swapChain.vkraii = nullptr;
 }
 
 void Core::recreateSwapChain() {
@@ -1375,8 +1375,8 @@ void Core::initDepthFormat() {
 void Core::createDepthResources() {
     // Create depth image, allocate memory for it and bind it
     createImage(
-        swapChainExtent.width,
-        swapChainExtent.height,
+        swapChain.extent.width,
+        swapChain.extent.height,
         1,
         msaa.samples,
         depthStencil.depthFormat,
@@ -1430,11 +1430,11 @@ void Core::initMaxUsableSampleCount() {
 }
 
 void Core::createColorResources() {
-    vk::Format const colorFormat = swapChainSurfaceFormat.format;
+    vk::Format const colorFormat = swapChain.surfaceFormat.format;
 
     createImage(
-        swapChainExtent.width,
-        swapChainExtent.height,
+        swapChain.extent.width,
+        swapChain.extent.height,
         1,
         msaa.samples,
         colorFormat,
@@ -1451,11 +1451,11 @@ void Core::createColorResources() {
 // GETTERS
 
 uint32_t Core::getSwapChainExtentWidth() const {
-    return swapChainExtent.width;
+    return swapChain.extent.width;
 }
     
 uint32_t Core::getSwapChainExtentHeight() const {
-    return swapChainExtent.height;
+    return swapChain.extent.height;
 }
 
 uint32_t Core::getMaxFramesInFlight() const {
