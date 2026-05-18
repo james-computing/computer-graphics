@@ -9,6 +9,8 @@
 import vulkan_hpp;
 #endif
 
+#include <iostream>
+
 class DebugMessenger {
 private:
     vk::raii::DebugUtilsMessengerEXT vkraii {nullptr};

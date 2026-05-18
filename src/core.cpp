@@ -141,21 +141,6 @@ void Core::createInstance() {
     instance = vk::raii::Instance(context, createInfo);
 }
 
-VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugMessenger::debugCallback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT        severity,
-    vk::DebugUtilsMessageTypeFlagsEXT               type,
-    vk::DebugUtilsMessengerCallbackDataEXT const *  pCallBackData,
-    void *                                          pUserData
-) {
-    std::cerr << "\nvalidation layer:\n" <<
-                    "\ttype " << vk::to_string(type) << '\n' <<
-                    "\tmsg: " << pCallBackData->pMessage << std::endl;
-    if (type >= vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation) {
-        throw std::runtime_error("Vulkan error!");
-    }
-    return vk::False;
-}
-
 void Core::pickPhysicalDevice() {
     // try catch?
     std::vector<vk::raii::PhysicalDevice> const physicalDevices {instance.enumeratePhysicalDevices()};
