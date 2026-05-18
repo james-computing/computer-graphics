@@ -268,8 +268,8 @@ private:
     ) const;
 
     // Depth stencil
-    void initDepthFormat();
     bool hasStencilComponent(vk::Format const format) const;
+    void initDepthFormat();
     void createDepthResources();
 
     // MSAA

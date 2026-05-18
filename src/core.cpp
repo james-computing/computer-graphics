@@ -401,6 +401,8 @@ void Core::createSurface() {
     surface = vk::raii::SurfaceKHR(instance, _surface);
 }
 
+// SWAP CHAIN
+
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const & availableFormats) const {
     auto const formatIterator{
         std::ranges::find_if(
@@ -668,6 +670,8 @@ void Core::createGraphicsPipeline() {
     // try catch?
     graphicsPipeline = vk::raii::Pipeline(device, nullptr, graphicsPipelineCreateInfo);
 }
+
+// COMMAND BUFFER
 
 void Core::createCommandPool() {
     vk::CommandPoolCreateInfo const commandPoolCreateInfo {
@@ -1090,6 +1094,8 @@ void Core::copyIndicesToIndexBuffer(
     copyToBuffer<uint32_t>(indices, dstOffset, indexBuffer);
 }
 
+// DESCRIPTOR SETS
+
 void Core::createDescriptorSetLayout() {
     vk::DescriptorSetLayoutBinding constexpr uboDescriptorSetLayoutBinding {
         .binding = 0,
@@ -1144,6 +1150,28 @@ void Core::createDescriptorPool() {
     };
 
     descriptorPool = vk::raii::DescriptorPool(device, descriptorPoolCreateInfo);
+}
+
+void Core::allocateDescriptorSets(
+    uint32_t const descriptorSetCount,
+    std::vector<vk::raii::DescriptorSet> & descriptorSets
+) const {
+    // Vector with descriptorSetCount copies of *descriptorSetLayout.
+    // It is needed because descriptorSetAllocateInfo receives an array of layouts.
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptorSetLayout)};
+
+    // Allocate descriptor sets
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = descriptorSetCount,
+        .pSetLayouts = descriptorSetLayouts.data()
+    };
+
+    descriptorSets = device.allocateDescriptorSets(descriptorSetAllocateInfo);
+}
+
+void Core::updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const {
+    device.updateDescriptorSets(writeDescriptorSets, {});
 }
 
 void Core::createImage(
@@ -1276,6 +1304,8 @@ vk::raii::ImageView Core::createImageView(
     return vk::raii::ImageView(device, imageViewCreateInfo);
 }
 
+// TEXTURE SAMPLER
+
 void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
     vk::PhysicalDeviceProperties physicalDeviceProperties {physicalDevice.getProperties()};
 
@@ -1326,7 +1356,11 @@ vk::Format Core::findSupportedFormat(
     throw std::runtime_error("Failed to find supported format");
 }
 
-// DepthStencil
+// DEPTH & STENCIL
+
+bool Core::hasStencilComponent(vk::Format const format) const {
+    return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+}
 
 void Core::initDepthFormat() {
     std::vector<vk::Format> const candidateFormats {
@@ -1336,10 +1370,6 @@ void Core::initDepthFormat() {
     };
 
     depthStencil.depthFormat = findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
-}
-
-bool Core::hasStencilComponent(vk::Format const format) const {
-    return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 
 void Core::createDepthResources() {
@@ -1418,27 +1448,7 @@ void Core::createColorResources() {
     msaa.colorImageView = createImageView(msaa.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
 }
 
-void Core::allocateDescriptorSets(
-    uint32_t const descriptorSetCount,
-    std::vector<vk::raii::DescriptorSet> & descriptorSets
-) const {
-    // Vector with descriptorSetCount copies of *descriptorSetLayout.
-    // It is needed because descriptorSetAllocateInfo receives an array of layouts.
-    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptorSetLayout)};
-
-    // Allocate descriptor sets
-    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = descriptorSetCount,
-        .pSetLayouts = descriptorSetLayouts.data()
-    };
-
-    descriptorSets = device.allocateDescriptorSets(descriptorSetAllocateInfo);
-}
-
-void Core::updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const {
-    device.updateDescriptorSets(writeDescriptorSets, {});
-}
+// GETTERS
 
 uint32_t Core::getSwapChainExtentWidth() const {
     return swapChainExtent.width;
