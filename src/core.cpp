@@ -816,7 +816,7 @@ void Core::recordCommandBuffer(
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline);
 
-    commandBuffer.bindVertexBuffers(0, *vertexBuffer, {0});
+    commandBuffer.bindVertexBuffers(0, *vertexBuffer.buffer, {0});
     
     commandBuffer.bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint32);
 
@@ -1030,7 +1030,7 @@ void Core::createBuffer(
 void Core::createVertexBuffer() {
     // Should change the buffer size to something else, but still with enough space for the vertex data.
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {MAX_VERTICES * sizeof(Vertex)};
+    vk::DeviceSize const bufferSize {vertexBuffer.MAX_VERTICES * sizeof(Vertex)};
 
     // Create the vertex buffer
     vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
@@ -1039,8 +1039,8 @@ void Core::createVertexBuffer() {
         bufferSize,
         vertexbufferUsage,
         vertexBufferMemoryProperties,
-        vertexBuffer,
-        vertexBufferMemory
+        vertexBuffer.buffer,
+        vertexBuffer.memory
     );
 }
 
@@ -1084,7 +1084,7 @@ void Core::copyVerticesToVertexBuffer(
     std::vector<Vertex> const & vertices,
     vk::DeviceSize const & dstOffset
 ) const {
-    copyToBuffer<Vertex>(vertices, dstOffset, vertexBuffer);
+    copyToBuffer<Vertex>(vertices, dstOffset, vertexBuffer.buffer);
 }
 
 void Core::copyIndicesToIndexBuffer(

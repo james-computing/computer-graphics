@@ -43,6 +43,12 @@ struct MSAA {
     vk::raii::ImageView colorImageView {nullptr};
 };
 
+struct VertexBuffer {
+    vk::raii::Buffer buffer {nullptr};
+    vk::raii::DeviceMemory memory {nullptr};
+    size_t const MAX_VERTICES {4000};
+};
+
 class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
@@ -95,12 +101,11 @@ private:
     uint32_t frameIndex {0};
     bool frameBufferResized {false};
 
-    size_t MAX_VERTICES {4000};
     size_t MAX_INDICES {12000};
     uint32_t numIndices {0};
 
-    vk::raii::Buffer vertexBuffer {nullptr};
-    vk::raii::DeviceMemory vertexBufferMemory {nullptr};
+    VertexBuffer vertexBuffer;
+
     vk::raii::Buffer indexBuffer {nullptr};
     vk::raii::DeviceMemory indexBufferMemory {nullptr};
 
