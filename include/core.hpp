@@ -9,9 +9,6 @@
 import vulkan_hpp;
 #endif
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 #include <iostream>
 #include <stdexcept>
 #include <cstdint> // For uint32_t
@@ -25,6 +22,7 @@ import vulkan_hpp;
 #include <unordered_map>
 
 #include "../include/debugMessenger.hpp"
+#include "../include/window.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/shader.hpp"
@@ -41,12 +39,6 @@ struct ValidationLayers {
     std::vector<char const *> const layers {
         "VK_LAYER_KHRONOS_validation"
     };
-};
-
-struct Window {
-    uint32_t const WIDTH {800};
-    uint32_t const HEIGHT {600};
-    GLFWwindow * glfw {nullptr};
 };
 
 struct SwapChain {
@@ -125,7 +117,6 @@ private:
 
     uint32_t const MAX_FRAMES_IN_FLIGHT {2};
     uint32_t frameIndex {0};
-    bool frameBufferResized {false};
 
     VertexBuffer vertexBuffer;
     IndexBuffer indexBuffer;
@@ -220,7 +211,6 @@ public:
 private:
     std::vector<char const *> getRequiredGLFWExtensions() const;
     std::vector<char const *> getRequiredValidationLayers() const;
-    void initWindow();
 
     void initVulkan();
 
@@ -266,8 +256,6 @@ private:
 
     void cleanupSwapChain();
     void recreateSwapChain();
-
-    static void frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height);
 
     uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
 

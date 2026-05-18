@@ -1,20 +1,5 @@
 #include "../include/core.hpp"
 
-void Core::initWindow() {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // don't create an OpenGL context, since we're using Vulkan
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-    // Create a window.
-    // The 4th parameter is to specify a monitor,
-    // The 5th is for OpenGL.
-    window.glfw = glfwCreateWindow(window.WIDTH, window.HEIGHT, "Vulkan", nullptr, nullptr);
-
-    glfwSetWindowUserPointer(window.glfw, this);
-    glfwSetFramebufferSizeCallback(window.glfw, frameBufferResizeCallback);
-}
-
 void Core::initVulkan() {
     createInstance();
 
@@ -63,8 +48,8 @@ void Core::initVulkan() {
 }
 
 void Core::init() {
-    std::cout << "initWindow" << std::endl;
-    initWindow();
+    std::cout << "init window" << std::endl;
+    window.init();
     std::cout << "initVulkan" << std::endl;
     initVulkan();
 }
@@ -909,7 +894,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     };
 
     vk::Result const resultPresent {queue.vkraii.presentKHR(presentInfoKHR)};
-    if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || frameBufferResized) {
+    if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || window.getFrameBufferResized()) {
         recreateSwapChain();
         return;
     } else if (resultPresent != vk::Result::eSuccess) {
@@ -946,11 +931,6 @@ void Core::recreateSwapChain() {
     createSwapChainImageViews();
     createColorResources();
     createDepthResources();
-}
-
-void Core::frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height) {
-    Core * const app {reinterpret_cast<Core *>(glfwGetWindowUserPointer(glfwWindow))};
-    app->frameBufferResized = true;
 }
 
 uint32_t Core::findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const {
