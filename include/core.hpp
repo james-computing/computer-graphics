@@ -49,6 +49,13 @@ struct VertexBuffer {
     size_t const MAX_VERTICES {4000};
 };
 
+struct IndexBuffer {
+    vk::raii::Buffer buffer {nullptr};
+    vk::raii::DeviceMemory memory {nullptr};
+    size_t const MAX_INDICES {12000};
+    uint32_t numIndices {0};
+};
+
 class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
@@ -101,13 +108,8 @@ private:
     uint32_t frameIndex {0};
     bool frameBufferResized {false};
 
-    size_t MAX_INDICES {12000};
-    uint32_t numIndices {0};
-
     VertexBuffer vertexBuffer;
-
-    vk::raii::Buffer indexBuffer {nullptr};
-    vk::raii::DeviceMemory indexBufferMemory {nullptr};
+    IndexBuffer indexBuffer;
 
     vk::raii::DescriptorSetLayout descriptorSetLayout {nullptr}; // for model view projection, which uses uniform buffers
     vk::raii::DescriptorPool descriptorPool {nullptr};

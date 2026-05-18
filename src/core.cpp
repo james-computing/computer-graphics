@@ -818,7 +818,7 @@ void Core::recordCommandBuffer(
 
     commandBuffer.bindVertexBuffers(0, *vertexBuffer.buffer, {0});
     
-    commandBuffer.bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint32);
+    commandBuffer.bindIndexBuffer(*indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
     vk::Viewport const viewport {
         .x = 0.0f,
@@ -1046,7 +1046,7 @@ void Core::createVertexBuffer() {
 
 void Core::createIndexBuffer() {
     // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {MAX_INDICES * sizeof(uint32_t)};
+    vk::DeviceSize const bufferSize {indexBuffer.MAX_INDICES * sizeof(uint32_t)};
 
     // Create the index buffer
     vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
@@ -1055,8 +1055,8 @@ void Core::createIndexBuffer() {
         bufferSize,
         indexbufferUsage,
         indexBufferMemoryProperties,
-        indexBuffer,
-        indexBufferMemory
+        indexBuffer.buffer,
+        indexBuffer.memory
     );
 }
 
@@ -1091,7 +1091,7 @@ void Core::copyIndicesToIndexBuffer(
     std::vector<uint32_t> const & indices,
     vk::DeviceSize const & dstOffset
 ) const {
-    copyToBuffer<uint32_t>(indices, dstOffset, indexBuffer);
+    copyToBuffer<uint32_t>(indices, dstOffset, indexBuffer.buffer);
 }
 
 // DESCRIPTOR SETS
