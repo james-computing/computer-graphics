@@ -861,7 +861,7 @@ void Core::recordCommandBuffer(
 }
 
 void Core::createSyncObjects() {
-    assert(presentCompleteSemaphores.empty() && renderFinishedSemaphores.empty() && inFlightFences.empty());
+    assert(syncObjects.presentCompleteSemaphores.empty() && syncObjects.renderFinishedSemaphores.empty() && syncObjects.inFlightFences.empty());
 
     vk::FenceCreateInfo constexpr fenceCreateInfo {
         .flags = vk::FenceCreateFlagBits::eSignaled
@@ -869,19 +869,19 @@ void Core::createSyncObjects() {
 
     size_t const numberOfImages {swapChain.images.size()};
     for (size_t i {0}; i < numberOfImages; ++i) {
-        renderFinishedSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
+        syncObjects.renderFinishedSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
     }
 
     for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-        presentCompleteSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
-        inFlightFences.emplace_back(vk::raii::Fence(device, fenceCreateInfo));
+        syncObjects.presentCompleteSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
+        syncObjects.inFlightFences.emplace_back(vk::raii::Fence(device, fenceCreateInfo));
     }
 }
 
 void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) {
     vk::raii::CommandBuffer & commandBuffer {commandBuffers[frameIndex]};
-    vk::raii::Semaphore & presentCompleteSemaphore {presentCompleteSemaphores[frameIndex]};
-    vk::raii::Fence & drawFence {inFlightFences[frameIndex]};
+    vk::raii::Semaphore & presentCompleteSemaphore {syncObjects.presentCompleteSemaphores[frameIndex]};
+    vk::raii::Fence & drawFence {syncObjects.inFlightFences[frameIndex]};
 
     // Timeout is in nanoseconds. Use UINT64_MAX to effectivelly disable it.
     vk::Result const fenceResult {device.waitForFences(*drawFence, vk::True, UINT64_MAX)};
@@ -909,7 +909,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     commandBuffer.reset();
     recordCommandBuffer(imageIndex, descriptorSets, indexCount);
 
-    vk::raii::Semaphore const & renderFinishedSemaphore {renderFinishedSemaphores[imageIndex]}; // imageIndex, not frameIndex
+    vk::raii::Semaphore const & renderFinishedSemaphore {syncObjects.renderFinishedSemaphores[imageIndex]}; // imageIndex, not frameIndex
     vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     vk::SubmitInfo const submitInfo {
         .waitSemaphoreCount = 1,

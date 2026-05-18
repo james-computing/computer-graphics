@@ -64,6 +64,12 @@ struct IndexBuffer {
     uint32_t numIndices {0};
 };
 
+struct SyncObjects {
+    std::vector<vk::raii::Semaphore> presentCompleteSemaphores;
+    std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
+    std::vector<vk::raii::Fence> inFlightFences;
+};
+
 class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
@@ -104,9 +110,7 @@ private:
     vk::raii::CommandPool commandPool {nullptr};
     std::vector<vk::raii::CommandBuffer> commandBuffers;
 
-    std::vector<vk::raii::Semaphore> presentCompleteSemaphores;
-    std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
-    std::vector<vk::raii::Fence> inFlightFences;
+    SyncObjects syncObjects;
 
     uint32_t const MAX_FRAMES_IN_FLIGHT {2};
     uint32_t frameIndex {0};
@@ -121,7 +125,6 @@ private:
     DepthStencil depthStencil;
     // multisampling
     MSAA msaa;
-    
 
     /////////////////////////////////////// METHODS //////////////////////////////////////////////////
 public:
