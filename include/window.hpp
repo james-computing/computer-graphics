@@ -26,6 +26,7 @@ public:
     bool getFrameBufferResized() const;
     bool shouldClose() const;
     void pollEvents() const;
+    void cleanup() const;
     
 private:
     static void frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height);

@@ -66,9 +66,7 @@ bool Core::step() const {
 
 void Core::cleanup() {
     cleanupSwapChain();
-
-    glfwDestroyWindow(window.glfw);
-    glfwTerminate();
+    window.cleanup();
 }
 
 std::vector<char const *> Core::getRequiredGLFWExtensions() const {

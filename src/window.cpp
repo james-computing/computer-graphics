@@ -31,3 +31,8 @@ bool Window::shouldClose() const {
 void Window::pollEvents() const {
     glfwPollEvents();
 }
+
+void Window::cleanup() const {
+    glfwDestroyWindow(glfw);
+    glfwTerminate();
+}
