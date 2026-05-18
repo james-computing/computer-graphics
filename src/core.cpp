@@ -9,10 +9,10 @@ void Core::initWindow() {
     // Create a window.
     // The 4th parameter is to specify a monitor,
     // The 5th is for OpenGL.
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    window.glfw = glfwCreateWindow(window.WIDTH, window.HEIGHT, "Vulkan", nullptr, nullptr);
 
-    glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, frameBufferResizeCallback);
+    glfwSetWindowUserPointer(window.glfw, this);
+    glfwSetFramebufferSizeCallback(window.glfw, frameBufferResizeCallback);
 }
 
 void Core::initVulkan() {
@@ -68,7 +68,7 @@ void Core::init() {
 }
 
 bool Core::shouldContinue() {
-    return !glfwWindowShouldClose(window);
+    return !glfwWindowShouldClose(window.glfw);
 }
 
 void Core::pollEvents() {
@@ -78,7 +78,7 @@ void Core::pollEvents() {
 void Core::cleanup() {
     cleanupSwapChain();
 
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(window.glfw);
     glfwTerminate();
 }
 
@@ -92,7 +92,7 @@ std::vector<char const *> Core::getRequiredGLFWExtensions() const {
     std::vector<char const *> requiredGLFWExtensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
     // Also require the extension necessary for the message callback
-    if(enableValidationLayers) {
+    if(validationLayers.enable) {
         requiredGLFWExtensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
 
@@ -131,8 +131,8 @@ std::vector<char const *> Core::getRequiredGLFWExtensions() const {
 std::vector<char const *> Core::getRequiredValidationLayers() const {
     // Get the required validation layers
     std::vector<char const *> requiredValidationLayers;
-    if (enableValidationLayers) {
-        requiredValidationLayers.assign(validationLayers.begin(), validationLayers.end());
+    if (validationLayers.enable) {
+        requiredValidationLayers.assign(validationLayers.layers.begin(), validationLayers.layers.end());
     }
 
     // try catch?
@@ -200,7 +200,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL Core::debugCallback(
 }
 
 void Core::setupDebugMessenger() {
-    if (!enableValidationLayers) {
+    if (!validationLayers.enable) {
         return;
     }
 
@@ -390,7 +390,7 @@ void Core::createSurface() {
     // C struct
     VkSurfaceKHR _surface;
     // C function call
-    VkResult result = glfwCreateWindowSurface(*instance, window, nullptr, &_surface);
+    VkResult result = glfwCreateWindowSurface(*instance, window.glfw, nullptr, &_surface);
 
     if (result != VkResult::VK_SUCCESS) {
         std::cerr << "Failed to create window surface";
@@ -450,7 +450,7 @@ vk::Extent2D Core::chooseSwapExtent(vk::SurfaceCapabilitiesKHR const & capabilit
     // Width and height must be between the minimum and maximum values allowed, we solve this by clamping.
     // The width and height must be in pixels, the appropriate values are obtained from the framebuffer size.
     int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window.glfw, &width, &height);
 
     return vk::Extent2D {
         std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
@@ -957,9 +957,9 @@ void Core::recreateSwapChain() {
     // Handle window minimization by waiting for width and height to be non zero
     int width;
     int height;
-    glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window.glfw, &width, &height);
     while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(window.glfw, &width, &height);
         glfwWaitEvents();
     }
 

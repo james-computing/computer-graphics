@@ -29,6 +29,24 @@ import vulkan_hpp;
 
 #include "../libraries/stb/stb_image.h"
 
+struct ValidationLayers {
+#ifdef NDEBUG
+    const bool enable {false};
+#else
+    const bool enable {true};
+#endif
+
+    std::vector<char const *> const layers {
+        "VK_LAYER_KHRONOS_validation"
+    };
+};
+
+struct Window {
+    uint32_t const WIDTH {800};
+    uint32_t const HEIGHT {600};
+    GLFWwindow * glfw {nullptr};
+};
+
 struct SwapChain {
     vk::Extent2D extent;
     vk::SurfaceFormatKHR surfaceFormat;
@@ -73,23 +91,12 @@ struct SyncObjects {
 class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
-    uint32_t const WIDTH {800};
-    uint32_t const HEIGHT {600};
-
-    GLFWwindow * window {nullptr};
+    Window window;
 
     vk::raii::Context context;
     vk::raii::Instance instance {nullptr};
 
-    #ifdef NDEBUG
-    const bool enableValidationLayers {false};
-    #else
-    const bool enableValidationLayers {true};
-    #endif
-
-    std::vector<char const *> const validationLayers {
-        "VK_LAYER_KHRONOS_validation"
-    };
+    ValidationLayers validationLayers;
 
     vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
 
