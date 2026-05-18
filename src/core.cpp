@@ -606,7 +606,7 @@ void Core::createGraphicsPipeline() {
     };
 
     vk::PipelineMultisampleStateCreateInfo const pipelineMultisampleStateCreateInfo {
-        .rasterizationSamples = msaaSamples,
+        .rasterizationSamples = msaa.samples,
         .sampleShadingEnable = vk::False
     };
 
@@ -751,7 +751,7 @@ void Core::recordCommandBuffer(
 
     // Transition multisampled color image to eColorAttachmentOptimal
     transitionImageLayout(
-        *colorImage,
+        *msaa.colorImage,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -777,7 +777,7 @@ void Core::recordCommandBuffer(
 
     // MSAA with resolve
     vk::RenderingAttachmentInfo const colorAttachmentInfo {
-        .imageView = *colorImageView,
+        .imageView = *msaa.colorImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .resolveMode = vk::ResolveModeFlagBits::eAverage,
         .resolveImageView = swapChainImageViews[imageIndex],
@@ -1348,7 +1348,7 @@ void Core::createDepthResources() {
         swapChainExtent.width,
         swapChainExtent.height,
         1,
-        msaaSamples,
+        msaa.samples,
         depthStencil.depthFormat,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
@@ -1372,31 +1372,31 @@ void Core::initMaxUsableSampleCount() {
     };
 
     if (sampleCounts & vk::SampleCountFlagBits::e64) {
-        msaaSamples = vk::SampleCountFlagBits::e64;
+        msaa.samples = vk::SampleCountFlagBits::e64;
         return;
     }
     if (sampleCounts & vk::SampleCountFlagBits::e32) {
-        msaaSamples = vk::SampleCountFlagBits::e32;
+        msaa.samples = vk::SampleCountFlagBits::e32;
         return;
     }
     if (sampleCounts & vk::SampleCountFlagBits::e16) {
-        msaaSamples = vk::SampleCountFlagBits::e16;
+        msaa.samples = vk::SampleCountFlagBits::e16;
         return;
     }
     if (sampleCounts & vk::SampleCountFlagBits::e8) {
-        msaaSamples = vk::SampleCountFlagBits::e8;
+        msaa.samples = vk::SampleCountFlagBits::e8;
         return;
     }
     if (sampleCounts & vk::SampleCountFlagBits::e4) {
-        msaaSamples = vk::SampleCountFlagBits::e4;
+        msaa.samples = vk::SampleCountFlagBits::e4;
         return;
     }
     if (sampleCounts & vk::SampleCountFlagBits::e2) {
-        msaaSamples = vk::SampleCountFlagBits::e2;
+        msaa.samples = vk::SampleCountFlagBits::e2;
         return;
     }
 
-    msaaSamples = vk::SampleCountFlagBits::e1;
+    msaa.samples = vk::SampleCountFlagBits::e1;
 }
 
 void Core::createColorResources() {
@@ -1406,16 +1406,16 @@ void Core::createColorResources() {
         swapChainExtent.width,
         swapChainExtent.height,
         1,
-        msaaSamples,
+        msaa.samples,
         colorFormat,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        colorImage,
-        colorImageMemory
+        msaa.colorImage,
+        msaa.colorImageMemory
     );
 
-    colorImageView = createImageView(colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
+    msaa.colorImageView = createImageView(msaa.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
 }
 
 void Core::allocateDescriptorSets(

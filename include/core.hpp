@@ -36,6 +36,13 @@ struct DepthStencil {
     vk::Format depthFormat;
 };
 
+struct MSAA {
+    vk::SampleCountFlagBits samples {vk::SampleCountFlagBits::e1};
+    vk::raii::Image colorImage {nullptr};
+    vk::raii::DeviceMemory colorImageMemory {nullptr};
+    vk::raii::ImageView colorImageView {nullptr};
+};
+
 class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
@@ -101,12 +108,9 @@ private:
     vk::raii::DescriptorPool descriptorPool {nullptr};
 
     DepthStencil depthStencil;
-
-    // For MSAA
-    vk::SampleCountFlagBits msaaSamples {vk::SampleCountFlagBits::e1};
-    vk::raii::Image colorImage {nullptr};
-    vk::raii::DeviceMemory colorImageMemory {nullptr};
-    vk::raii::ImageView colorImageView {nullptr};
+    // multisampling
+    MSAA msaa;
+    
 
     /////////////////////////////////////// METHODS //////////////////////////////////////////////////
 public:
@@ -262,10 +266,13 @@ private:
         vk::ImageTiling const tiling,
         vk::FormatFeatureFlags const features
     ) const;
+
+    // Depth stencil
     void initDepthFormat();
     bool hasStencilComponent(vk::Format const format) const;
     void createDepthResources();
 
+    // MSAA
     void initMaxUsableSampleCount();
     void createColorResources();
 
