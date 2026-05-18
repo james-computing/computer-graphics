@@ -636,7 +636,7 @@ void Core::createGraphicsPipeline() {
     vk::PipelineRenderingCreateInfo const pipelineRenderingCreateInfo {
         .colorAttachmentCount = 1,
         .pColorAttachmentFormats = &swapChainSurfaceFormat.format,
-        .depthAttachmentFormat = depthFormat
+        .depthAttachmentFormat = depthStencil.depthFormat
     };
 
     vk::PipelineDepthStencilStateCreateInfo constexpr depthStencilStateCreateInfo {
@@ -763,7 +763,7 @@ void Core::recordCommandBuffer(
 
     // Is it necessary to make this transition for every frame? There is a single transition for the depth buffer.
     transitionImageLayout(
-        *depthImage,
+        *depthStencil.depthImage,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthAttachmentOptimal,
         vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
@@ -790,7 +790,7 @@ void Core::recordCommandBuffer(
     vk::ClearValue constexpr clearDepth {vk::ClearDepthStencilValue(1.0f, 0)}; // 1.0 = far view plane
 
     vk::RenderingAttachmentInfo const depthAttachmentInfo {
-        .imageView = depthImageView,
+        .imageView = depthStencil.depthImageView,
         .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eDontCare,
@@ -1326,6 +1326,8 @@ vk::Format Core::findSupportedFormat(
     throw std::runtime_error("Failed to find supported format");
 }
 
+// DepthStencil
+
 void Core::initDepthFormat() {
     std::vector<vk::Format> const candidateFormats {
         vk::Format::eD32Sfloat,
@@ -1333,7 +1335,7 @@ void Core::initDepthFormat() {
         vk::Format::eD24UnormS8Uint
     };
 
-    depthFormat = findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+    depthStencil.depthFormat = findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
 }
 
 bool Core::hasStencilComponent(vk::Format const format) const {
@@ -1347,17 +1349,19 @@ void Core::createDepthResources() {
         swapChainExtent.height,
         1,
         msaaSamples,
-        depthFormat,
+        depthStencil.depthFormat,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        depthImage,
-        depthImageMemory
+        depthStencil.depthImage,
+        depthStencil.depthImageMemory
     );
 
     // Create depth image view
-    depthImageView = createImageView(depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    depthStencil.depthImageView = createImageView(depthStencil.depthImage, depthStencil.depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
 }
+
+// MSAA
 
 void Core::initMaxUsableSampleCount() {
     vk::PhysicalDeviceProperties const physicalDeviceProperties {physicalDevice.getProperties()};

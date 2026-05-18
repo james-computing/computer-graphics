@@ -29,6 +29,13 @@ import vulkan_hpp;
 
 #include "../libraries/stb/stb_image.h"
 
+struct DepthStencil {
+    vk::raii::Image depthImage {nullptr};
+    vk::raii::DeviceMemory depthImageMemory {nullptr};
+    vk::raii::ImageView depthImageView {nullptr};
+    vk::Format depthFormat;
+};
+
 class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
@@ -93,10 +100,7 @@ private:
     vk::raii::DescriptorSetLayout descriptorSetLayout {nullptr}; // for model view projection, which uses uniform buffers
     vk::raii::DescriptorPool descriptorPool {nullptr};
 
-    vk::raii::Image depthImage {nullptr};
-    vk::raii::DeviceMemory depthImageMemory {nullptr};
-    vk::raii::ImageView depthImageView {nullptr};
-    vk::Format depthFormat;
+    DepthStencil depthStencil;
 
     // For MSAA
     vk::SampleCountFlagBits msaaSamples {vk::SampleCountFlagBits::e1};
