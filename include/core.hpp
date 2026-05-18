@@ -21,6 +21,7 @@ import vulkan_hpp;
 #include <chrono> // for model view projection
 #include <unordered_map>
 
+#include "../include/validationLayers.hpp"
 #include "../include/debugMessenger.hpp"
 #include "../include/window.hpp"
 #include "../include/vertex.hpp"
@@ -28,18 +29,6 @@ import vulkan_hpp;
 #include "../include/shader.hpp"
 
 #include "../libraries/stb/stb_image.h"
-
-struct ValidationLayers {
-#ifdef NDEBUG
-    const bool enable {false};
-#else
-    const bool enable {true};
-#endif
-
-    std::vector<char const *> const layers {
-        "VK_LAYER_KHRONOS_validation"
-    };
-};
 
 struct SwapChain {
     vk::Extent2D extent;
@@ -209,7 +198,6 @@ public:
 
 private:
     std::vector<char const *> getRequiredGLFWExtensions() const;
-    std::vector<char const *> getRequiredValidationLayers() const;
 
     void initVulkan();
 

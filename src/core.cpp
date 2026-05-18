@@ -117,41 +117,9 @@ std::vector<char const *> Core::getRequiredGLFWExtensions() const {
     return requiredGLFWExtensions;
 }
 
-std::vector<char const *> Core::getRequiredValidationLayers() const {
-    // Get the required validation layers
-    std::vector<char const *> requiredValidationLayers;
-    if (validationLayers.enable) {
-        requiredValidationLayers.assign(validationLayers.layers.begin(), validationLayers.layers.end());
-    }
-
-    // try catch?
-    std::vector<vk::LayerProperties> const layerProperties {context.enumerateInstanceLayerProperties()};
-
-    // Find if there is a required validation layer that is none of the layer properties
-    auto unsupportedLayerIterator {
-        std::ranges::find_if(
-            requiredValidationLayers,
-            [&layerProperties] (char const * const &requiredValidationLayer) -> bool {
-                return std::ranges::none_of(
-                    layerProperties,
-                    [requiredValidationLayer] (vk::LayerProperties const & layerProperty) -> bool {
-                        return strcmp(layerProperty.layerName, requiredValidationLayer) == 0;
-                    }
-                );
-            }
-        )
-    };
-
-    if (unsupportedLayerIterator != requiredValidationLayers.end()) {
-        throw std::runtime_error("Required layer not supported: " + std::string(*unsupportedLayerIterator));
-    }
-
-    return requiredValidationLayers;
-}
-
 void Core::createInstance() {
     std::vector<char const *> const requiredGLFWExtensions = getRequiredGLFWExtensions();
-    std::vector<char const *> const requiredValidationLayers = getRequiredValidationLayers();
+    std::vector<char const *> const requiredValidationLayers = validationLayers.getRequiredValidationLayers(context);
 
     vk::ApplicationInfo constexpr appInfo {
         .pApplicationName = "Application",
