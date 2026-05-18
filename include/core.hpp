@@ -264,4 +264,38 @@ private:
 
     void initMaxUsableSampleCount();
     void createColorResources();
+
+    // Templates must be in the header file
+    template <typename T>
+    void copyToBuffer(
+        std::vector<T> const & v,
+        vk::DeviceSize const & dstOffset,
+        vk::raii::Buffer const & buffer
+    ) const {
+        vk::DeviceSize bufferSize {v.size() * sizeof(T)};
+
+        // Create a staging buffer to transfer data from the host to the device
+        vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
+        vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+        };
+        vk::raii::Buffer stagingBuffer {nullptr};
+        vk::raii::DeviceMemory stagingBufferMemory {nullptr};
+        createBuffer(
+            bufferSize,
+            stagingBufferUsage,
+            stagingBufferMemoryProperties,
+            stagingBuffer,
+            stagingBufferMemory
+        );
+
+        // Copy the data from the vertices vector to the staging buffer memory
+        void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
+        memcpy(data, v.data(), bufferSize);
+        stagingBufferMemory.unmapMemory();
+        data = nullptr;
+
+        // Copy data from staging buffer to vertex buffer
+        copyBuffer(stagingBuffer, buffer, dstOffset, bufferSize);
+    }
 };

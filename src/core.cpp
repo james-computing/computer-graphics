@@ -1080,62 +1080,14 @@ void Core::copyVerticesToVertexBuffer(
     std::vector<Vertex> const & vertices,
     vk::DeviceSize const & dstOffset
 ) const {
-    vk::DeviceSize bufferSize {vertices.size() * sizeof(Vertex)};
-
-    // Create a staging buffer to transfer data from the host to the device
-    vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
-    vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-    };
-    vk::raii::Buffer stagingBuffer {nullptr};
-    vk::raii::DeviceMemory stagingBufferMemory {nullptr};
-    createBuffer(
-        bufferSize,
-        stagingBufferUsage,
-        stagingBufferMemoryProperties,
-        stagingBuffer,
-        stagingBufferMemory
-    );
-
-    // Copy the data from the vertices vector to the staging buffer memory
-    void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, vertices.data(), bufferSize);
-    stagingBufferMemory.unmapMemory();
-    data = nullptr;
-
-    // Copy data from staging buffer to vertex buffer
-    copyBuffer(stagingBuffer, vertexBuffer, dstOffset, bufferSize);
+    copyToBuffer<Vertex>(vertices, dstOffset, vertexBuffer);
 }
 
 void Core::copyIndicesToIndexBuffer(
     std::vector<uint32_t> const & indices,
     vk::DeviceSize const & dstOffset
 ) const {
-    vk::DeviceSize bufferSize {indices.size() * sizeof(uint32_t)};
-
-    // Create a staging buffer to transfer data from the host to the device
-    vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
-    vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-    };
-    vk::raii::Buffer stagingBuffer {nullptr};
-    vk::raii::DeviceMemory stagingBufferMemory {nullptr};
-    createBuffer(
-        bufferSize,
-        stagingBufferUsage,
-        stagingBufferMemoryProperties,
-        stagingBuffer,
-        stagingBufferMemory
-    );
-
-    // Copy the data from the indices vector to the staging buffer memory
-    void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, indices.data(), bufferSize);
-    stagingBufferMemory.unmapMemory();
-    data = nullptr;
-
-    // Copy data from staging buffer to index buffer
-    copyBuffer(stagingBuffer, indexBuffer, dstOffset, bufferSize);
+    copyToBuffer<uint32_t>(indices, dstOffset, indexBuffer);
 }
 
 void Core::createDescriptorSetLayout() {
