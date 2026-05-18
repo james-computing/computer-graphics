@@ -1,0 +1,90 @@
+#include "../include/physicalDevice.hpp"
+
+bool PhysicalDevice::isSuitable(vk::raii::PhysicalDevice const & physicalDevice) {
+    vk::PhysicalDeviceProperties const deviceProperties {physicalDevice.getProperties()};
+    vk::PhysicalDeviceFeatures const deviceFeatures {physicalDevice.getFeatures()};
+    std::vector<vk::QueueFamilyProperties> const queueFamilies {physicalDevice.getQueueFamilyProperties()};
+    std::vector<char const *> const requiredDeviceExtensions({vk::KHRSwapchainExtensionName});
+
+    bool const supportsVulkan1_3 {deviceProperties.apiVersion >= vk::ApiVersion13};
+
+    bool const supportsGraphics {
+        std::ranges::any_of(
+            queueFamilies,
+            [] (vk::QueueFamilyProperties const &qfp) -> bool {
+                return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+            }
+        )
+    };
+
+    // try catch?
+    std::vector<vk::ExtensionProperties> const availableDeviceExtensions {physicalDevice.enumerateDeviceExtensionProperties()};
+
+    bool const supportsAllRequiredExtensions {
+        // All of the required device extensions are any of the available extensions
+        std::ranges::all_of(
+            requiredDeviceExtensions,
+            [&availableDeviceExtensions] (char const * const & requiredDeviceExtension) -> bool {
+                return std::ranges::any_of(
+                    availableDeviceExtensions,
+                    [requiredDeviceExtension] (vk::ExtensionProperties const & availableDeviceExtension) -> bool {
+                        return strcmp(availableDeviceExtension.extensionName, requiredDeviceExtension) == 0;
+                    }
+                );
+            }
+        )
+    };
+
+    auto const features {
+        // .template is to tell the compiler to use the method that comes from templates, avoiding ambiguity
+        physicalDevice.template getFeatures2<
+            vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features, // for shader module creation
+            vk::PhysicalDeviceVulkan13Features,
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        >()
+    };
+    bool const supportsRequiredFeatures {
+        
+        features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters && // for shader module creation
+        features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
+        features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
+        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
+        features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy // for texture sampler
+    };
+
+    return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;
+
+    /*
+    if (
+        deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu &&
+        deviceFeatures.geometryShader &&
+        supportsVulkan1_3
+    ) {
+        return true;
+    }
+
+    return false;*/
+}
+
+void PhysicalDevice::pick(vk::raii::Instance const & instance) {
+    // try catch?
+    std::vector<vk::raii::PhysicalDevice> const physicalDevices {instance.enumeratePhysicalDevices()};
+    
+    auto const deviceIterator {
+        // Find if there is some suitable device
+        std::ranges::find_if(
+            physicalDevices,
+            [this] (vk::raii::PhysicalDevice const & physicalDevice) -> bool {
+                return isSuitable(physicalDevice);
+            }
+        )
+    };
+
+    if (deviceIterator == physicalDevices.end()) {
+        throw std::runtime_error("Failed to find a suitable physical device");
+    }
+
+    // Pick the first suitable physical device found
+    vkraii = *deviceIterator;
+}

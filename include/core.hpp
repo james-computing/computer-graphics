@@ -25,6 +25,7 @@ import vulkan_hpp;
 #include "../include/glfwExtensions.hpp"
 #include "../include/debugMessenger.hpp"
 #include "../include/window.hpp"
+#include "../include/physicalDevice.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/shader.hpp"
@@ -88,7 +89,7 @@ private:
     ValidationLayers validationLayers;
     DebugMessenger debugMessenger;
 
-    vk::raii::PhysicalDevice physicalDevice {nullptr};
+    PhysicalDevice physicalDevice;
 
     vk::raii::Device device {nullptr}; // logical device
 
@@ -198,14 +199,9 @@ public:
     vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const;
 
 private:
-    std::vector<char const *> getRequiredGLFWExtensions() const;
-
     void initVulkan();
 
     void createInstance();
-
-    void pickPhysicalDevice();
-    bool isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice) const;
 
     void createLogicalDevice();
 

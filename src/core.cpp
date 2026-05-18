@@ -7,7 +7,7 @@ void Core::initVulkan() {
     if (validationLayers.enable) {
         debugMessenger.setup(instance); // make debug messenger first, because we want to be able to debug early
     }
-    pickPhysicalDevice();
+    physicalDevice.pick(instance);
     createSurface();
 
     // depends on physical device.
@@ -93,98 +93,9 @@ void Core::createInstance() {
     instance = vk::raii::Instance(context, createInfo);
 }
 
-void Core::pickPhysicalDevice() {
-    // try catch?
-    std::vector<vk::raii::PhysicalDevice> const physicalDevices {instance.enumeratePhysicalDevices()};
-    
-    auto const deviceIterator {
-        // Find if there is some suitable device
-        std::ranges::find_if(
-            physicalDevices,
-            [this] (vk::raii::PhysicalDevice const & physicalDevice) -> bool {
-                return isDeviceSuitable(physicalDevice);
-            }
-        )
-    };
-
-    if (deviceIterator == physicalDevices.end()) {
-        throw std::runtime_error("Failed to find a suitable physical device");
-    }
-
-    // Pick the first suitable physical device found
-    physicalDevice = *deviceIterator;
-}
-
-bool Core::isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice) const {
-    vk::PhysicalDeviceProperties const deviceProperties {physicalDevice.getProperties()};
-    vk::PhysicalDeviceFeatures const deviceFeatures {physicalDevice.getFeatures()};
-    std::vector<vk::QueueFamilyProperties> const queueFamilies {physicalDevice.getQueueFamilyProperties()};
-    std::vector<char const *> const requiredDeviceExtensions({vk::KHRSwapchainExtensionName});
-
-    bool const supportsVulkan1_3 {deviceProperties.apiVersion >= vk::ApiVersion13};
-
-    bool const supportsGraphics {
-        std::ranges::any_of(
-            queueFamilies,
-            [] (vk::QueueFamilyProperties const &qfp) -> bool {
-                return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
-            }
-        )
-    };
-
-    // try catch?
-    std::vector<vk::ExtensionProperties> const availableDeviceExtensions {physicalDevice.enumerateDeviceExtensionProperties()};
-
-    bool const supportsAllRequiredExtensions {
-        // All of the required device extensions are any of the available extensions
-        std::ranges::all_of(
-            requiredDeviceExtensions,
-            [&availableDeviceExtensions] (char const * const & requiredDeviceExtension) -> bool {
-                return std::ranges::any_of(
-                    availableDeviceExtensions,
-                    [requiredDeviceExtension] (vk::ExtensionProperties const & availableDeviceExtension) -> bool {
-                        return strcmp(availableDeviceExtension.extensionName, requiredDeviceExtension) == 0;
-                    }
-                );
-            }
-        )
-    };
-
-    auto const features {
-        // .template is to tell the compiler to use the method that comes from templates, avoiding ambiguity
-        physicalDevice.template getFeatures2<
-            vk::PhysicalDeviceFeatures2,
-            vk::PhysicalDeviceVulkan11Features, // for shader module creation
-            vk::PhysicalDeviceVulkan13Features,
-            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
-        >()
-    };
-    bool const supportsRequiredFeatures {
-        
-        features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters && // for shader module creation
-        features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
-        features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
-        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
-        features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy // for texture sampler
-    };
-
-    return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;
-
-    /*
-    if (
-        deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu &&
-        deviceFeatures.geometryShader &&
-        supportsVulkan1_3
-    ) {
-        return true;
-    }
-
-    return false;*/
-}
-
 void Core::createLogicalDevice() {
     std::vector<vk::QueueFamilyProperties> const queueFamilyProperties {
-        physicalDevice.getQueueFamilyProperties()
+        physicalDevice.vkraii.getQueueFamilyProperties()
     };
 
     // Find first queue with graphics support which is also capable of presenting to the window,
@@ -196,7 +107,7 @@ void Core::createLogicalDevice() {
         bool supportsGraphics = (queueFamilyProperties[queue.index].queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
         
         // try catch?
-        bool supportsWindowPresentation = physicalDevice.getSurfaceSupportKHR(queue.index, *surface);
+        bool supportsWindowPresentation = physicalDevice.vkraii.getSurfaceSupportKHR(queue.index, *surface);
 
         if (supportsGraphics && supportsWindowPresentation) {
             foundSuitableQueue = true;
@@ -248,7 +159,7 @@ void Core::createLogicalDevice() {
     };
 
     // try catch?
-    device = vk::raii::Device(physicalDevice, deviceCreateInfo);
+    device = vk::raii::Device(physicalDevice.vkraii, deviceCreateInfo);
 
     queue.vkraii = vk::raii::Queue(device, queue.index, 0);
 }
@@ -341,17 +252,17 @@ uint32_t Core::chooseSwapImageCount(vk::SurfaceCapabilitiesKHR const & surfaceCa
 void Core::createSwapChain() {
     // Same from createLogicalDevice
     // try catch?
-    vk::SurfaceCapabilitiesKHR const surfaceCapabilities {physicalDevice.getSurfaceCapabilitiesKHR(*surface)};
+    vk::SurfaceCapabilitiesKHR const surfaceCapabilities {physicalDevice.vkraii.getSurfaceCapabilitiesKHR(*surface)};
     swapChain.extent = chooseSwapExtent(surfaceCapabilities);
     uint32_t const minImageCount {chooseSwapImageCount(surfaceCapabilities)};
 
     // Same from createLogicalDevice
     // try catch?
-    std::vector<vk::SurfaceFormatKHR> const availableFormats {physicalDevice.getSurfaceFormatsKHR(*surface)};
+    std::vector<vk::SurfaceFormatKHR> const availableFormats {physicalDevice.vkraii.getSurfaceFormatsKHR(*surface)};
     swapChain.surfaceFormat = chooseSwapSurfaceFormat(availableFormats);
 
     // try catch?
-    std::vector<vk::PresentModeKHR> const availablePresentModes = physicalDevice.getSurfacePresentModesKHR(*surface);
+    std::vector<vk::PresentModeKHR> const availablePresentModes = physicalDevice.vkraii.getSurfacePresentModesKHR(*surface);
     vk::PresentModeKHR const presentMode {chooseSwapPresentMode(availablePresentModes)};
 
     vk::SwapchainCreateInfoKHR const swapChainCreateInfo {
@@ -841,7 +752,7 @@ void Core::recreateSwapChain() {
 }
 
 uint32_t Core::findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const {
-    vk::PhysicalDeviceMemoryProperties const memoryProperties {physicalDevice.getMemoryProperties()};
+    vk::PhysicalDeviceMemoryProperties const memoryProperties {physicalDevice.vkraii.getMemoryProperties()};
 
     for (uint32_t i {0}; i < memoryProperties.memoryTypeCount; ++i) {
         if (
@@ -1169,7 +1080,7 @@ vk::raii::ImageView Core::createImageView(
 // TEXTURE SAMPLER
 
 void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
-    vk::PhysicalDeviceProperties physicalDeviceProperties {physicalDevice.getProperties()};
+    vk::PhysicalDeviceProperties physicalDeviceProperties {physicalDevice.vkraii.getProperties()};
 
     vk::SamplerCreateInfo const samplerCreateInfo {
         .magFilter = vk::Filter::eLinear,
@@ -1200,7 +1111,7 @@ vk::Format Core::findSupportedFormat(
     switch (tiling) {
         case vk::ImageTiling::eLinear:
             for (vk::Format const & format : candidateFormats) {
-                vk::FormatProperties const props {physicalDevice.getFormatProperties(format)};
+                vk::FormatProperties const props {physicalDevice.vkraii.getFormatProperties(format)};
                 if ((props.linearTilingFeatures & features) == features) {
                     return format;
                 }
@@ -1208,7 +1119,7 @@ vk::Format Core::findSupportedFormat(
             break;
         case vk::ImageTiling::eOptimal:
             for (vk::Format const & format : candidateFormats) {
-                vk::FormatProperties const props {physicalDevice.getFormatProperties(format)};
+                vk::FormatProperties const props {physicalDevice.vkraii.getFormatProperties(format)};
                 if ((props.optimalTilingFeatures & features) == features) {
                     return format;
                 }
@@ -1256,7 +1167,7 @@ void Core::createDepthResources() {
 // MSAA
 
 void Core::initMaxUsableSampleCount() {
-    vk::PhysicalDeviceProperties const physicalDeviceProperties {physicalDevice.getProperties()};
+    vk::PhysicalDeviceProperties const physicalDeviceProperties {physicalDevice.vkraii.getProperties()};
 
     vk::SampleCountFlags sampleCounts {
         physicalDeviceProperties.limits.framebufferColorSampleCounts &
@@ -1329,5 +1240,5 @@ uint32_t Core::getFrameIndex() const {
 }
 
 vk::FormatProperties Core::getFormatProperties(vk::Format const imageFormat) const {
-    return physicalDevice.getFormatProperties(imageFormat);
+    return physicalDevice.vkraii.getFormatProperties(imageFormat);
 }
