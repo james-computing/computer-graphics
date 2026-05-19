@@ -26,17 +26,14 @@ import vulkan_hpp;
 #include "../include/window.hpp"
 #include "../include/instance.hpp"
 #include "../include/physicalDevice.hpp"
+#include "../include/queue.hpp"
+#include "../include/device.hpp"
 #include "../include/swapChain.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/shader.hpp"
 
 #include "../libraries/stb/stb_image.h"
-
-struct Queue {
-    uint32_t index;
-    vk::raii::Queue vkraii {nullptr};
-};
 
 struct DepthStencil {
     vk::raii::Image depthImage {nullptr};
@@ -84,8 +81,7 @@ private:
     DebugMessenger debugMessenger;
 
     PhysicalDevice physicalDevice;
-
-    vk::raii::Device device {nullptr}; // logical device
+    Device device;
 
     Queue queue;
 

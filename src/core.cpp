@@ -16,9 +16,9 @@ void Core::initVulkan() {
     initDepthFormat();
     
     // depends on physicalDevice and surface
-    createLogicalDevice();
+    device.create(physicalDevice.vkraii, surface, queue);
 
-    swapChain.create(physicalDevice.vkraii, device, surface, window);
+    swapChain.create(physicalDevice.vkraii, device.vkraii, surface, window);
     
     // depends on logical device
     createDescriptorSetLayout();
@@ -61,79 +61,8 @@ bool Core::step() const {
 }
 
 void Core::cleanup() {
-    swapChain.cleanupSwapChain(device);
+    swapChain.cleanupSwapChain(device.vkraii);
     window.cleanup();
-}
-
-void Core::createLogicalDevice() {
-    std::vector<vk::QueueFamilyProperties> const queueFamilyProperties {
-        physicalDevice.vkraii.getQueueFamilyProperties()
-    };
-
-    // Find first queue with graphics support which is also capable of presenting to the window,
-    // and store its index.
-    bool foundSuitableQueue {false};
-    queue.index = 0;
-    size_t const queueFamilyPropertiesSize {queueFamilyProperties.size()};
-    for (; queue.index < queueFamilyPropertiesSize; ++queue.index) {
-        bool supportsGraphics = (queueFamilyProperties[queue.index].queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
-        
-        // try catch?
-        bool supportsWindowPresentation = physicalDevice.vkraii.getSurfaceSupportKHR(queue.index, *surface);
-
-        if (supportsGraphics && supportsWindowPresentation) {
-            foundSuitableQueue = true;
-            break;
-        }
-    }
-
-    if (!foundSuitableQueue) {
-        throw std::runtime_error("Failed to find suitable queue");
-    }
-
-    float constexpr queuePriority {0.5f};
-    vk::DeviceQueueCreateInfo const deviceQueueCreateInfo {
-        .queueFamilyIndex = queue.index,
-        .queueCount = 1,
-        .pQueuePriorities = &queuePriority
-    };
-
-    //vk::PhysicalDeviceFeatures constexpr deviceFeatures;
-
-    // Create a chain of featured structures.
-    // Vulkan uses multiple features by chaining the features and then passing the first feature of the chain.
-    // In C, the chain is constructed using the pNext property.
-    vk::StructureChain<
-        vk::PhysicalDeviceFeatures2,
-        vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
-        vk::PhysicalDeviceVulkan11Features
-    > const featureChain {
-        {.features = {.samplerAnisotropy = true }},
-        {
-            .synchronization2 = true, // sync objects
-            .dynamicRendering = true
-        },
-        {.extendedDynamicState = true},
-        {.shaderDrawParameters = true} // for shader module creation
-    };
-
-    std::vector<char const *> const requiredDeviceExtensions {
-        vk::KHRSwapchainExtensionName
-    };
-
-    vk::DeviceCreateInfo const deviceCreateInfo {
-        .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
-        .queueCreateInfoCount = 1,
-        .pQueueCreateInfos = &deviceQueueCreateInfo,
-        .enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size()),
-        .ppEnabledExtensionNames = requiredDeviceExtensions.data()
-    };
-
-    // try catch?
-    device = vk::raii::Device(physicalDevice.vkraii, deviceCreateInfo);
-
-    queue.vkraii = vk::raii::Queue(device, queue.index, 0);
 }
 
 void Core::createSurface() {
@@ -157,7 +86,7 @@ void Core::createGraphicsPipeline() {
 
     // The shader module is only needed during the pipeline creation,
     // so we can keep it as a local variable for this method.
-    vk::raii::ShaderModule const shaderModule = Shader::createShaderModule(device, shaderCode);
+    vk::raii::ShaderModule const shaderModule = Shader::createShaderModule(device.vkraii, shaderCode);
 
     vk::PipelineShaderStageCreateInfo const vertShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -253,7 +182,7 @@ void Core::createGraphicsPipeline() {
         .pushConstantRangeCount = 0
     };
 
-    pipelineLayout = vk::raii::PipelineLayout(device, pipelineLayoutCreateInfo);
+    pipelineLayout = vk::raii::PipelineLayout(device.vkraii, pipelineLayoutCreateInfo);
 
     vk::PipelineRenderingCreateInfo const pipelineRenderingCreateInfo {
         .colorAttachmentCount = 1,
@@ -288,7 +217,7 @@ void Core::createGraphicsPipeline() {
     };
 
     // try catch?
-    graphicsPipeline = vk::raii::Pipeline(device, nullptr, graphicsPipelineCreateInfo);
+    graphicsPipeline = vk::raii::Pipeline(device.vkraii, nullptr, graphicsPipelineCreateInfo);
 }
 
 // COMMAND BUFFER
@@ -299,7 +228,7 @@ void Core::createCommandPool() {
         .queueFamilyIndex = queue.index
     };
 
-    commandPool = vk::raii::CommandPool(device, commandPoolCreateInfo);
+    commandPool = vk::raii::CommandPool(device.vkraii, commandPoolCreateInfo);
 }
 
 void Core::createCommandBuffers() {
@@ -310,7 +239,7 @@ void Core::createCommandBuffers() {
     };
 
     // vk::raii::CommandBuffers inherits from std::vector<vk::raii:CommandBuffer>
-    commandBuffers = vk::raii::CommandBuffers(device, commandBufferAllocateInfo);
+    commandBuffers = vk::raii::CommandBuffers(device.vkraii, commandBufferAllocateInfo);
 }
 
 void Core::transitionImageLayout(
@@ -489,12 +418,12 @@ void Core::createSyncObjects() {
 
     size_t const numberOfImages {swapChain.images.size()};
     for (size_t i {0}; i < numberOfImages; ++i) {
-        syncObjects.renderFinishedSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
+        syncObjects.renderFinishedSemaphores.emplace_back(vk::raii::Semaphore(device.vkraii, vk::SemaphoreCreateInfo()));
     }
 
     for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-        syncObjects.presentCompleteSemaphores.emplace_back(vk::raii::Semaphore(device, vk::SemaphoreCreateInfo()));
-        syncObjects.inFlightFences.emplace_back(vk::raii::Fence(device, fenceCreateInfo));
+        syncObjects.presentCompleteSemaphores.emplace_back(vk::raii::Semaphore(device.vkraii, vk::SemaphoreCreateInfo()));
+        syncObjects.inFlightFences.emplace_back(vk::raii::Fence(device.vkraii, fenceCreateInfo));
     }
 }
 
@@ -504,7 +433,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     vk::raii::Fence & drawFence {syncObjects.inFlightFences[frameIndex]};
 
     // Timeout is in nanoseconds. Use UINT64_MAX to effectivelly disable it.
-    vk::Result const fenceResult {device.waitForFences(*drawFence, vk::True, UINT64_MAX)};
+    vk::Result const fenceResult {device.vkraii.waitForFences(*drawFence, vk::True, UINT64_MAX)};
     if (fenceResult != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to wait for fence");
     }
@@ -514,7 +443,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     switch (resultValueAcquireNextImage.result) {
         case vk::Result::eErrorOutOfDateKHR:
         case vk::Result::eSuboptimalKHR: // resultValueAcquireNextImage.has_value() is giving false in this case, so must treat as error
-            swapChain.recreateSwapChain(physicalDevice.vkraii, device, surface, window);
+            swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface, window);
             createColorResources();
             createDepthResources();
             return;
@@ -543,7 +472,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
         .pSignalSemaphores = &*renderFinishedSemaphore
     };
 
-    device.resetFences(*drawFence);
+    device.vkraii.resetFences(*drawFence);
     queue.vkraii.submit(submitInfo, drawFence);
 
     vk::PresentInfoKHR const presentInfoKHR {
@@ -557,7 +486,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
 
     vk::Result const resultPresent {queue.vkraii.presentKHR(presentInfoKHR)};
     if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || window.getFrameBufferResized()) {
-        swapChain.recreateSwapChain(physicalDevice.vkraii, device, surface, window);
+        swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface, window);
         createColorResources();
         createDepthResources();
         return;
@@ -599,7 +528,7 @@ void Core::createBuffer(
         .sharingMode = vk::SharingMode::eExclusive
     };
 
-    buffer = vk::raii::Buffer(device, bufferCreateInfo);
+    buffer = vk::raii::Buffer(device.vkraii, bufferCreateInfo);
 
     vk::MemoryRequirements const memoryRequirements {buffer.getMemoryRequirements()};
 
@@ -614,7 +543,7 @@ void Core::createBuffer(
         .memoryTypeIndex = memoryTypeIndex
     };
 
-    bufferMemory = vk::raii::DeviceMemory(device, memoryAllocateInfo);
+    bufferMemory = vk::raii::DeviceMemory(device.vkraii, memoryAllocateInfo);
 
     vk::DeviceSize constexpr memoryOffset {0};
     buffer.bindMemory(*bufferMemory, memoryOffset);
@@ -716,7 +645,7 @@ void Core::createDescriptorSetLayout() {
         .pBindings = bindings.data()
     };
 
-    descriptorSetLayout = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfo);
+    descriptorSetLayout = vk::raii::DescriptorSetLayout(device.vkraii, descriptorSetLayoutCreateInfo);
 }
 
 void Core::createDescriptorPool() {
@@ -742,7 +671,7 @@ void Core::createDescriptorPool() {
         .pPoolSizes = descriptorPoolSizes.data()
     };
 
-    descriptorPool = vk::raii::DescriptorPool(device, descriptorPoolCreateInfo);
+    descriptorPool = vk::raii::DescriptorPool(device.vkraii, descriptorPoolCreateInfo);
 }
 
 void Core::allocateDescriptorSets(
@@ -760,11 +689,11 @@ void Core::allocateDescriptorSets(
         .pSetLayouts = descriptorSetLayouts.data()
     };
 
-    descriptorSets = device.allocateDescriptorSets(descriptorSetAllocateInfo);
+    descriptorSets = device.vkraii.allocateDescriptorSets(descriptorSetAllocateInfo);
 }
 
 void Core::updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const {
-    device.updateDescriptorSets(writeDescriptorSets, {});
+    device.vkraii.updateDescriptorSets(writeDescriptorSets, {});
 }
 
 void Core::createImage(
@@ -797,7 +726,7 @@ void Core::createImage(
         .initialLayout = vk::ImageLayout::eUndefined
     };
 
-    image = vk::raii::Image(device, imageCreateInfo);
+    image = vk::raii::Image(device.vkraii, imageCreateInfo);
 
     // Allocate memory for the image
     vk::MemoryRequirements const memoryRequirements {image.getMemoryRequirements()};
@@ -805,7 +734,7 @@ void Core::createImage(
         .allocationSize = memoryRequirements.size,
         .memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, imageMemoryProperties)
     };
-    imageMemory = vk::raii::DeviceMemory(device, memoryAllocateInfo);
+    imageMemory = vk::raii::DeviceMemory(device.vkraii, memoryAllocateInfo);
     // Bind the memory
     image.bindMemory(imageMemory, 0);
 }
@@ -817,7 +746,7 @@ void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) cons
         .commandBufferCount = 1
     };
 
-    commandBuffer = std::move(device.allocateCommandBuffers(commandBufferAllocateInfo).front());
+    commandBuffer = std::move(device.vkraii.allocateCommandBuffers(commandBufferAllocateInfo).front());
 
     vk::CommandBufferBeginInfo constexpr commandBufferBeginInfo {
         .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
@@ -894,7 +823,7 @@ vk::raii::ImageView Core::createImageView(
         }
     };
 
-    return vk::raii::ImageView(device, imageViewCreateInfo);
+    return vk::raii::ImageView(device.vkraii, imageViewCreateInfo);
 }
 
 // TEXTURE SAMPLER
@@ -920,7 +849,7 @@ void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
         .unnormalizedCoordinates = vk::False
     };
 
-    textureSampler = vk::raii::Sampler(device, samplerCreateInfo);
+    textureSampler = vk::raii::Sampler(device.vkraii, samplerCreateInfo);
 }
 
 vk::Format Core::findSupportedFormat(
