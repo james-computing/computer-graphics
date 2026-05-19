@@ -20,6 +20,10 @@ void Window::frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int h
     window->frameBufferResized = true;
 }
 
+void Window::getFramebufferSize(int & width, int & height) const {
+    glfwGetFramebufferSize(glfw, &width, &height);
+}
+
 bool Window::getFrameBufferResized() const {
     return frameBufferResized;    
 }

@@ -18,11 +18,7 @@ void Core::initVulkan() {
     // depends on physicalDevice and surface
     createLogicalDevice();
 
-    // depends on physicalDevice and surface
-    createSwapChain();
-    // depends on logical device and swap chain surface format,
-    // which is chosen in chooseSwapSurfaceFormat, which is called in createSwapChain
-    createSwapChainImageViews();
+    swapChain.create(physicalDevice.vkraii, device, surface, window);
     
     // depends on logical device
     createDescriptorSetLayout();
@@ -65,7 +61,7 @@ bool Core::step() const {
 }
 
 void Core::cleanup() {
-    cleanupSwapChain();
+    swapChain.cleanupSwapChain(device);
     window.cleanup();
 }
 
@@ -177,136 +173,6 @@ void Core::createSurface() {
 
     // Get a C++ surface from the C _surface
     surface = vk::raii::SurfaceKHR(instance, _surface);
-}
-
-// SWAP CHAIN
-
-vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const & availableFormats) const {
-    auto const formatIterator{
-        std::ranges::find_if(
-            availableFormats,
-            [] (vk::SurfaceFormatKHR const & availableFormat) -> bool {
-                return availableFormat.format == vk::Format::eB8G8R8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
-            }
-        )
-    };
-
-    if (formatIterator == availableFormats.end()) {
-        return availableFormats[0];
-    } else {
-        return *formatIterator;
-    }
-}
-
-vk::PresentModeKHR Core::chooseSwapPresentMode(std::vector<vk::PresentModeKHR> const & availablePresentModes) const {
-    bool fifoAvailable {false};
-    for (vk::PresentModeKHR const & presentMode : availablePresentModes) {
-        switch (presentMode) {
-            case vk::PresentModeKHR::eMailbox:
-                return vk::PresentModeKHR::eMailbox;
-            case vk::PresentModeKHR::eFifo:
-                fifoAvailable = true;
-                break;
-        }
-    }
-
-    if (fifoAvailable) {
-        return vk::PresentModeKHR::eFifo;
-    }
-    else {
-        throw std::runtime_error("Neither eFifo or eMailbox present modes avaiable"); 
-    }
-}
-
-vk::Extent2D Core::chooseSwapExtent(vk::SurfaceCapabilitiesKHR const & capabilities) const {
-    // If width != max, capabilities.currentExtent already have the correct Extent2D, just return it
-    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-        return capabilities.currentExtent;
-    }
-
-    // Otherwise, we can choose an extent.
-    // Width and height must be between the minimum and maximum values allowed, we solve this by clamping.
-    // The width and height must be in pixels, the appropriate values are obtained from the framebuffer size.
-    int width, height;
-    glfwGetFramebufferSize(window.glfw, &width, &height);
-
-    return vk::Extent2D {
-        std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
-        std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
-    };
-}
-
-uint32_t Core::chooseSwapImageCount(vk::SurfaceCapabilitiesKHR const & surfaceCapabilities) const {
-    // Pick at least 3 images, and at least the minimum + 1
-    uint32_t minImageCount {std::max(3u, surfaceCapabilities.minImageCount + 1)};
-
-    // Don't pass the maximum
-    bool const thereIsAMax {surfaceCapabilities.maxImageCount > 0};
-    if (thereIsAMax && surfaceCapabilities.maxImageCount < minImageCount) {
-        minImageCount = surfaceCapabilities.maxImageCount;
-    }
-
-    return minImageCount;
-}
-
-void Core::createSwapChain() {
-    // Same from createLogicalDevice
-    // try catch?
-    vk::SurfaceCapabilitiesKHR const surfaceCapabilities {physicalDevice.vkraii.getSurfaceCapabilitiesKHR(*surface)};
-    swapChain.extent = chooseSwapExtent(surfaceCapabilities);
-    uint32_t const minImageCount {chooseSwapImageCount(surfaceCapabilities)};
-
-    // Same from createLogicalDevice
-    // try catch?
-    std::vector<vk::SurfaceFormatKHR> const availableFormats {physicalDevice.vkraii.getSurfaceFormatsKHR(*surface)};
-    swapChain.surfaceFormat = chooseSwapSurfaceFormat(availableFormats);
-
-    // try catch?
-    std::vector<vk::PresentModeKHR> const availablePresentModes = physicalDevice.vkraii.getSurfacePresentModesKHR(*surface);
-    vk::PresentModeKHR const presentMode {chooseSwapPresentMode(availablePresentModes)};
-
-    vk::SwapchainCreateInfoKHR const swapChainCreateInfo {
-        .surface = *surface,
-        .minImageCount = minImageCount,
-        .imageFormat = swapChain.surfaceFormat.format,
-        .imageColorSpace = swapChain.surfaceFormat.colorSpace,
-        .imageExtent = swapChain.extent,
-        .imageArrayLayers = 1, // because not a stereoscopic 3D application
-        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
-        .imageSharingMode = vk::SharingMode::eExclusive,
-        .preTransform = surfaceCapabilities.currentTransform, // don't apply any transformation
-        .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
-        .presentMode = presentMode,
-        .clipped = true
-    };
-    
-    // try catch?
-    swapChain.vkraii = vk::raii::SwapchainKHR(device, swapChainCreateInfo);
-    // try catch?
-    swapChain.images = swapChain.vkraii.getImages();
-}
-
-void Core::createSwapChainImageViews() {
-    assert(swapChain.imageViews.empty());
-
-    vk::ImageViewCreateInfo imageViewCreateInfo {
-        .viewType = vk::ImageViewType::e2D,
-        .format = swapChain.surfaceFormat.format,
-        .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-        }
-    };
-
-    // Could use createImageView in this for loop, but won't, because it could be creating multiple
-    // copies of imageViewCreateInfo unnecessarily.
-    for (vk::Image & image : swapChain.images) {
-        imageViewCreateInfo.image = image;
-        swapChain.imageViews.emplace_back(vk::raii::ImageView(device, imageViewCreateInfo));
-    }
 }
 
 void Core::createGraphicsPipeline() {
@@ -672,7 +538,9 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     switch (resultValueAcquireNextImage.result) {
         case vk::Result::eErrorOutOfDateKHR:
         case vk::Result::eSuboptimalKHR: // resultValueAcquireNextImage.has_value() is giving false in this case, so must treat as error
-            recreateSwapChain();
+            swapChain.recreateSwapChain(physicalDevice.vkraii, device, surface, window);
+            createColorResources();
+            createDepthResources();
             return;
         case vk::Result::eSuccess:
             break;
@@ -713,7 +581,9 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
 
     vk::Result const resultPresent {queue.vkraii.presentKHR(presentInfoKHR)};
     if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || window.getFrameBufferResized()) {
-        recreateSwapChain();
+        swapChain.recreateSwapChain(physicalDevice.vkraii, device, surface, window);
+        createColorResources();
+        createDepthResources();
         return;
     } else if (resultPresent != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to present image");
@@ -723,32 +593,6 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     if (frameIndex == MAX_FRAMES_IN_FLIGHT) {
         frameIndex = 0;
     }
-}
-
-void Core::cleanupSwapChain() {
-    device.waitIdle();
-    swapChain.imageViews.clear();
-    swapChain.vkraii = nullptr;
-}
-
-void Core::recreateSwapChain() {
-    // Handle window minimization by waiting for width and height to be non zero
-    int width;
-    int height;
-    glfwGetFramebufferSize(window.glfw, &width, &height);
-    while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window.glfw, &width, &height);
-        glfwWaitEvents();
-    }
-
-    // Now the window should not be minimized, with width and height non zero.
-    // Proceed with swap chain recreation.
-
-    cleanupSwapChain();
-    createSwapChain();
-    createSwapChainImageViews();
-    createColorResources();
-    createDepthResources();
 }
 
 uint32_t Core::findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const {

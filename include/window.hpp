@@ -23,6 +23,7 @@ private:
 
 public:
     void init();
+    void getFramebufferSize(int & width, int & height) const;
     bool getFrameBufferResized() const;
     bool shouldClose() const;
     void pollEvents() const;

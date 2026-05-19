@@ -26,19 +26,12 @@ import vulkan_hpp;
 #include "../include/debugMessenger.hpp"
 #include "../include/window.hpp"
 #include "../include/physicalDevice.hpp"
+#include "../include/swapChain.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/shader.hpp"
 
 #include "../libraries/stb/stb_image.h"
-
-struct SwapChain {
-    vk::Extent2D extent;
-    vk::SurfaceFormatKHR surfaceFormat;
-    vk::raii::SwapchainKHR vkraii {nullptr};
-    std::vector<vk::Image> images;
-    std::vector<vk::raii::ImageView> imageViews;
-};
 
 struct Queue {
     uint32_t index;
@@ -207,13 +200,6 @@ private:
 
     void createSurface();
 
-    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const & availableFormats) const;
-    vk::PresentModeKHR chooseSwapPresentMode(std::vector<vk::PresentModeKHR> const & availablePresentModes) const;
-    vk::Extent2D chooseSwapExtent(vk::SurfaceCapabilitiesKHR const & capabilities) const;
-    uint32_t chooseSwapImageCount(vk::SurfaceCapabilitiesKHR const & surfaceCapabilities) const;
-    void createSwapChain();
-    void createSwapChainImageViews();
-
     void createGraphicsPipeline();
 
     void createCommandPool();
@@ -237,9 +223,6 @@ private:
     ) const;
 
     void createSyncObjects();
-
-    void cleanupSwapChain();
-    void recreateSwapChain();
 
     uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
 
