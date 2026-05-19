@@ -822,32 +822,6 @@ void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
     textureSampler = vk::raii::Sampler(device.vkraii, samplerCreateInfo);
 }
 
-vk::Format Core::findSupportedFormat(
-    std::vector<vk::Format> const & candidateFormats,
-    vk::ImageTiling const tiling,
-    vk::FormatFeatureFlags const features
-) const {
-    switch (tiling) {
-        case vk::ImageTiling::eLinear:
-            for (vk::Format const & format : candidateFormats) {
-                vk::FormatProperties const props {physicalDevice.vkraii.getFormatProperties(format)};
-                if ((props.linearTilingFeatures & features) == features) {
-                    return format;
-                }
-            }
-            break;
-        case vk::ImageTiling::eOptimal:
-            for (vk::Format const & format : candidateFormats) {
-                vk::FormatProperties const props {physicalDevice.vkraii.getFormatProperties(format)};
-                if ((props.optimalTilingFeatures & features) == features) {
-                    return format;
-                }
-            }
-            break;
-    }
-    throw std::runtime_error("Failed to find supported format");
-}
-
 // DEPTH & STENCIL
 
 bool Core::hasStencilComponent(vk::Format const format) const {
@@ -861,7 +835,11 @@ void Core::initDepthFormat() {
         vk::Format::eD24UnormS8Uint
     };
 
-    depthStencil.depthFormat = findSupportedFormat(candidateFormats, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+    depthStencil.depthFormat = physicalDevice.findSupportedFormat(
+        candidateFormats,
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment
+    );
 }
 
 void Core::createDepthResources() {

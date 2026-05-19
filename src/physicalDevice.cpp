@@ -103,3 +103,29 @@ uint32_t PhysicalDevice::findMemoryType(uint32_t const typeFilter, vk::MemoryPro
 
     throw std::runtime_error("Failed to find suitable memory type");
 }
+
+vk::Format PhysicalDevice::findSupportedFormat(
+    std::vector<vk::Format> const & candidateFormats,
+    vk::ImageTiling const tiling,
+    vk::FormatFeatureFlags const features
+) const {
+    switch (tiling) {
+        case vk::ImageTiling::eLinear:
+            for (vk::Format const & format : candidateFormats) {
+                vk::FormatProperties const props {vkraii.getFormatProperties(format)};
+                if ((props.linearTilingFeatures & features) == features) {
+                    return format;
+                }
+            }
+            break;
+        case vk::ImageTiling::eOptimal:
+            for (vk::Format const & format : candidateFormats) {
+                vk::FormatProperties const props {vkraii.getFormatProperties(format)};
+                if ((props.optimalTilingFeatures & features) == features) {
+                    return format;
+                }
+            }
+            break;
+    }
+    throw std::runtime_error("Failed to find supported format");
+}

@@ -229,12 +229,6 @@ private:
     void createDescriptorSetLayout();
     void createDescriptorPool();
 
-    vk::Format findSupportedFormat(
-        std::vector<vk::Format> const & candidateFormats,
-        vk::ImageTiling const tiling,
-        vk::FormatFeatureFlags const features
-    ) const;
-
     // Depth stencil
     bool hasStencilComponent(vk::Format const format) const;
     void initDepthFormat();
