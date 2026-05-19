@@ -22,9 +22,9 @@ import vulkan_hpp;
 #include <unordered_map>
 
 #include "../include/validationLayers.hpp"
-#include "../include/glfwExtensions.hpp"
 #include "../include/debugMessenger.hpp"
 #include "../include/window.hpp"
+#include "../include/instance.hpp"
 #include "../include/physicalDevice.hpp"
 #include "../include/swapChain.hpp"
 #include "../include/vertex.hpp"
@@ -77,7 +77,8 @@ private:
     Window window;
 
     vk::raii::Context context;
-    vk::raii::Instance instance {nullptr};
+
+    Instance instance;
 
     ValidationLayers validationLayers;
     DebugMessenger debugMessenger;
@@ -193,8 +194,6 @@ public:
 
 private:
     void initVulkan();
-
-    void createInstance();
 
     void createLogicalDevice();
 

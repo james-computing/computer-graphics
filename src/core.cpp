@@ -1,13 +1,13 @@
 #include "../include/core.hpp"
 
 void Core::initVulkan() {
-    createInstance();
+    instance.create(context, validationLayers);
 
     // depends on instance
     if (validationLayers.enable) {
-        debugMessenger.setup(instance); // make debug messenger first, because we want to be able to debug early
+        debugMessenger.setup(instance.vkraii); // make debug messenger first, because we want to be able to debug early
     }
-    physicalDevice.pick(instance);
+    physicalDevice.pick(instance.vkraii);
     createSurface();
 
     // depends on physical device.
@@ -63,30 +63,6 @@ bool Core::step() const {
 void Core::cleanup() {
     swapChain.cleanupSwapChain(device);
     window.cleanup();
-}
-
-void Core::createInstance() {
-    std::vector<char const *> const requiredGLFWExtensions = GLFWExtensions::getRequiredGLFWExtensions(context, validationLayers.enable);
-    std::vector<char const *> const requiredValidationLayers = validationLayers.getRequiredValidationLayers(context);
-
-    vk::ApplicationInfo constexpr appInfo {
-        .pApplicationName = "Application",
-        .applicationVersion = VK_MAKE_API_VERSION(1, 0, 0, 0), // VK_MAKE_VERSION is deprecated
-        .pEngineName = "No Engine",
-        .engineVersion = VK_MAKE_API_VERSION(1, 0, 0, 0), // VK_MAKE_VERSION is deprecated
-        .apiVersion = vk::ApiVersion14
-    };
-
-    vk::InstanceCreateInfo const createInfo {
-        .pApplicationInfo = &appInfo,
-        .enabledLayerCount = static_cast<uint32_t>(requiredValidationLayers.size()),
-        .ppEnabledLayerNames = requiredValidationLayers.data(),
-        .enabledExtensionCount = static_cast<uint32_t>(requiredGLFWExtensions.size()),
-        .ppEnabledExtensionNames = requiredGLFWExtensions.data()
-    };
-
-    // try catch?
-    instance = vk::raii::Instance(context, createInfo);
 }
 
 void Core::createLogicalDevice() {
@@ -164,7 +140,7 @@ void Core::createSurface() {
     // C struct
     VkSurfaceKHR _surface;
     // C function call
-    VkResult result = glfwCreateWindowSurface(*instance, window.glfw, nullptr, &_surface);
+    VkResult result = glfwCreateWindowSurface(*instance.vkraii, window.glfw, nullptr, &_surface);
 
     if (result != VkResult::VK_SUCCESS) {
         std::cerr << "Failed to create window surface";
@@ -172,7 +148,7 @@ void Core::createSurface() {
     }
 
     // Get a C++ surface from the C _surface
-    surface = vk::raii::SurfaceKHR(instance, _surface);
+    surface = vk::raii::SurfaceKHR(instance.vkraii, _surface);
 }
 
 void Core::createGraphicsPipeline() {
