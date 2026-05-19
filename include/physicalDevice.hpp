@@ -13,6 +13,7 @@ class PhysicalDevice {
 public:
     vk::raii::PhysicalDevice vkraii {nullptr};
     void pick(vk::raii::Instance const & instance);
+    uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
 
 private:
     static bool isSuitable(vk::raii::PhysicalDevice const & physicalDevice);

@@ -485,21 +485,6 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     }
 }
 
-uint32_t Core::findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const {
-    vk::PhysicalDeviceMemoryProperties const memoryProperties {physicalDevice.vkraii.getMemoryProperties()};
-
-    for (uint32_t i {0}; i < memoryProperties.memoryTypeCount; ++i) {
-        if (
-            (typeFilter & (1 << i)) &&
-            (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties
-        ) {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("Failed to find suitable memory type");
-}
-
 void Core::createBuffer(
     vk::DeviceSize const bufferSize,
     vk::BufferUsageFlags const bufferUsage,
@@ -518,7 +503,7 @@ void Core::createBuffer(
     vk::MemoryRequirements const memoryRequirements {buffer.getMemoryRequirements()};
 
     uint32_t const memoryTypeIndex {
-        findMemoryType(
+        physicalDevice.findMemoryType(
             memoryRequirements.memoryTypeBits,
             memoryProperties
         )
@@ -717,7 +702,7 @@ void Core::createImage(
     vk::MemoryRequirements const memoryRequirements {image.getMemoryRequirements()};
     vk::MemoryAllocateInfo const memoryAllocateInfo {
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, imageMemoryProperties)
+        .memoryTypeIndex = physicalDevice.findMemoryType(memoryRequirements.memoryTypeBits, imageMemoryProperties)
     };
     imageMemory = vk::raii::DeviceMemory(device.vkraii, memoryAllocateInfo);
     // Bind the memory

@@ -216,8 +216,6 @@ private:
 
     void createSyncObjects();
 
-    uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
-
     template <typename T>
     void copyToBuffer(
         std::vector<T> const & v,
