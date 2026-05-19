@@ -140,6 +140,13 @@ public:
         vk::raii::DeviceMemory & imageMemory
     ) const;
 
+    vk::raii::ImageView createImageView(
+        vk::raii::Image const & image,
+        vk::Format const format,
+        vk::ImageAspectFlags const  aspectFlags,
+        uint32_t const mipLevels
+    ) const;
+
     void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const;
     void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const;
 
@@ -148,13 +155,6 @@ public:
         vk::raii::Image const & image,
         uint32_t const width,
         uint32_t const height
-    ) const;
-
-    vk::raii::ImageView createImageView(
-        vk::raii::Image const & image,
-        vk::Format const format,
-        vk::ImageAspectFlags const  aspectFlags,
-        uint32_t const mipLevels
     ) const;
 
     void createTextureSampler(vk::raii::Sampler & textureSampler) const;

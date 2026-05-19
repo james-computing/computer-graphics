@@ -577,6 +577,28 @@ void Core::createImage(
     image.bindMemory(imageMemory, 0);
 }
 
+vk::raii::ImageView Core::createImageView(
+    vk::raii::Image const & image,
+    vk::Format const format,
+    vk::ImageAspectFlags const aspectFlags,
+    uint32_t const mipLevels
+) const {
+    vk::ImageViewCreateInfo const imageViewCreateInfo {
+        .image = image,
+        .viewType = vk::ImageViewType::e2D,
+        .format = format,
+        .subresourceRange = vk::ImageSubresourceRange {
+            .aspectMask = aspectFlags,
+            .baseMipLevel = 0,
+            .levelCount = mipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    return vk::raii::ImageView(device.vkraii, imageViewCreateInfo);
+}
+
 void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const {
     vk::CommandBufferAllocateInfo const commandBufferAllocateInfo {
         .commandPool = commandPool,
@@ -640,28 +662,6 @@ void Core::copyBufferToImage(
     commandBuffer.copyBufferToImage(*buffer, *image, vk::ImageLayout::eTransferDstOptimal, region);
 
     endSingleTimeCommands(commandBuffer);
-}
-
-vk::raii::ImageView Core::createImageView(
-    vk::raii::Image const & image,
-    vk::Format const format,
-    vk::ImageAspectFlags const aspectFlags,
-    uint32_t const mipLevels
-) const {
-    vk::ImageViewCreateInfo const imageViewCreateInfo {
-        .image = image,
-        .viewType = vk::ImageViewType::e2D,
-        .format = format,
-        .subresourceRange = vk::ImageSubresourceRange {
-            .aspectMask = aspectFlags,
-            .baseMipLevel = 0,
-            .levelCount = mipLevels,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-        }
-    };
-
-    return vk::raii::ImageView(device.vkraii, imageViewCreateInfo);
 }
 
 // TEXTURE SAMPLER

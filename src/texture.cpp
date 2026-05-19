@@ -188,30 +188,10 @@ void Texture::generateMipmaps(Core const & core, vk::Format imageFormat) const {
 }
 
 void Texture::createTextureImage(Core const & core, stbi_uc const * const pixels) {
+    // First create the image
+
     vk::DeviceSize const imageSize {(vk::DeviceSize) (textureWidth * textureHeight * 4)};
-
-    // Create a staging buffer to receive the image
-    vk::raii::Buffer stagingBuffer {nullptr};
-    vk::raii::DeviceMemory stagingBufferMemory {nullptr};
-    vk::BufferUsageFlags constexpr stagingBufferUsageFlags {vk::BufferUsageFlagBits::eTransferSrc};
-    vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
-        // Memory visible to host and available immediately to the device
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-    };
-    core.createBuffer(
-        imageSize,
-        stagingBufferUsageFlags,
-        stagingBufferMemoryProperties,
-        stagingBuffer,
-        stagingBufferMemory
-    );
-
-    // Transfer the image to the staging buffer
-    void * data {stagingBufferMemory.mapMemory(0, imageSize)};
-    memcpy(data, pixels, imageSize);
-    stagingBufferMemory.unmapMemory();
-    data = nullptr;
-
+    
     vk::ImageTiling constexpr imageTiling {vk::ImageTiling::eOptimal};
     vk::ImageUsageFlags constexpr imageUsage {
         vk::ImageUsageFlagBits::eTransferSrc | // for mip map creation
@@ -232,15 +212,39 @@ void Texture::createTextureImage(Core const & core, stbi_uc const * const pixels
         imageMemory
     );
     
-    // Transition image layout to receive texture
+    // Transition image layout to receive texture later
     transitionTextureImageLayout(
         core,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eTransferDstOptimal
     );
+
+    // Create a staging buffer to receive the texture. It will be used to transfer the texture to the image.
+    vk::raii::Buffer stagingBuffer {nullptr};
+    vk::raii::DeviceMemory stagingBufferMemory {nullptr};
+    vk::BufferUsageFlags constexpr stagingBufferUsageFlags {vk::BufferUsageFlagBits::eTransferSrc};
+    vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
+        // Memory visible to host and available immediately to the device
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+    };
+    core.createBuffer(
+        imageSize,
+        stagingBufferUsageFlags,
+        stagingBufferMemoryProperties,
+        stagingBuffer,
+        stagingBufferMemory
+    );
+
+    // Transfer the image to the staging buffer
+    void * data {stagingBufferMemory.mapMemory(0, imageSize)};
+    memcpy(data, pixels, imageSize);
+    stagingBufferMemory.unmapMemory();
+    data = nullptr;
+    
     // Copy texture from staging buffer to image
     core.copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
 
+    // The image layout will be transitioned to be used by the shader when generating the mipmaps.
     generateMipmaps(core, vk::Format::eR8G8B8A8Srgb);
 }
 
