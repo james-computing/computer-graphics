@@ -420,6 +420,32 @@ void Core::createIndexBuffer() {
     );
 }
 
+void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const {
+    vk::CommandBufferAllocateInfo const commandBufferAllocateInfo {
+        .commandPool = commandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+
+    commandBuffer = std::move(device.vkraii.allocateCommandBuffers(commandBufferAllocateInfo).front());
+
+    vk::CommandBufferBeginInfo constexpr commandBufferBeginInfo {
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    };
+    commandBuffer.begin(commandBufferBeginInfo);
+}
+
+void Core::endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const {
+    commandBuffer.end();
+
+    vk::SubmitInfo const submitInfo {
+        .commandBufferCount = 1,
+        .pCommandBuffers = &*commandBuffer
+    };
+    queue.vkraii.submit(submitInfo, {});
+    queue.vkraii.waitIdle();
+}
+
 void Core::copyBuffer(
     vk::raii::Buffer const & srcBuffer,
     vk::raii::Buffer const & dstBuffer,
@@ -452,86 +478,6 @@ void Core::copyIndicesToIndexBuffer(
     vk::DeviceSize const & dstOffset
 ) const {
     copyToBuffer<uint32_t>(indices, dstOffset, indexBuffer.buffer);
-}
-
-// DESCRIPTOR SETS
-
-void Core::createDescriptorSetLayout() {
-    vk::DescriptorSetLayoutBinding constexpr uboDescriptorSetLayoutBinding {
-        .binding = 0,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .pImmutableSamplers = nullptr
-    };
-
-    vk::DescriptorSetLayoutBinding constexpr combinedImageSamplerDescriptorSetLayoutBinding {
-        .binding = 1,
-        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    };
-
-    std::array<vk::DescriptorSetLayoutBinding, 2> bindings {
-        uboDescriptorSetLayoutBinding, 
-        combinedImageSamplerDescriptorSetLayoutBinding
-    };
-
-    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfo {
-        .bindingCount = static_cast<uint32_t>(bindings.size()),
-        .pBindings = bindings.data()
-    };
-
-    descriptorSetLayout = vk::raii::DescriptorSetLayout(device.vkraii, descriptorSetLayoutCreateInfo);
-}
-
-void Core::createDescriptorPool() {
-    vk::DescriptorPoolSize const uniformBufferDescriptorPoolSize {
-        .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = MAX_FRAMES_IN_FLIGHT
-    };
-
-    vk::DescriptorPoolSize const combinedImageSamplerDescriptorPoolSize {
-        .type = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = MAX_FRAMES_IN_FLIGHT
-    };
-
-    std::array<vk::DescriptorPoolSize, 2> descriptorPoolSizes {
-        uniformBufferDescriptorPoolSize,
-        combinedImageSamplerDescriptorPoolSize
-    };
-
-    vk::DescriptorPoolCreateInfo const descriptorPoolCreateInfo {
-        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = MAX_FRAMES_IN_FLIGHT,
-        .poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size()),
-        .pPoolSizes = descriptorPoolSizes.data()
-    };
-
-    descriptorPool = vk::raii::DescriptorPool(device.vkraii, descriptorPoolCreateInfo);
-}
-
-void Core::allocateDescriptorSets(
-    uint32_t const descriptorSetCount,
-    std::vector<vk::raii::DescriptorSet> & descriptorSets
-) const {
-    // Vector with descriptorSetCount copies of *descriptorSetLayout.
-    // It is needed because descriptorSetAllocateInfo receives an array of layouts.
-    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptorSetLayout)};
-
-    // Allocate descriptor sets
-    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = descriptorSetCount,
-        .pSetLayouts = descriptorSetLayouts.data()
-    };
-
-    descriptorSets = device.vkraii.allocateDescriptorSets(descriptorSetAllocateInfo);
-}
-
-void Core::updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const {
-    device.vkraii.updateDescriptorSets(writeDescriptorSets, {});
 }
 
 void Core::createImage(
@@ -597,32 +543,6 @@ vk::raii::ImageView Core::createImageView(
     };
 
     return vk::raii::ImageView(device.vkraii, imageViewCreateInfo);
-}
-
-void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const {
-    vk::CommandBufferAllocateInfo const commandBufferAllocateInfo {
-        .commandPool = commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1
-    };
-
-    commandBuffer = std::move(device.vkraii.allocateCommandBuffers(commandBufferAllocateInfo).front());
-
-    vk::CommandBufferBeginInfo constexpr commandBufferBeginInfo {
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-    };
-    commandBuffer.begin(commandBufferBeginInfo);
-}
-
-void Core::endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const {
-    commandBuffer.end();
-
-    vk::SubmitInfo const submitInfo {
-        .commandBufferCount = 1,
-        .pCommandBuffers = &*commandBuffer
-    };
-    queue.vkraii.submit(submitInfo, {});
-    queue.vkraii.waitIdle();
 }
 
 void Core::copyBufferToImage(
@@ -784,6 +704,86 @@ void Core::createColorResources() {
     );
 
     msaa.colorImageView = createImageView(msaa.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
+}
+
+// DESCRIPTOR SETS
+
+void Core::createDescriptorSetLayout() {
+    vk::DescriptorSetLayoutBinding constexpr uboDescriptorSetLayoutBinding {
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .pImmutableSamplers = nullptr
+    };
+
+    vk::DescriptorSetLayoutBinding constexpr combinedImageSamplerDescriptorSetLayoutBinding {
+        .binding = 1,
+        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    };
+
+    std::array<vk::DescriptorSetLayoutBinding, 2> bindings {
+        uboDescriptorSetLayoutBinding, 
+        combinedImageSamplerDescriptorSetLayoutBinding
+    };
+
+    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfo {
+        .bindingCount = static_cast<uint32_t>(bindings.size()),
+        .pBindings = bindings.data()
+    };
+
+    descriptorSetLayout = vk::raii::DescriptorSetLayout(device.vkraii, descriptorSetLayoutCreateInfo);
+}
+
+void Core::createDescriptorPool() {
+    vk::DescriptorPoolSize const uniformBufferDescriptorPoolSize {
+        .type = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = MAX_FRAMES_IN_FLIGHT
+    };
+
+    vk::DescriptorPoolSize const combinedImageSamplerDescriptorPoolSize {
+        .type = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount = MAX_FRAMES_IN_FLIGHT
+    };
+
+    std::array<vk::DescriptorPoolSize, 2> descriptorPoolSizes {
+        uniformBufferDescriptorPoolSize,
+        combinedImageSamplerDescriptorPoolSize
+    };
+
+    vk::DescriptorPoolCreateInfo const descriptorPoolCreateInfo {
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = MAX_FRAMES_IN_FLIGHT,
+        .poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size()),
+        .pPoolSizes = descriptorPoolSizes.data()
+    };
+
+    descriptorPool = vk::raii::DescriptorPool(device.vkraii, descriptorPoolCreateInfo);
+}
+
+void Core::allocateDescriptorSets(
+    uint32_t const descriptorSetCount,
+    std::vector<vk::raii::DescriptorSet> & descriptorSets
+) const {
+    // Vector with descriptorSetCount copies of *descriptorSetLayout.
+    // It is needed because descriptorSetAllocateInfo receives an array of layouts.
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptorSetLayout)};
+
+    // Allocate descriptor sets
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = descriptorSetCount,
+        .pSetLayouts = descriptorSetLayouts.data()
+    };
+
+    descriptorSets = device.vkraii.allocateDescriptorSets(descriptorSetAllocateInfo);
+}
+
+void Core::updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const {
+    device.vkraii.updateDescriptorSets(writeDescriptorSets, {});
 }
 
 // GETTERS
