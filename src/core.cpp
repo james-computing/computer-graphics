@@ -8,7 +8,7 @@ void Core::initVulkan() {
         debugMessenger.setup(instance.vkraii); // make debug messenger first, because we want to be able to debug early
     }
     physicalDevice.pick(instance.vkraii);
-    createSurface();
+    surface.create(instance.vkraii, window.glfw);
 
     // depends on physical device.
     // msaaSamples is used when creating the graphics pipeline and the color and depth resources.
@@ -16,9 +16,9 @@ void Core::initVulkan() {
     initDepthFormat();
     
     // depends on physicalDevice and surface
-    device.create(physicalDevice.vkraii, surface, queue);
+    device.create(physicalDevice.vkraii, surface.vkraii, queue);
 
-    swapChain.create(physicalDevice.vkraii, device.vkraii, surface, window);
+    swapChain.create(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
     
     // depends on logical device
     createDescriptorSetLayout();
@@ -63,21 +63,6 @@ bool Core::step() const {
 void Core::cleanup() {
     swapChain.cleanupSwapChain(device.vkraii);
     window.cleanup();
-}
-
-void Core::createSurface() {
-    // C struct
-    VkSurfaceKHR _surface;
-    // C function call
-    VkResult result = glfwCreateWindowSurface(*instance.vkraii, window.glfw, nullptr, &_surface);
-
-    if (result != VkResult::VK_SUCCESS) {
-        std::cerr << "Failed to create window surface";
-        return;
-    }
-
-    // Get a C++ surface from the C _surface
-    surface = vk::raii::SurfaceKHR(instance.vkraii, _surface);
 }
 
 void Core::createGraphicsPipeline() {
@@ -443,7 +428,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     switch (resultValueAcquireNextImage.result) {
         case vk::Result::eErrorOutOfDateKHR:
         case vk::Result::eSuboptimalKHR: // resultValueAcquireNextImage.has_value() is giving false in this case, so must treat as error
-            swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface, window);
+            swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
             createColorResources();
             createDepthResources();
             return;
@@ -486,7 +471,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
 
     vk::Result const resultPresent {queue.vkraii.presentKHR(presentInfoKHR)};
     if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || window.getFrameBufferResized()) {
-        swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface, window);
+        swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
         createColorResources();
         createDepthResources();
         return;

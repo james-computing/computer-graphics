@@ -24,6 +24,7 @@ import vulkan_hpp;
 #include "../include/validationLayers.hpp"
 #include "../include/debugMessenger.hpp"
 #include "../include/window.hpp"
+#include "../include/surface.hpp"
 #include "../include/instance.hpp"
 #include "../include/physicalDevice.hpp"
 #include "../include/queue.hpp"
@@ -85,7 +86,7 @@ private:
 
     Queue queue;
 
-    vk::raii::SurfaceKHR surface {nullptr};
+    Surface surface;
     SwapChain swapChain;
 
     vk::raii::PipelineLayout pipelineLayout {nullptr};
@@ -190,10 +191,6 @@ public:
 
 private:
     void initVulkan();
-
-    void createLogicalDevice();
-
-    void createSurface();
 
     void createGraphicsPipeline();
 
