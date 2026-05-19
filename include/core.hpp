@@ -118,13 +118,6 @@ public:
         vk::raii::DeviceMemory & bufferMemory
     ) const;
 
-    void copyBuffer(
-        vk::raii::Buffer const & srcBuffer,
-        vk::raii::Buffer const & dstBuffer,
-        vk::DeviceSize const & dstOffset,
-        vk::DeviceSize const bufferSize
-    ) const;
-
     void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
         vk::DeviceSize const & dstOffset
@@ -205,6 +198,13 @@ private:
     ) const;
 
     void createSyncObjects();
+
+    void copyBuffer(
+        vk::raii::Buffer const & srcBuffer,
+        vk::raii::Buffer const & dstBuffer,
+        vk::DeviceSize const & dstOffset,
+        vk::DeviceSize const bufferSize
+    ) const;
 
     template <typename T>
     void copyToBuffer(
