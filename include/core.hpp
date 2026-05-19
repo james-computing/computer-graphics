@@ -30,9 +30,9 @@ import vulkan_hpp;
 #include "../include/queue.hpp"
 #include "../include/device.hpp"
 #include "../include/swapChain.hpp"
+#include "../include/graphicsPipeline.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
-#include "../include/shader.hpp"
 
 #include "../libraries/stb/stb_image.h"
 
@@ -73,25 +73,17 @@ class Core {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
     Window window;
-
     vk::raii::Context context;
-
     Instance instance;
-
     ValidationLayers validationLayers;
     DebugMessenger debugMessenger;
-
     PhysicalDevice physicalDevice;
     Device device;
-
     Queue queue;
-
     Surface surface;
     SwapChain swapChain;
-
-    vk::raii::PipelineLayout pipelineLayout {nullptr};
-    vk::raii::Pipeline graphicsPipeline {nullptr};
-
+    GraphicsPipeline graphicsPipeline;
+    
     vk::raii::CommandPool commandPool {nullptr};
     std::vector<vk::raii::CommandBuffer> commandBuffers;
 
@@ -191,8 +183,6 @@ public:
 
 private:
     void initVulkan();
-
-    void createGraphicsPipeline();
 
     void createCommandPool();
     void createCommandBuffers();

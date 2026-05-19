@@ -13,5 +13,5 @@ import vulkan_hpp;
 
 namespace Shader {
     std::vector<char> readFile(std::string const & filename);
-    [[nodiscard]] vk::raii::ShaderModule createShaderModule(vk::raii::Device & device, std::vector<char> const & code);
+    [[nodiscard]] vk::raii::ShaderModule createShaderModule(vk::raii::Device const & device, std::vector<char> const & code);
 }

@@ -23,7 +23,7 @@ std::vector<char> readFile(std::string const & filename) {
     return buffer;
 }
 
-[[nodiscard]] vk::raii::ShaderModule createShaderModule(vk::raii::Device & device, std::vector<char> const & code) {
+[[nodiscard]] vk::raii::ShaderModule createShaderModule(vk::raii::Device const & device, std::vector<char> const & code) {
     // Size of type used for code, in bytes.
     // If the type is char, then typeSizeInBytes = 1.
     size_t constexpr typeSizeInBytes {sizeof(*code.data())};
