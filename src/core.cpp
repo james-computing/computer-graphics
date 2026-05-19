@@ -296,9 +296,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
     switch (resultValueAcquireNextImage.result) {
         case vk::Result::eErrorOutOfDateKHR:
         case vk::Result::eSuboptimalKHR: // resultValueAcquireNextImage.has_value() is giving false in this case, so must treat as error
-            swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
-            createColorResources();
-            createDepthResources();
+            recreateSwapChainColorDepth();
             return;
         case vk::Result::eSuccess:
             break;
@@ -339,9 +337,7 @@ void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets
 
     vk::Result const resultPresent {queue.vkraii.presentKHR(presentInfoKHR)};
     if (resultPresent == vk::Result::eSuboptimalKHR || resultPresent == vk::Result::eErrorOutOfDateKHR || window.getFrameBufferResized()) {
-        swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
-        createColorResources();
-        createDepthResources();
+        recreateSwapChainColorDepth();
         return;
     } else if (resultPresent != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to present image");
@@ -806,4 +802,10 @@ uint32_t Core::getFrameIndex() const {
 
 vk::FormatProperties Core::getFormatProperties(vk::Format const imageFormat) const {
     return physicalDevice.vkraii.getFormatProperties(imageFormat);
+}
+
+void Core::recreateSwapChainColorDepth() {
+    swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
+    createColorResources();
+    createDepthResources();
 }

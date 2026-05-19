@@ -227,6 +227,9 @@ private:
     // MSAA
     void initMaxUsableSampleCount();
     void createColorResources();
+
+    // Group swap chain recreation with color and depth resources recreation
+    void recreateSwapChainColorDepth();
 };
 
 // Templates must be in the header file
