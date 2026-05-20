@@ -104,7 +104,8 @@ void Core::transitionImageLayout(
     vk::AccessFlags2 const dstAccessMask,
     vk::PipelineStageFlags2 const srcStageMask,
     vk::PipelineStageFlags2 const dstStageMask,
-    vk::ImageAspectFlags const imageAspectFlags
+    vk::ImageAspectFlags const imageAspectFlags,
+    vk::raii::CommandBuffer const & commandBuffer
 ) const {
     // Use a barrier to change the image layout
     vk::ImageMemoryBarrier2 const barrier {
@@ -132,7 +133,7 @@ void Core::transitionImageLayout(
         .pImageMemoryBarriers = &barrier
     };
 
-    commandBuffers[frameIndex].pipelineBarrier2(dependencyInfo);
+    commandBuffer.pipelineBarrier2(dependencyInfo);
 }
 
 void Core::recordCommandBuffer(
@@ -153,7 +154,8 @@ void Core::recordCommandBuffer(
         vk::AccessFlagBits2::eColorAttachmentWrite,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::ImageAspectFlagBits::eColor
+        vk::ImageAspectFlagBits::eColor,
+        commandBuffer
     );
 
     // Transition multisampled color image to eColorAttachmentOptimal
@@ -165,7 +167,8 @@ void Core::recordCommandBuffer(
         vk::AccessFlagBits2::eColorAttachmentWrite,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::ImageAspectFlagBits::eColor
+        vk::ImageAspectFlagBits::eColor,
+        commandBuffer
     );
 
     // Is it necessary to make this transition for every frame? There is a single transition for the depth buffer.
@@ -177,7 +180,8 @@ void Core::recordCommandBuffer(
         vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
-        vk::ImageAspectFlagBits::eDepth
+        vk::ImageAspectFlagBits::eDepth,
+        commandBuffer
     );
 
     vk::ClearValue constexpr clearColor {vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f)}; // black
@@ -257,7 +261,8 @@ void Core::recordCommandBuffer(
         vk::AccessFlagBits2::eNone,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::PipelineStageFlagBits2::eBottomOfPipe,
-        vk::ImageAspectFlagBits::eColor
+        vk::ImageAspectFlagBits::eColor,
+        commandBuffer
     );
 
     commandBuffer.end();

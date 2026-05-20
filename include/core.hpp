@@ -159,7 +159,8 @@ private:
         vk::AccessFlags2 const dstAccessMask,
         vk::PipelineStageFlags2 const srcStageMask,
         vk::PipelineStageFlags2 const dstStageMask,
-        vk::ImageAspectFlags const imageAspectFlags
+        vk::ImageAspectFlags const imageAspectFlags,
+        vk::raii::CommandBuffer const & commandBuffer
     ) const;
 
     void recordCommandBuffer(
