@@ -33,6 +33,7 @@
 
 #include "../libraries/stb/stb_image.h"
 
+// Used in drawFrame
 struct SyncObjects {
     std::vector<vk::raii::Semaphore> presentCompleteSemaphores;
     std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
