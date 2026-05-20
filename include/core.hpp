@@ -28,14 +28,9 @@
 #include "../include/mvp.hpp"
 #include "../include/depthStencil.hpp"
 #include "../include/msaa.hpp"
+#include "../include/vertexBuffer.hpp"
 
 #include "../libraries/stb/stb_image.h"
-
-struct VertexBuffer {
-    vk::raii::Buffer buffer {nullptr};
-    vk::raii::DeviceMemory memory {nullptr};
-    size_t const MAX_VERTICES {4000};
-};
 
 struct IndexBuffer {
     vk::raii::Buffer buffer {nullptr};
@@ -194,7 +189,6 @@ private:
         vk::raii::Buffer const & buffer
     ) const;
     
-    void createVertexBuffer();
     void createIndexBuffer();
 
     void createDescriptorSetLayout();
