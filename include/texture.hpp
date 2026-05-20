@@ -2,7 +2,9 @@
 
 #include <cmath>
 #include <cstdint> // For uint32_t
-#include "core.hpp"
+#include <iostream>
+#include "icore.hpp"
+#include "../libraries/stb/stb_image.h"
 
 class Texture {
     // VARIABLES
@@ -19,12 +21,12 @@ public:
     // METHODS //
     void computeMipLevels(int const textureWidth, int const textureHeight);
     void transitionTextureImageLayout(
-        Core const & core,
+        ICore const & core,
         vk::ImageLayout const oldLayout,
         vk::ImageLayout const newLayout
     ) const;
-    void generateMipmaps(Core const & core, vk::Format imageFormat) const;
-    void createTextureImage(Core const & core, stbi_uc const * const pixels);
-    void createTextureImageView(Core const & core);
-    void load(Core const & core, char const * const texturePath);
+    void generateMipmaps(ICore const & core, vk::Format imageFormat) const;
+    void createTextureImage(ICore const & core, stbi_uc const * const pixels);
+    void createTextureImageView(ICore const & core);
+    void load(ICore const & core, char const * const texturePath);
 };

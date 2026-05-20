@@ -1,13 +1,6 @@
 #pragma once
 
-#define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
-//#define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
-#if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
-#include <vulkan/vulkan_raii.hpp>
-#else
-import vulkan_hpp;
-#endif
+#include "../include/icore.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -69,7 +62,7 @@ struct SyncObjects {
     std::vector<vk::raii::Fence> inFlightFences;
 };
 
-class Core {
+class Core : public ICore {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
     Window window;
@@ -104,11 +97,11 @@ private:
 
     /////////////////////////////////////// METHODS //////////////////////////////////////////////////
 public:
-    void init();
-    bool step() const;
-    void cleanup();
+    void init() override;
+    bool step() const override;
+    void cleanup() override;
 
-    void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount);
+    void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) override;
 
     void createBuffer(
         vk::DeviceSize const bufferSize,
@@ -116,16 +109,16 @@ public:
         vk::MemoryPropertyFlags const memoryProperties,
         vk::raii::Buffer & buffer,
         vk::raii::DeviceMemory & bufferMemory
-    ) const;
+    ) const override;
 
     void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
         vk::DeviceSize const & dstOffset
-    ) const;
+    ) const override;
     void copyIndicesToIndexBuffer(
         std::vector<uint32_t> const & indices,
         vk::DeviceSize const & dstOffset
-    ) const;
+    ) const override;
 
     void createImage(
         uint32_t const width,
@@ -138,41 +131,41 @@ public:
         vk::MemoryPropertyFlags const imageMemoryProperties,
         vk::raii::Image & image,
         vk::raii::DeviceMemory & imageMemory
-    ) const;
+    ) const override;
 
     vk::raii::ImageView createImageView(
         vk::raii::Image const & image,
         vk::Format const format,
         vk::ImageAspectFlags const  aspectFlags,
         uint32_t const mipLevels
-    ) const;
+    ) const override;
 
-    void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const;
-    void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const;
+    void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const override;
+    void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const override;
 
     void copyBufferToImage(
         vk::raii::Buffer const & buffer,
         vk::raii::Image const & image,
         uint32_t const width,
         uint32_t const height
-    ) const;
+    ) const override;
 
-    void createTextureSampler(vk::raii::Sampler & textureSampler) const;
+    void createTextureSampler(vk::raii::Sampler & textureSampler) const override;
 
     void allocateDescriptorSets(
         uint32_t const descriptorSetCount,
         std::vector<vk::raii::DescriptorSet> & descriptorSets
-    ) const;
+    ) const override;
 
-    void updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const;
+    void updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const override;
 
-    uint32_t getSwapChainExtentWidth() const;
-    uint32_t getSwapChainExtentHeight() const;
+    uint32_t getSwapChainExtentWidth() const override;
+    uint32_t getSwapChainExtentHeight() const override;
 
-    uint32_t getMaxFramesInFlight() const;
-    uint32_t getFrameIndex() const;
+    uint32_t getMaxFramesInFlight() const override;
+    uint32_t getFrameIndex() const override;
 
-    vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const;
+    vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const override;
 
 private:
     void initVulkan();

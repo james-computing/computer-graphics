@@ -6,7 +6,7 @@ void Texture::computeMipLevels(int const textureWidth, int const textureHeight) 
 }
 
 void Texture::transitionTextureImageLayout(
-    Core const & core,
+    ICore const & core,
     vk::ImageLayout const oldLayout,
     vk::ImageLayout const newLayout
 ) const {
@@ -50,7 +50,7 @@ void Texture::transitionTextureImageLayout(
     core.endSingleTimeCommands(commandBuffer);
 }
 
-void Texture::generateMipmaps(Core const & core, vk::Format imageFormat) const {
+void Texture::generateMipmaps(ICore const & core, vk::Format imageFormat) const {
     // Check if linear blitting is supported
     vk::FormatProperties const formatProperties {core.getFormatProperties(imageFormat)};
     if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
@@ -187,7 +187,7 @@ void Texture::generateMipmaps(Core const & core, vk::Format imageFormat) const {
     core.endSingleTimeCommands(commandBuffer);
 }
 
-void Texture::createTextureImage(Core const & core, stbi_uc const * const pixels) {
+void Texture::createTextureImage(ICore const & core, stbi_uc const * const pixels) {
     // First create the image
 
     vk::DeviceSize const imageSize {(vk::DeviceSize) (textureWidth * textureHeight * 4)};
@@ -249,12 +249,12 @@ void Texture::createTextureImage(Core const & core, stbi_uc const * const pixels
 }
 
 void Texture::createTextureImageView(
-    Core const & core
+    ICore const & core
 ) {
     imageView = core.createImageView(image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
 }
 
-void Texture::load(Core const & core, char const * const texturePath) {
+void Texture::load(ICore const & core, char const * const texturePath) {
     std::cout << "Loading texture" << std::endl;
     // texturePath.c_str()
     stbi_uc * pixels = stbi_load(texturePath, &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
