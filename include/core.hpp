@@ -26,15 +26,10 @@
 #include "../include/graphicsPipeline.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
+#include "../include/depthStencil.hpp"
 
 #include "../libraries/stb/stb_image.h"
 
-struct DepthStencil {
-    vk::raii::Image depthImage {nullptr};
-    vk::raii::DeviceMemory depthImageMemory {nullptr};
-    vk::raii::ImageView depthImageView {nullptr};
-    vk::Format depthFormat;
-};
 
 struct MSAA {
     vk::SampleCountFlagBits samples {vk::SampleCountFlagBits::e1};
@@ -211,11 +206,6 @@ private:
 
     void createDescriptorSetLayout();
     void createDescriptorPool();
-
-    // Depth stencil
-    bool hasStencilComponent(vk::Format const format) const;
-    void initDepthFormat();
-    void createDepthResources();
 
     // MSAA
     void initMaxUsableSampleCount();

@@ -13,7 +13,7 @@ void Core::initVulkan() {
     // depends on physical device.
     // msaaSamples is used when creating the graphics pipeline and the color and depth resources.
     initMaxUsableSampleCount();
-    initDepthFormat();
+    depthStencil.initDepthFormat(physicalDevice);
     
     // depends on physicalDevice and surface
     device.create(physicalDevice.vkraii, surface.vkraii, queue);
@@ -44,7 +44,7 @@ void Core::initVulkan() {
         depthStencil.depthFormat
     );
     createColorResources(); // For MSAA. Color resources are used only in recordCommandBuffer.
-    createDepthResources(); // Depth resources are used only in recordCommandBuffer.
+    depthStencil.createDepthResources(*this, msaa.samples); // Depth resources are used only in recordCommandBuffer.
 
     // depends on logical device
     createVertexBuffer();
@@ -606,45 +606,6 @@ void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
     textureSampler = vk::raii::Sampler(device.vkraii, samplerCreateInfo);
 }
 
-// DEPTH & STENCIL
-
-bool Core::hasStencilComponent(vk::Format const format) const {
-    return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
-}
-
-void Core::initDepthFormat() {
-    std::vector<vk::Format> const candidateFormats {
-        vk::Format::eD32Sfloat,
-        vk::Format::eD32SfloatS8Uint,
-        vk::Format::eD24UnormS8Uint
-    };
-
-    depthStencil.depthFormat = physicalDevice.findSupportedFormat(
-        candidateFormats,
-        vk::ImageTiling::eOptimal,
-        vk::FormatFeatureFlagBits::eDepthStencilAttachment
-    );
-}
-
-void Core::createDepthResources() {
-    // Create depth image, allocate memory for it and bind it
-    createImage(
-        swapChain.extent.width,
-        swapChain.extent.height,
-        1,
-        msaa.samples,
-        depthStencil.depthFormat,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        depthStencil.depthImage,
-        depthStencil.depthImageMemory
-    );
-
-    // Create depth image view
-    depthStencil.depthImageView = createImageView(depthStencil.depthImage, depthStencil.depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
-}
-
 // MSAA
 
 void Core::initMaxUsableSampleCount() {
@@ -807,5 +768,5 @@ vk::FormatProperties Core::getFormatProperties(vk::Format const imageFormat) con
 void Core::recreateSwapChainColorDepth() {
     swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
     createColorResources();
-    createDepthResources();
+    depthStencil.createDepthResources(*this, msaa.samples);
 }
