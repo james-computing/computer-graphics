@@ -12,7 +12,7 @@ void Core::initVulkan() {
 
     // depends on physical device.
     // msaaSamples is used when creating the graphics pipeline and the color and depth resources.
-    initMaxUsableSampleCount();
+    msaa.initMaxUsableSampleCount(physicalDevice.vkraii);
     depthStencil.initDepthFormat(physicalDevice);
     
     // depends on physicalDevice and surface
@@ -43,7 +43,8 @@ void Core::initVulkan() {
         &swapChain.surfaceFormat.format,
         depthStencil.depthFormat
     );
-    createColorResources(); // For MSAA. Color resources are used only in recordCommandBuffer.
+    // For MSAA. Color resources are used only in recordCommandBuffer.
+    msaa.createColorResources(*this, swapChain.surfaceFormat.format, swapChain.extent.width, swapChain.extent.height);
     depthStencil.createDepthResources(*this, msaa.samples); // Depth resources are used only in recordCommandBuffer.
 
     // depends on logical device
@@ -606,63 +607,6 @@ void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
     textureSampler = vk::raii::Sampler(device.vkraii, samplerCreateInfo);
 }
 
-// MSAA
-
-void Core::initMaxUsableSampleCount() {
-    vk::PhysicalDeviceProperties const physicalDeviceProperties {physicalDevice.vkraii.getProperties()};
-
-    vk::SampleCountFlags sampleCounts {
-        physicalDeviceProperties.limits.framebufferColorSampleCounts &
-        physicalDeviceProperties.limits.framebufferDepthSampleCounts
-    };
-
-    if (sampleCounts & vk::SampleCountFlagBits::e64) {
-        msaa.samples = vk::SampleCountFlagBits::e64;
-        return;
-    }
-    if (sampleCounts & vk::SampleCountFlagBits::e32) {
-        msaa.samples = vk::SampleCountFlagBits::e32;
-        return;
-    }
-    if (sampleCounts & vk::SampleCountFlagBits::e16) {
-        msaa.samples = vk::SampleCountFlagBits::e16;
-        return;
-    }
-    if (sampleCounts & vk::SampleCountFlagBits::e8) {
-        msaa.samples = vk::SampleCountFlagBits::e8;
-        return;
-    }
-    if (sampleCounts & vk::SampleCountFlagBits::e4) {
-        msaa.samples = vk::SampleCountFlagBits::e4;
-        return;
-    }
-    if (sampleCounts & vk::SampleCountFlagBits::e2) {
-        msaa.samples = vk::SampleCountFlagBits::e2;
-        return;
-    }
-
-    msaa.samples = vk::SampleCountFlagBits::e1;
-}
-
-void Core::createColorResources() {
-    vk::Format const colorFormat = swapChain.surfaceFormat.format;
-
-    createImage(
-        swapChain.extent.width,
-        swapChain.extent.height,
-        1,
-        msaa.samples,
-        colorFormat,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        msaa.colorImage,
-        msaa.colorImageMemory
-    );
-
-    msaa.colorImageView = createImageView(msaa.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
-}
-
 // DESCRIPTOR SETS
 
 void Core::createDescriptorSetLayout() {
@@ -767,6 +711,6 @@ vk::FormatProperties Core::getFormatProperties(vk::Format const imageFormat) con
 
 void Core::recreateSwapChainColorDepth() {
     swapChain.recreateSwapChain(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
-    createColorResources();
+    msaa.createColorResources(*this, swapChain.surfaceFormat.format, swapChain.extent.width, swapChain.extent.height);
     depthStencil.createDepthResources(*this, msaa.samples);
 }

@@ -27,16 +27,9 @@
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/depthStencil.hpp"
+#include "../include/msaa.hpp"
 
 #include "../libraries/stb/stb_image.h"
-
-
-struct MSAA {
-    vk::SampleCountFlagBits samples {vk::SampleCountFlagBits::e1};
-    vk::raii::Image colorImage {nullptr};
-    vk::raii::DeviceMemory colorImageMemory {nullptr};
-    vk::raii::ImageView colorImageView {nullptr};
-};
 
 struct VertexBuffer {
     vk::raii::Buffer buffer {nullptr};
@@ -206,10 +199,6 @@ private:
 
     void createDescriptorSetLayout();
     void createDescriptorPool();
-
-    // MSAA
-    void initMaxUsableSampleCount();
-    void createColorResources();
 
     // Group swap chain recreation with color and depth resources recreation
     void recreateSwapChainColorDepth();
