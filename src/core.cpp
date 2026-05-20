@@ -49,7 +49,7 @@ void Core::initVulkan() {
 
     // depends on logical device
     vertexBuffer.create(*this);
-    createIndexBuffer();
+    indexBuffer.create(*this);
 }
 
 void Core::init() {
@@ -382,22 +382,6 @@ void Core::createBuffer(
 
     vk::DeviceSize constexpr memoryOffset {0};
     buffer.bindMemory(*bufferMemory, memoryOffset);
-}
-
-void Core::createIndexBuffer() {
-    // Size of both staging and vertex buffers
-    vk::DeviceSize const bufferSize {indexBuffer.MAX_INDICES * sizeof(uint32_t)};
-
-    // Create the index buffer
-    vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
-    vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    createBuffer(
-        bufferSize,
-        indexbufferUsage,
-        indexBufferMemoryProperties,
-        indexBuffer.buffer,
-        indexBuffer.memory
-    );
 }
 
 void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const {
