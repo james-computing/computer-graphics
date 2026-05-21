@@ -27,7 +27,7 @@ void Core::initVulkan() {
         MAX_FRAMES_IN_FLIGHT
     );
 
-    command.create(device.vkraii, queue.index, MAX_FRAMES_IN_FLIGHT);
+    command.create(device.vkraii, queue.familyIndex, MAX_FRAMES_IN_FLIGHT);
 
     // Depends on logical device, MAX_FRAMES_IN_FLIGHT and swapChainImages.size()
     createSyncObjects();

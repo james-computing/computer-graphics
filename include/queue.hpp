@@ -1,6 +1,6 @@
 #pragma once
 
 struct Queue {
-    uint32_t index;
+    uint32_t familyIndex;
     vk::raii::Queue vkraii {nullptr};
 };

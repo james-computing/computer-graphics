@@ -8,13 +8,13 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
     // Find first queue with graphics support which is also capable of presenting to the window,
     // and store its index.
     bool foundSuitableQueue {false};
-    queue.index = 0;
+    queue.familyIndex = 0;
     size_t const queueFamilyPropertiesSize {queueFamilyProperties.size()};
-    for (; queue.index < queueFamilyPropertiesSize; ++queue.index) {
-        bool supportsGraphics = (queueFamilyProperties[queue.index].queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+    for (; queue.familyIndex < queueFamilyPropertiesSize; ++queue.familyIndex) {
+        bool supportsGraphics = (queueFamilyProperties[queue.familyIndex].queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
         
         // try catch?
-        bool supportsWindowPresentation = physicalDevice.getSurfaceSupportKHR(queue.index, *surface);
+        bool supportsWindowPresentation = physicalDevice.getSurfaceSupportKHR(queue.familyIndex, *surface);
 
         if (supportsGraphics && supportsWindowPresentation) {
             foundSuitableQueue = true;
@@ -28,7 +28,7 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
 
     float constexpr queuePriority {0.5f};
     vk::DeviceQueueCreateInfo const deviceQueueCreateInfo {
-        .queueFamilyIndex = queue.index,
+        .queueFamilyIndex = queue.familyIndex,
         .queueCount = 1,
         .pQueuePriorities = &queuePriority
     };
@@ -68,5 +68,5 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
     // try catch?
     vkraii = vk::raii::Device(physicalDevice, deviceCreateInfo);
 
-    queue.vkraii = vk::raii::Queue(vkraii, queue.index, 0);
+    queue.vkraii = vk::raii::Queue(vkraii, queue.familyIndex, 0);
 }
