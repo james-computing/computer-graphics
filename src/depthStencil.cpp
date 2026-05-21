@@ -28,7 +28,9 @@ void DepthStencil::createDepthResources(
     vk::SampleCountFlagBits const msaaSamples
 ) {
     // Create depth image, allocate memory for it and bind it
-    core.createImage(
+    Image::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
         swapChainExtentWidth,
         swapChainExtentHeight,
         1,
@@ -42,5 +44,5 @@ void DepthStencil::createDepthResources(
     );
 
     // Create depth image view
-    depthImageView = core.createImageView(depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    depthImageView = Image::createView(core.getDevice(), depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
 }

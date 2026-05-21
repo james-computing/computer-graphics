@@ -6,6 +6,7 @@
 #include "irenderer.hpp"
 #include "../include/singleTimeCommands.hpp"
 #include "../include/buffer.hpp"
+#include "../include/image.hpp"
 #include "../libraries/stb/stb_image.h"
 
 class Texture {

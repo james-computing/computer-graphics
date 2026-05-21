@@ -200,7 +200,9 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
         vk::ImageUsageFlagBits::eSampled
     };
     vk::MemoryPropertyFlags constexpr imageMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    core.createImage(
+    Image::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
         static_cast<uint32_t>(textureWidth),
         static_cast<uint32_t>(textureHeight),
         mipLevels,
@@ -263,7 +265,7 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
 void Texture::createTextureImageView(
     ICore const & core
 ) {
-    imageView = core.createImageView(image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
+    imageView = Image::createView(core.getDevice() ,image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
 }
 
 void Texture::load(ICore const & core, IRenderer const & renderer, char const * const texturePath) {

@@ -9,7 +9,6 @@
 #include "../include/queue.hpp"
 #include "../include/device.hpp"
 #include "../include/singleTimeCommands.hpp"
-#include "../include/memoryType.hpp"
 
 class Core : public ICore {
 private:
@@ -27,26 +26,6 @@ private:
 public:
     void init1() override;
     void init2(vk::raii::SurfaceKHR const & surface) override;
-
-    void createImage(
-        uint32_t const width,
-        uint32_t const height,
-        uint32_t const mipLevels,
-        vk::SampleCountFlagBits const numSamples,
-        vk::Format const imageFormat,
-        vk::ImageTiling const imageTiling,
-        vk::ImageUsageFlags const imageUsage,
-        vk::MemoryPropertyFlags const imageMemoryProperties,
-        vk::raii::Image & image,
-        vk::raii::DeviceMemory & imageMemory
-    ) const override;
-
-    vk::raii::ImageView createImageView(
-        vk::raii::Image const & image,
-        vk::Format const format,
-        vk::ImageAspectFlags const  aspectFlags,
-        uint32_t const mipLevels
-    ) const override;
 
     void copyBufferToImage(
         vk::raii::Buffer const & buffer,

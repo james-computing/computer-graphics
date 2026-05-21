@@ -44,7 +44,9 @@ void MSAA::createColorResources(
     int const swapChainExtentWidth,
     int const swapChainExtentHeight
 ) {
-    core.createImage(
+    Image::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
         swapChainExtentWidth,
         swapChainExtentHeight,
         1,
@@ -57,5 +59,5 @@ void MSAA::createColorResources(
         colorImageMemory
     );
 
-    colorImageView = core.createImageView(colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
+    colorImageView = Image::createView(core.getDevice(), colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
 }

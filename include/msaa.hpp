@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icore.hpp"
+#include "image.hpp"
 
 class MSAA {
 public:

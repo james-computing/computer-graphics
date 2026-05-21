@@ -1,8 +1,8 @@
 #pragma once
 
 #include "icore.hpp"
-#include "physicalDevice.hpp"
 #include "format.hpp"
+#include "image.hpp"
 
 class DepthStencil {
 public:
