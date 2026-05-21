@@ -14,11 +14,6 @@ public:
     vk::raii::PhysicalDevice vkraii {nullptr};
     void pick(vk::raii::Instance const & instance);
     uint32_t findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const;
-    vk::Format findSupportedFormat(
-        std::vector<vk::Format> const & candidateFormats,
-        vk::ImageTiling const tiling,
-        vk::FormatFeatureFlags const features
-    ) const;
 
 private:
     static bool isSuitable(vk::raii::PhysicalDevice const & physicalDevice);

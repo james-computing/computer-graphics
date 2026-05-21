@@ -2,7 +2,20 @@
 
 void Application::init() {
     std::cout << "Application init" << std::endl;
-    core.init();
+
+    // Window must be initialized before core,
+    // otherwise GLFW doens't say that the extension is required,
+    // which then leads to failing to initialize the surface.
+    renderer.initWindow();
+
+    core.init1();
+
+    renderer.initSurface(core.getInstance());
+
+    // The core doesn't own the surface, but it uses the Vulkan instance to initialize it.
+    core.init2(renderer.getSurface());
+
+    renderer.initRest(core);
 
     std::cout << "Create texture sampler" << std::endl;
     // depends on the logical and physical devices.
@@ -10,7 +23,7 @@ void Application::init() {
     core.createTextureSampler(textureSampler);
     
     std::cout << "model load" << std::endl;
-    model.load(core, modelPath, texturePath);
+    model.load(core, renderer, modelPath, texturePath);
 
     // depends on MAX_FRAMES_IN_FLIGHT. Also calls createBuffer, which depends on the logical device.
     createUniformBuffers();
@@ -22,16 +35,16 @@ void Application::init() {
 void Application::run() {
     init();
     
-    while (core.step()) {
-        updateUniformBuffer(core.getFrameIndex());
-        core.drawFrame(descriptorSets, model.getNumIndices());
+    while (renderer.step()) {
+        updateUniformBuffer(renderer.getFrameIndex());
+        renderer.drawFrame(descriptorSets, model.getNumIndices());
     }
 
-    core.cleanup();
+    renderer.cleanup();
 }
 
 void Application::createUniformBuffers() {
-    uint32_t const MAX_FRAMES_IN_FLIGHT {core.getMaxFramesInFlight()};
+    uint32_t const MAX_FRAMES_IN_FLIGHT {renderer.getMaxFramesInFlight()};
     for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         // Create uniform buffer, allocate memory for it and bind it
         vk::DeviceSize constexpr bufferSize {sizeof(UniformBufferObject)};
@@ -80,7 +93,7 @@ void Application::updateUniformBuffer(uint32_t frameIndex) {
     ubo.view = glm::lookAt(eye, center, up);
 
     // Perspective projection
-    float const aspectRatio {static_cast<float>(core.getSwapChainExtentWidth())/static_cast<float>(core.getSwapChainExtentHeight())};
+    float const aspectRatio {static_cast<float>(renderer.getSwapChainExtentWidth())/static_cast<float>(renderer.getSwapChainExtentHeight())};
     float constexpr near {0.1f};
     float constexpr far {10.f};
     ubo.proj = glm::perspective(glm::radians(45.0f), aspectRatio, near, far);
@@ -93,13 +106,13 @@ void Application::updateUniformBuffer(uint32_t frameIndex) {
 }
 
 void Application::allocateDescriptorSets() {
-    core.allocateDescriptorSets(core.getMaxFramesInFlight(), descriptorSets);
+    renderer.allocateDescriptorSets(renderer.getMaxFramesInFlight(), descriptorSets);
 }
 
 void Application::updateDescriptorSets() const {
     // Configure descriptor sets.
     // Maybe could build an array of vk::WriteDescriptorSet and call device.updateDescriptorSets once.
-    uint32_t const MAX_FRAMES_IN_FLIGHT {core.getMaxFramesInFlight()};
+    uint32_t const MAX_FRAMES_IN_FLIGHT {renderer.getMaxFramesInFlight()};
     for (size_t i {0}; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         // uniform buffer
 
@@ -141,7 +154,7 @@ void Application::updateDescriptorSets() const {
         };
 
         // update
-        core.updateDescriptorSets(writeDescriptorSets);
+        core.getDevice().updateDescriptorSets(writeDescriptorSets, {});
     }
 }
 

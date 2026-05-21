@@ -11,15 +11,17 @@
 import vulkan_hpp;
 #endif
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include "../include/surface.hpp"
 #include "../include/vertex.hpp"
 
 class ICore {
 public:
-    virtual void init() = 0;
-    virtual bool step() const = 0;
-    virtual void cleanup() = 0;
-
-    virtual void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) = 0;
+    // glfwWindow can't be const * const, because of the function glfwCreateWindowSurface 
+    virtual void init1() = 0;
+    virtual void init2(vk::raii::SurfaceKHR const & surface) = 0;
 
     virtual void createBuffer(
         vk::DeviceSize const bufferSize,
@@ -27,15 +29,6 @@ public:
         vk::MemoryPropertyFlags const memoryProperties,
         vk::raii::Buffer & buffer,
         vk::raii::DeviceMemory & bufferMemory
-    ) const = 0;
-
-    virtual void copyVerticesToVertexBuffer(
-        std::vector<Vertex> const & vertices,
-        vk::DeviceSize const & dstOffset
-    ) const = 0;
-    virtual void copyIndicesToIndexBuffer(
-        std::vector<uint32_t> const & indices,
-        vk::DeviceSize const & dstOffset
     ) const = 0;
 
     virtual void createImage(
@@ -58,30 +51,30 @@ public:
         uint32_t const mipLevels
     ) const = 0;
 
-    virtual void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const = 0;
+    virtual void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer, vk::raii::CommandPool const & commandPool) const = 0;
     virtual void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const = 0;
+
+    virtual void copyBuffer(
+        vk::raii::Buffer const & srcBuffer,
+        vk::raii::Buffer const & dstBuffer,
+        vk::DeviceSize const & dstOffset,
+        vk::DeviceSize const bufferSize,
+        vk::raii::CommandPool const & commandPool
+    ) const = 0;
 
     virtual void copyBufferToImage(
         vk::raii::Buffer const & buffer,
         vk::raii::Image const & image,
         uint32_t const width,
-        uint32_t const height
+        uint32_t const height,
+        vk::raii::CommandPool const & commandPool
     ) const = 0;
 
     virtual void createTextureSampler(vk::raii::Sampler & textureSampler) const = 0;
 
-    virtual void allocateDescriptorSets(
-        uint32_t const descriptorSetCount,
-        std::vector<vk::raii::DescriptorSet> & descriptorSets
-    ) const = 0;
-
-    virtual void updateDescriptorSets(std::vector<vk::WriteDescriptorSet> const & writeDescriptorSets) const = 0;
-
-    virtual uint32_t getSwapChainExtentWidth() const = 0;
-    virtual uint32_t getSwapChainExtentHeight() const = 0;
-
-    virtual uint32_t getMaxFramesInFlight() const = 0;
-    virtual uint32_t getFrameIndex() const = 0;
-
-    virtual vk::FormatProperties getFormatProperties(vk::Format const imageFormat) const = 0;
+    virtual vk::raii::Instance const & getInstance() = 0;
+    virtual vk::raii::PhysicalDevice const & getPhysicalDevice() const = 0;
+    virtual vk::raii::Device const & getDevice() const = 0;
+    virtual uint32_t const getQueueFamilyIndex() const = 0;
+    virtual vk::raii::Queue const & getQueue() const = 0;
 };

@@ -2,6 +2,7 @@
 
 #include "icore.hpp"
 #include "physicalDevice.hpp"
+#include "format.hpp"
 
 class DepthStencil {
 public:
@@ -11,6 +12,11 @@ public:
     vk::Format depthFormat;
 
     bool hasStencilComponent(vk::Format const format) const;
-    void initDepthFormat(PhysicalDevice const & physicalDevice);
-    void createDepthResources(ICore const & core, vk::SampleCountFlagBits msaaSamples);
+    void initDepthFormat(vk::raii::PhysicalDevice const & physicalDevice);
+    void createDepthResources(
+        ICore const & core,
+        int const swapChainExtentWidth,
+        int const swapChainExtentHeight,
+        vk::SampleCountFlagBits const msaaSamples
+    );
 };

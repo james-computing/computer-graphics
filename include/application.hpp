@@ -1,11 +1,13 @@
 #pragma once
 
 #include "core.hpp"
+#include "renderer.hpp"
 #include "model.hpp"
 
 class Application {
 private:
     Core core;
+    Renderer renderer;
     Model model;
     std::string const modelPath {"./models/viking_room.obj"};
     std::string const texturePath {"./textures/viking_room.png"};

@@ -4,6 +4,13 @@ void Instance::create(vk::raii::Context const & context, ValidationLayers const 
     std::vector<char const *> const requiredGLFWExtensions = GLFWExtensions::getRequiredGLFWExtensions(context, validationLayers.enable);
     std::vector<char const *> const requiredValidationLayers = validationLayers.getRequiredValidationLayers(context);
 
+    std::cout << "validation layers enabled: " << validationLayers.enable << std::endl;
+    std::cout << "Required GLFW extensions:\n";
+    for (auto const & extension : requiredGLFWExtensions) {
+        std::cout << extension << '\n';
+    }
+    std::cout << std::endl;
+
     vk::ApplicationInfo constexpr appInfo {
         .pApplicationName = "Application",
         .applicationVersion = VK_MAKE_API_VERSION(1, 0, 0, 0), // VK_MAKE_VERSION is deprecated

@@ -9,7 +9,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../libraries/tinyobjloader/tiny_obj_loader.h"
 
-void Model::loadVertices(ICore const & core, std::string_view const modelPath) {
+void Model::loadVertices(IRenderer const & renderer, std::string_view const modelPath) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -68,15 +68,15 @@ void Model::loadVertices(ICore const & core, std::string_view const modelPath) {
     std::cout << "number of vertices = " << numVertices << std::endl;
     std::cout << "number of indices = " << numIndices << std::endl;
 
-    core.copyVerticesToVertexBuffer(vertices, 0);
-    core.copyIndicesToIndexBuffer(indices, 0);
+    renderer.copyVerticesToVertexBuffer(vertices, 0);
+    renderer.copyIndicesToIndexBuffer(indices, 0);
 }
 
-void Model::load(ICore const & core, std::string_view const modelPath, std::string_view const texturePath) {
+void Model::load(ICore const & core, IRenderer const & renderer, std::string_view const modelPath, std::string_view const texturePath) {
     std::cout << "load texture" << std::endl;
-    texture.load(core, texturePath.data());
+    texture.load(core, renderer.getCommandPool(), texturePath.data());
     std::cout << "load vertices" << std::endl;
-    loadVertices(core, modelPath.data());
+    loadVertices(renderer, modelPath.data());
 }
 
 uint32_t Model::getNumIndices() const {

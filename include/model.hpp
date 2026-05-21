@@ -6,7 +6,7 @@
 #include "../libraries/stb/stb_image.h"
 
 #include "vertex.hpp"
-#include "icore.hpp"
+#include "irenderer.hpp"
 #include "texture.hpp"
 
 class Model {
@@ -22,9 +22,9 @@ public:
 
     // METHODS //
 private:
-    void loadVertices(ICore const & core, std::string_view const modelPath);
+    void loadVertices(IRenderer const & Renderer, std::string_view const modelPath);
 
 public:
-    void load(ICore const & core, std::string_view const modelPath, std::string_view const texturePath);
+    void load(ICore const & core, IRenderer const & renderer, std::string_view const modelPath, std::string_view const texturePath);
     uint32_t getNumIndices() const;
 };

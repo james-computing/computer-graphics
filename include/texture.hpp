@@ -22,11 +22,12 @@ public:
     void computeMipLevels(int const textureWidth, int const textureHeight);
     void transitionTextureImageLayout(
         ICore const & core,
+        vk::raii::CommandPool const & commandPool,
         vk::ImageLayout const oldLayout,
         vk::ImageLayout const newLayout
     ) const;
-    void generateMipmaps(ICore const & core, vk::Format imageFormat) const;
-    void createTextureImage(ICore const & core, stbi_uc const * const pixels);
+    void generateMipmaps(ICore const & core, vk::raii::CommandPool const & commandPool, vk::Format imageFormat) const;
+    void createTextureImage(ICore const & core, vk::raii::CommandPool const & commandPool, stbi_uc const * const pixels);
     void createTextureImageView(ICore const & core);
-    void load(ICore const & core, char const * const texturePath);
+    void load(ICore const & core, vk::raii::CommandPool const & commandPool, char const * const texturePath);
 };
