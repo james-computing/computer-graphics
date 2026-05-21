@@ -7,7 +7,9 @@ void IndexBuffer::create(ICore const & core) {
     // Create the index buffer
     vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
     vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    core.createBuffer(
+    Buffer::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
         bufferSize,
         indexbufferUsage,
         indexBufferMemoryProperties,

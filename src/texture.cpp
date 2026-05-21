@@ -229,7 +229,9 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
         // Memory visible to host and available immediately to the device
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
     };
-    core.createBuffer(
+    Buffer::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
         imageSize,
         stagingBufferUsageFlags,
         stagingBufferMemoryProperties,

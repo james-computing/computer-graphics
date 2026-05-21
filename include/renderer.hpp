@@ -143,7 +143,9 @@ void Renderer::copyToBuffer(
     };
     vk::raii::Buffer stagingBuffer {nullptr};
     vk::raii::DeviceMemory stagingBufferMemory {nullptr};
-    _corePtr->createBuffer(
+    Buffer::create(
+        _corePtr->getPhysicalDevice(),
+        _corePtr->getDevice(),
         bufferSize,
         stagingBufferUsage,
         stagingBufferMemoryProperties,
@@ -158,5 +160,5 @@ void Renderer::copyToBuffer(
     data = nullptr;
 
     // Copy data from staging buffer to vertex buffer
-    _corePtr->copyBuffer(stagingBuffer, buffer, dstOffset, bufferSize, _corePtr->getDevice(), _corePtr->getQueue(), command.pool);
+    Buffer::copy(stagingBuffer, buffer, dstOffset, bufferSize, _corePtr->getDevice(), _corePtr->getQueue(), command.pool);
 }

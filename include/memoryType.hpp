@@ -9,11 +9,8 @@
 import vulkan_hpp;
 #endif
 
-class PhysicalDevice {
-public:
-    vk::raii::PhysicalDevice vkraii {nullptr};
-    void pick(vk::raii::Instance const & instance);
+namespace MemoryType {
 
-private:
-    static bool isSuitable(vk::raii::PhysicalDevice const & physicalDevice);
-};
+uint32_t find(vk::raii::PhysicalDevice const & physicaldevice, uint32_t const typeFilter, vk::MemoryPropertyFlags const properties);
+
+}

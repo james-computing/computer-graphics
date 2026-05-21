@@ -88,18 +88,3 @@ void PhysicalDevice::pick(vk::raii::Instance const & instance) {
     // Pick the first suitable physical device found
     vkraii = *deviceIterator;
 }
-
-uint32_t PhysicalDevice::findMemoryType(uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) const {
-    vk::PhysicalDeviceMemoryProperties const memoryProperties {vkraii.getMemoryProperties()};
-
-    for (uint32_t i {0}; i < memoryProperties.memoryTypeCount; ++i) {
-        if (
-            (typeFilter & (1 << i)) &&
-            (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties
-        ) {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("Failed to find suitable memory type");
-}

@@ -54,7 +54,9 @@ void Application::createUniformBuffers() {
         };
         vk::raii::Buffer buffer {nullptr};
         vk::raii::DeviceMemory bufferMemory {nullptr};
-        core.createBuffer(
+        Buffer::create(
+            core.getPhysicalDevice(),
+            core.getDevice(),
             bufferSize,
             bufferUsage,
             memoryProperties,

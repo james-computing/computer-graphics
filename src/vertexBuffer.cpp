@@ -8,7 +8,9 @@ void VertexBuffer::create(ICore const & core) {
     // Create the vertex buffer
     vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
     vk::MemoryPropertyFlags constexpr vertexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    core.createBuffer(
+    Buffer::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
         bufferSize,
         vertexbufferUsage,
         vertexBufferMemoryProperties,

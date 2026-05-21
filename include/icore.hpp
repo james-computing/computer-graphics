@@ -23,14 +23,6 @@ public:
     virtual void init1() = 0;
     virtual void init2(vk::raii::SurfaceKHR const & surface) = 0;
 
-    virtual void createBuffer(
-        vk::DeviceSize const bufferSize,
-        vk::BufferUsageFlags const bufferUsage,
-        vk::MemoryPropertyFlags const memoryProperties,
-        vk::raii::Buffer & buffer,
-        vk::raii::DeviceMemory & bufferMemory
-    ) const = 0;
-
     virtual void createImage(
         uint32_t const width,
         uint32_t const height,
@@ -51,16 +43,6 @@ public:
         uint32_t const mipLevels
     ) const = 0;
 
-    virtual void copyBuffer(
-        vk::raii::Buffer const & srcBuffer,
-        vk::raii::Buffer const & dstBuffer,
-        vk::DeviceSize const & dstOffset,
-        vk::DeviceSize const bufferSize,
-        vk::raii::Device const & device,
-        vk::raii::Queue const & queue,
-        vk::raii::CommandPool const & commandPool
-    ) const = 0;
-
     virtual void copyBufferToImage(
         vk::raii::Buffer const & buffer,
         vk::raii::Image const & image,
@@ -71,7 +53,7 @@ public:
         vk::raii::CommandPool const & commandPool
     ) const = 0;
 
-    virtual vk::raii::Instance const & getInstance() = 0;
+    virtual vk::raii::Instance const & getInstance() const = 0;
     virtual vk::raii::PhysicalDevice const & getPhysicalDevice() const = 0;
     virtual vk::raii::Device const & getDevice() const = 0;
     virtual uint32_t const getQueueFamilyIndex() const = 0;

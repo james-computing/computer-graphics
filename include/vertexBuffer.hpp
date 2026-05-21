@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icore.hpp"
+#include "buffer.hpp"
 
 class VertexBuffer {
 public:

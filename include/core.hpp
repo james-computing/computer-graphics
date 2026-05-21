@@ -9,6 +9,7 @@
 #include "../include/queue.hpp"
 #include "../include/device.hpp"
 #include "../include/singleTimeCommands.hpp"
+#include "../include/memoryType.hpp"
 
 class Core : public ICore {
 private:
@@ -26,14 +27,6 @@ private:
 public:
     void init1() override;
     void init2(vk::raii::SurfaceKHR const & surface) override;
-    
-    void createBuffer(
-        vk::DeviceSize const bufferSize,
-        vk::BufferUsageFlags const bufferUsage,
-        vk::MemoryPropertyFlags const memoryProperties,
-        vk::raii::Buffer & buffer,
-        vk::raii::DeviceMemory & bufferMemory
-    ) const override;
 
     void createImage(
         uint32_t const width,
@@ -55,16 +48,6 @@ public:
         uint32_t const mipLevels
     ) const override;
 
-    void copyBuffer(
-        vk::raii::Buffer const & srcBuffer,
-        vk::raii::Buffer const & dstBuffer,
-        vk::DeviceSize const & dstOffset,
-        vk::DeviceSize const bufferSize,
-        vk::raii::Device const & device,
-        vk::raii::Queue const & queue,
-        vk::raii::CommandPool const & commandPool
-    ) const;
-
     void copyBufferToImage(
         vk::raii::Buffer const & buffer,
         vk::raii::Image const & image,
@@ -75,7 +58,7 @@ public:
         vk::raii::CommandPool const & commandPool
     ) const override;
 
-    vk::raii::Instance const & getInstance() override;
+    vk::raii::Instance const & getInstance() const override;
     vk::raii::PhysicalDevice const & getPhysicalDevice() const override;
     vk::raii::Device const & getDevice() const override;
     uint32_t const getQueueFamilyIndex() const override;

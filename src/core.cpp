@@ -18,63 +18,6 @@ void Core::init2(vk::raii::SurfaceKHR const & surface) {
     device.create(physicalDevice.vkraii, surface, queue);
 }
 
-void Core::createBuffer(
-    vk::DeviceSize const bufferSize,
-    vk::BufferUsageFlags const bufferUsage,
-    vk::MemoryPropertyFlags const memoryProperties,
-    vk::raii::Buffer & buffer,
-    vk::raii::DeviceMemory & bufferMemory
-) const {
-    vk::BufferCreateInfo const bufferCreateInfo {
-        .size = bufferSize,
-        .usage = bufferUsage,
-        .sharingMode = vk::SharingMode::eExclusive
-    };
-
-    buffer = vk::raii::Buffer(device.vkraii, bufferCreateInfo);
-
-    vk::MemoryRequirements const memoryRequirements {buffer.getMemoryRequirements()};
-
-    uint32_t const memoryTypeIndex {
-        physicalDevice.findMemoryType(
-            memoryRequirements.memoryTypeBits,
-            memoryProperties
-        )
-    };
-    vk::MemoryAllocateInfo const memoryAllocateInfo {
-        .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = memoryTypeIndex
-    };
-
-    bufferMemory = vk::raii::DeviceMemory(device.vkraii, memoryAllocateInfo);
-
-    vk::DeviceSize constexpr memoryOffset {0};
-    buffer.bindMemory(*bufferMemory, memoryOffset);
-}
-
-void Core::copyBuffer(
-    vk::raii::Buffer const & srcBuffer,
-    vk::raii::Buffer const & dstBuffer,
-    vk::DeviceSize const & dstOffset,
-    vk::DeviceSize const bufferSize,
-    vk::raii::Device const & device,
-    vk::raii::Queue const & queue,
-    vk::raii::CommandPool const & commandPool
-) const {
-    vk::raii::CommandBuffer commandCopyBuffer {nullptr};
-    SingleTimeCommands::begin(device, commandPool, commandCopyBuffer);
-
-    vk::BufferCopy const region {
-        .srcOffset = 0,
-        .dstOffset = dstOffset,
-        .size = bufferSize
-    };
-
-    commandCopyBuffer.copyBuffer(*srcBuffer, *dstBuffer, region);
-
-    SingleTimeCommands::end(queue, commandCopyBuffer);
-}
-
 void Core::createImage(
     uint32_t const width,
     uint32_t const height,
@@ -111,7 +54,7 @@ void Core::createImage(
     vk::MemoryRequirements const memoryRequirements {image.getMemoryRequirements()};
     vk::MemoryAllocateInfo const memoryAllocateInfo {
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = physicalDevice.findMemoryType(memoryRequirements.memoryTypeBits, imageMemoryProperties)
+        .memoryTypeIndex = MemoryType::find(physicalDevice.vkraii, memoryRequirements.memoryTypeBits, imageMemoryProperties)
     };
     imageMemory = vk::raii::DeviceMemory(device.vkraii, memoryAllocateInfo);
     // Bind the memory
@@ -183,7 +126,7 @@ void Core::copyBufferToImage(
 
 // GETTERS
 
-vk::raii::Instance const & Core::getInstance() {
+vk::raii::Instance const & Core::getInstance() const {
     return instance.vkraii;
 }
 
