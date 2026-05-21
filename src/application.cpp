@@ -3,8 +3,8 @@
 void Application::init() {
     std::cout << "Application init" << std::endl;
 
-    // Window must be initialized before core,
-    // otherwise GLFW doens't say that the extension is required,
+    // Window must be initialized before the core,
+    // otherwise GLFW doens't give the correct list of required extensions,
     // which then leads to failing to initialize the surface.
     renderer.initWindow();
 
