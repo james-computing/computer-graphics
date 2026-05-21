@@ -27,10 +27,7 @@ void Core::initVulkan() {
         MAX_FRAMES_IN_FLIGHT
     );
 
-    // depends on logical device and queueFamilyIndex, but this is obtained when creating the logical device
-    createCommandPool();
-    // depends on logical device, MAX_FRAMES_IN_FLIGHT and commandPool
-    createCommandBuffers();
+    command.create(device.vkraii, queue.index, MAX_FRAMES_IN_FLIGHT);
 
     // Depends on logical device, MAX_FRAMES_IN_FLIGHT and swapChainImages.size()
     createSyncObjects();
@@ -74,28 +71,6 @@ bool Core::step() const {
 void Core::cleanup() {
     swapChain.cleanupSwapChain(device.vkraii);
     window.cleanup();
-}
-
-// COMMAND BUFFER
-
-void Core::createCommandPool() {
-    vk::CommandPoolCreateInfo const commandPoolCreateInfo {
-        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-        .queueFamilyIndex = queue.index
-    };
-
-    commandPool = vk::raii::CommandPool(device.vkraii, commandPoolCreateInfo);
-}
-
-void Core::createCommandBuffers() {
-    vk::CommandBufferAllocateInfo const commandBufferAllocateInfo {
-        .commandPool = commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = MAX_FRAMES_IN_FLIGHT
-    };
-
-    // vk::raii::CommandBuffers inherits from std::vector<vk::raii:CommandBuffer>
-    commandBuffers = vk::raii::CommandBuffers(device.vkraii, commandBufferAllocateInfo);
 }
 
 void Core::transitionImageLayout(
@@ -143,7 +118,7 @@ void Core::recordCommandBuffer(
     std::vector<vk::raii::DescriptorSet> const & descriptorSets,
     uint32_t const indexCount
 ) const {
-    vk::raii::CommandBuffer const & commandBuffer {commandBuffers[frameIndex]};
+    vk::raii::CommandBuffer const & commandBuffer {command.buffers[frameIndex]};
 
     commandBuffer.begin({});
 
@@ -289,7 +264,7 @@ void Core::createSyncObjects() {
 }
 
 void Core::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) {
-    vk::raii::CommandBuffer & commandBuffer {commandBuffers[frameIndex]};
+    vk::raii::CommandBuffer & commandBuffer {command.buffers[frameIndex]};
     vk::raii::Semaphore & presentCompleteSemaphore {syncObjects.presentCompleteSemaphores[frameIndex]};
     vk::raii::Fence & drawFence {syncObjects.inFlightFences[frameIndex]};
 
@@ -393,7 +368,7 @@ void Core::createBuffer(
 
 void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer) const {
     vk::CommandBufferAllocateInfo const commandBufferAllocateInfo {
-        .commandPool = commandPool,
+        .commandPool = command.pool,
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = 1
     };

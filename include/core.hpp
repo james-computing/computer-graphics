@@ -25,6 +25,7 @@
 #include "../include/swapChain.hpp"
 #include "../include/descriptor.hpp"
 #include "../include/graphicsPipeline.hpp"
+#include "../include/command.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
 #include "../include/depthStencil.hpp"
@@ -45,6 +46,7 @@ class Core : public ICore {
 private:
     ///////////////////////////////////////////////// MEMBER VARIABLES //////////////////////////////////
     Window window;
+
     vk::raii::Context context;
     Instance instance;
     ValidationLayers validationLayers;
@@ -52,12 +54,12 @@ private:
     PhysicalDevice physicalDevice;
     Device device;
     Queue queue;
+
     Surface surface;
     SwapChain swapChain;
     GraphicsPipeline graphicsPipeline;
     
-    vk::raii::CommandPool commandPool {nullptr};
-    std::vector<vk::raii::CommandBuffer> commandBuffers;
+    Command command;
 
     SyncObjects syncObjects;
 
@@ -149,9 +151,6 @@ public:
 
 private:
     void initVulkan();
-
-    void createCommandPool();
-    void createCommandBuffers();
 
     void transitionImageLayout(
         vk::Image const & image, // not vk::raii::Image, because swapChain.getImages returns vk::Image
