@@ -3,6 +3,7 @@
 #include "core.hpp"
 #include "renderer.hpp"
 #include "model.hpp"
+#include "textureSampler.hpp"
 
 class Application {
 private:

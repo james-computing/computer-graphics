@@ -73,8 +73,6 @@ public:
         vk::raii::CommandPool const & commandPool
     ) const override;
 
-    void createTextureSampler(vk::raii::Sampler & textureSampler) const override;
-
     vk::raii::Instance const & getInstance() override;
     vk::raii::PhysicalDevice const & getPhysicalDevice() const override;
     vk::raii::Device const & getDevice() const override;

@@ -204,32 +204,6 @@ void Core::copyBufferToImage(
     endSingleTimeCommands(commandBuffer);
 }
 
-// TEXTURE SAMPLER
-
-void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
-    vk::PhysicalDeviceProperties physicalDeviceProperties {physicalDevice.vkraii.getProperties()};
-
-    vk::SamplerCreateInfo const samplerCreateInfo {
-        .magFilter = vk::Filter::eLinear,
-        .minFilter = vk::Filter::eLinear,
-        .mipmapMode = vk::SamplerMipmapMode::eLinear,
-        .addressModeU = vk::SamplerAddressMode::eRepeat,
-        .addressModeV = vk::SamplerAddressMode::eRepeat,
-        .addressModeW = vk::SamplerAddressMode::eRepeat,
-        .mipLodBias = 0.0f,
-        .anisotropyEnable = vk::True,
-        .maxAnisotropy = physicalDeviceProperties.limits.maxSamplerAnisotropy,
-        .compareEnable = vk::False,
-        .compareOp = vk::CompareOp::eAlways,
-        .minLod = 0.0f,
-        .maxLod = vk::LodClampNone,
-        .borderColor = vk::BorderColor::eIntOpaqueBlack,
-        .unnormalizedCoordinates = vk::False
-    };
-
-    textureSampler = vk::raii::Sampler(device.vkraii, samplerCreateInfo);
-}
-
 // GETTERS
 
 vk::raii::Instance const & Core::getInstance() {

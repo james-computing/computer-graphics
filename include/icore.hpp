@@ -70,8 +70,6 @@ public:
         vk::raii::CommandPool const & commandPool
     ) const = 0;
 
-    virtual void createTextureSampler(vk::raii::Sampler & textureSampler) const = 0;
-
     virtual vk::raii::Instance const & getInstance() = 0;
     virtual vk::raii::PhysicalDevice const & getPhysicalDevice() const = 0;
     virtual vk::raii::Device const & getDevice() const = 0;

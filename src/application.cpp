@@ -20,7 +20,7 @@ void Application::init() {
     std::cout << "Create texture sampler" << std::endl;
     // depends on the logical and physical devices.
     // Used in createDescriptorSets.
-    core.createTextureSampler(textureSampler);
+    TextureSampler::create(core.getPhysicalDevice(), core.getDevice(), textureSampler);
     
     std::cout << "model load" << std::endl;
     model.load(core, renderer, modelPath, texturePath);
