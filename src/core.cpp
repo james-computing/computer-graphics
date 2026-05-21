@@ -52,41 +52,17 @@ void Core::createBuffer(
     buffer.bindMemory(*bufferMemory, memoryOffset);
 }
 
-void Core::beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer, vk::raii::CommandPool const & commandPool) const {
-    vk::CommandBufferAllocateInfo const commandBufferAllocateInfo {
-        .commandPool = commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1
-    };
-
-    commandBuffer = std::move(device.vkraii.allocateCommandBuffers(commandBufferAllocateInfo).front());
-
-    vk::CommandBufferBeginInfo constexpr commandBufferBeginInfo {
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-    };
-    commandBuffer.begin(commandBufferBeginInfo);
-}
-
-void Core::endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const {
-    commandBuffer.end();
-
-    vk::SubmitInfo const submitInfo {
-        .commandBufferCount = 1,
-        .pCommandBuffers = &*commandBuffer
-    };
-    queue.vkraii.submit(submitInfo, {});
-    queue.vkraii.waitIdle();
-}
-
 void Core::copyBuffer(
     vk::raii::Buffer const & srcBuffer,
     vk::raii::Buffer const & dstBuffer,
     vk::DeviceSize const & dstOffset,
     vk::DeviceSize const bufferSize,
+    vk::raii::Device const & device,
+    vk::raii::Queue const & queue,
     vk::raii::CommandPool const & commandPool
 ) const {
     vk::raii::CommandBuffer commandCopyBuffer {nullptr};
-    beginSingleTimeCommands(commandCopyBuffer, commandPool);
+    SingleTimeCommands::begin(device, commandPool, commandCopyBuffer);
 
     vk::BufferCopy const region {
         .srcOffset = 0,
@@ -96,7 +72,7 @@ void Core::copyBuffer(
 
     commandCopyBuffer.copyBuffer(*srcBuffer, *dstBuffer, region);
 
-    endSingleTimeCommands(commandCopyBuffer);
+    SingleTimeCommands::end(queue, commandCopyBuffer);
 }
 
 void Core::createImage(
@@ -169,11 +145,12 @@ void Core::copyBufferToImage(
     vk::raii::Image const & image,
     uint32_t const width,
     uint32_t const height,
+    vk::raii::Device const & device,
+    vk::raii::Queue const & queue,
     vk::raii::CommandPool const & commandPool
 ) const {
     vk::raii::CommandBuffer commandBuffer {nullptr};
-    beginSingleTimeCommands(commandBuffer, commandPool);
-
+    SingleTimeCommands::begin(device, commandPool, commandBuffer);
 
     vk::ImageSubresourceLayers constexpr imageSubresource {
         .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -201,7 +178,7 @@ void Core::copyBufferToImage(
 
     commandBuffer.copyBufferToImage(*buffer, *image, vk::ImageLayout::eTransferDstOptimal, region);
 
-    endSingleTimeCommands(commandBuffer);
+    SingleTimeCommands::end(queue, commandBuffer);
 }
 
 // GETTERS

@@ -74,7 +74,7 @@ void Model::loadVertices(IRenderer const & renderer, std::string_view const mode
 
 void Model::load(ICore const & core, IRenderer const & renderer, std::string_view const modelPath, std::string_view const texturePath) {
     std::cout << "load texture" << std::endl;
-    texture.load(core, renderer.getCommandPool(), texturePath.data());
+    texture.load(core, renderer, texturePath.data());
     std::cout << "load vertices" << std::endl;
     loadVertices(renderer, modelPath.data());
 }

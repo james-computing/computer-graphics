@@ -8,6 +8,7 @@
 #include "../include/physicalDevice.hpp"
 #include "../include/queue.hpp"
 #include "../include/device.hpp"
+#include "../include/singleTimeCommands.hpp"
 
 class Core : public ICore {
 private:
@@ -54,14 +55,13 @@ public:
         uint32_t const mipLevels
     ) const override;
 
-    void beginSingleTimeCommands(vk::raii::CommandBuffer & commandBuffer, vk::raii::CommandPool const & commandPool) const override;
-    void endSingleTimeCommands(vk::raii::CommandBuffer const & commandBuffer) const override;
-
     void copyBuffer(
         vk::raii::Buffer const & srcBuffer,
         vk::raii::Buffer const & dstBuffer,
         vk::DeviceSize const & dstOffset,
         vk::DeviceSize const bufferSize,
+        vk::raii::Device const & device,
+        vk::raii::Queue const & queue,
         vk::raii::CommandPool const & commandPool
     ) const;
 
@@ -70,6 +70,8 @@ public:
         vk::raii::Image const & image,
         uint32_t const width,
         uint32_t const height,
+        vk::raii::Device const & device,
+        vk::raii::Queue const & queue,
         vk::raii::CommandPool const & commandPool
     ) const override;
 

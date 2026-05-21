@@ -3,7 +3,8 @@
 #include <cmath>
 #include <cstdint> // For uint32_t
 #include <iostream>
-#include "icore.hpp"
+#include "irenderer.hpp"
+#include "../include/singleTimeCommands.hpp"
 #include "../libraries/stb/stb_image.h"
 
 class Texture {
@@ -22,12 +23,12 @@ public:
     void computeMipLevels(int const textureWidth, int const textureHeight);
     void transitionTextureImageLayout(
         ICore const & core,
-        vk::raii::CommandPool const & commandPool,
+        IRenderer const & renderer,
         vk::ImageLayout const oldLayout,
         vk::ImageLayout const newLayout
     ) const;
-    void generateMipmaps(ICore const & core, vk::raii::CommandPool const & commandPool, vk::Format imageFormat) const;
-    void createTextureImage(ICore const & core, vk::raii::CommandPool const & commandPool, stbi_uc const * const pixels);
+    void generateMipmaps(ICore const & core, IRenderer const & renderer, vk::Format imageFormat) const;
+    void createTextureImage(ICore const & core, IRenderer const & renderer, stbi_uc const * const pixels);
     void createTextureImageView(ICore const & core);
-    void load(ICore const & core, vk::raii::CommandPool const & commandPool, char const * const texturePath);
+    void load(ICore const & core, IRenderer const & renderer, char const * const texturePath);
 };
