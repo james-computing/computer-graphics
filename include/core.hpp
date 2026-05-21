@@ -23,6 +23,7 @@
 #include "../include/queue.hpp"
 #include "../include/device.hpp"
 #include "../include/swapChain.hpp"
+#include "../include/descriptor.hpp"
 #include "../include/graphicsPipeline.hpp"
 #include "../include/vertex.hpp"
 #include "../include/mvp.hpp"
@@ -61,13 +62,14 @@ private:
     SyncObjects syncObjects;
 
     uint32_t const MAX_FRAMES_IN_FLIGHT {2};
+
+    // used by recordCommandBuffer and drawFrame
     uint32_t frameIndex {0};
 
     VertexBuffer vertexBuffer;
     IndexBuffer indexBuffer;
 
-    vk::raii::DescriptorSetLayout descriptorSetLayout {nullptr}; // for model view projection, which uses uniform buffers
-    vk::raii::DescriptorPool descriptorPool {nullptr};
+    Descriptor descriptor;
 
     DepthStencil depthStencil;
     // multisampling
@@ -184,9 +186,6 @@ private:
         vk::DeviceSize const & dstOffset,
         vk::raii::Buffer const & buffer
     ) const;
-
-    void createDescriptorSetLayout();
-    void createDescriptorPool();
 
     // Group swap chain recreation with color and depth resources recreation
     void recreateSwapChainColorDepth();

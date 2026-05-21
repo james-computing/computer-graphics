@@ -20,10 +20,12 @@ void Core::initVulkan() {
 
     swapChain.create(physicalDevice.vkraii, device.vkraii, surface.vkraii, window);
     
-    // depends on logical device
-    createDescriptorSetLayout();
-    // depends on logical device and MAX_FRAMES_IN_FLIGHT
-    createDescriptorPool();
+    descriptor.create(
+        device.vkraii,
+        MAX_FRAMES_IN_FLIGHT,
+        MAX_FRAMES_IN_FLIGHT,
+        MAX_FRAMES_IN_FLIGHT
+    );
 
     // depends on logical device and queueFamilyIndex, but this is obtained when creating the logical device
     createCommandPool();
@@ -39,7 +41,7 @@ void Core::initVulkan() {
         device.vkraii,
         swapChain.extent,
         msaa.samples,
-        descriptorSetLayout,
+        descriptor.setLayout,
         &swapChain.surfaceFormat.format,
         depthStencil.depthFormat
     );
@@ -579,75 +581,17 @@ void Core::createTextureSampler(vk::raii::Sampler & textureSampler) const {
     textureSampler = vk::raii::Sampler(device.vkraii, samplerCreateInfo);
 }
 
-// DESCRIPTOR SETS
-
-void Core::createDescriptorSetLayout() {
-    vk::DescriptorSetLayoutBinding constexpr uboDescriptorSetLayoutBinding {
-        .binding = 0,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .pImmutableSamplers = nullptr
-    };
-
-    vk::DescriptorSetLayoutBinding constexpr combinedImageSamplerDescriptorSetLayoutBinding {
-        .binding = 1,
-        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    };
-
-    std::array<vk::DescriptorSetLayoutBinding, 2> bindings {
-        uboDescriptorSetLayoutBinding, 
-        combinedImageSamplerDescriptorSetLayoutBinding
-    };
-
-    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfo {
-        .bindingCount = static_cast<uint32_t>(bindings.size()),
-        .pBindings = bindings.data()
-    };
-
-    descriptorSetLayout = vk::raii::DescriptorSetLayout(device.vkraii, descriptorSetLayoutCreateInfo);
-}
-
-void Core::createDescriptorPool() {
-    vk::DescriptorPoolSize const uniformBufferDescriptorPoolSize {
-        .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = MAX_FRAMES_IN_FLIGHT
-    };
-
-    vk::DescriptorPoolSize const combinedImageSamplerDescriptorPoolSize {
-        .type = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = MAX_FRAMES_IN_FLIGHT
-    };
-
-    std::array<vk::DescriptorPoolSize, 2> descriptorPoolSizes {
-        uniformBufferDescriptorPoolSize,
-        combinedImageSamplerDescriptorPoolSize
-    };
-
-    vk::DescriptorPoolCreateInfo const descriptorPoolCreateInfo {
-        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = MAX_FRAMES_IN_FLIGHT,
-        .poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size()),
-        .pPoolSizes = descriptorPoolSizes.data()
-    };
-
-    descriptorPool = vk::raii::DescriptorPool(device.vkraii, descriptorPoolCreateInfo);
-}
-
 void Core::allocateDescriptorSets(
     uint32_t const descriptorSetCount,
     std::vector<vk::raii::DescriptorSet> & descriptorSets
 ) const {
     // Vector with descriptorSetCount copies of *descriptorSetLayout.
     // It is needed because descriptorSetAllocateInfo receives an array of layouts.
-    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptorSetLayout)};
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptor.setLayout)};
 
     // Allocate descriptor sets
     vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
-        .descriptorPool = descriptorPool,
+        .descriptorPool = descriptor.pool,
         .descriptorSetCount = descriptorSetCount,
         .pSetLayouts = descriptorSetLayouts.data()
     };
