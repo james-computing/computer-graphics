@@ -392,7 +392,6 @@ vk::raii::CommandPool const & Renderer::getCommandPool() const {
     return command.pool;
 }
 
-
 void Renderer::recreateSwapChainColorDepth() {
     swapChain.recreateSwapChain(_corePtr->getPhysicalDevice(), _corePtr->getDevice(), surface.vkraii, window);
     msaa.createColorResources(*_corePtr, swapChain.surfaceFormat.format, swapChain.extent.width, swapChain.extent.height);

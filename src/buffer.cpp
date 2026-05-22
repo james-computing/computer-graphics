@@ -35,14 +35,14 @@ void create(
     buffer.bindMemory(*bufferMemory, memoryOffset);
 }
 
-void copy(
+void copyToBuffer(
+    vk::raii::Device const & device,
+    vk::raii::Queue const & queue,
+    vk::raii::CommandPool const & commandPool,
     vk::raii::Buffer const & srcBuffer,
     vk::raii::Buffer const & dstBuffer,
     vk::DeviceSize const & dstOffset,
-    vk::DeviceSize const bufferSize,
-    vk::raii::Device const & device,
-    vk::raii::Queue const & queue,
-    vk::raii::CommandPool const & commandPool
+    vk::DeviceSize const bufferSize
 ) {
     vk::raii::CommandBuffer commandCopyBuffer {nullptr};
     SingleTimeCommands::begin(device, commandPool, commandCopyBuffer);

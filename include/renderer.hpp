@@ -160,5 +160,5 @@ void Renderer::copyToBuffer(
     data = nullptr;
 
     // Copy data from staging buffer to vertex buffer
-    Buffer::copy(stagingBuffer, buffer, dstOffset, bufferSize, _corePtr->getDevice(), _corePtr->getQueue(), command.pool);
+    Buffer::copyToBuffer(_corePtr->getDevice(), _corePtr->getQueue(), command.pool, stagingBuffer, buffer, dstOffset, bufferSize);
 }
