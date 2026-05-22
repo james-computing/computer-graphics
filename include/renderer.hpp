@@ -10,8 +10,6 @@
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
-#include <glm/gtc/matrix_transform.hpp> // for model view projection
-#include <chrono> // for model view projection
 #include <unordered_map>
 
 #include "../include/icore.hpp"
@@ -21,7 +19,6 @@
 #include "../include/descriptor.hpp"
 #include "../include/graphicsPipeline.hpp"
 #include "../include/command.hpp"
-#include "../include/mvp.hpp"
 #include "../include/depthStencil.hpp"
 #include "../include/msaa.hpp"
 #include "../include/vertexBuffer.hpp"

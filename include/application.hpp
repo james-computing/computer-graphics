@@ -3,30 +3,24 @@
 #include "core.hpp"
 #include "renderer.hpp"
 #include "model.hpp"
+#include "object.hpp"
 #include "textureSampler.hpp"
 
 class Application {
 private:
     Core core;
     Renderer renderer;
+
     Model model;
     std::string const modelPath {"./models/viking_room.obj"};
     std::string const texturePath {"./textures/viking_room.png"};
-    
-    std::vector<vk::raii::Buffer> uniformBuffers; // model view projection matrices are stored in uniform buffers
-    std::vector<vk::raii::DeviceMemory> uniformBuffersMemories;
-    std::vector<void*> uniformBuffersMapped; // pointers to transfer data from host to uniform buffers
+    Object object;
 
     vk::raii::Sampler textureSampler {nullptr};
-    std::vector<vk::raii::DescriptorSet> descriptorSets;
+
 public:
     void run();
+
 private:
     void init(); 
-    void createUniformBuffers();
-    void updateUniformBuffer(uint32_t frameIndex);
-
-    void allocateDescriptorSets();
-    void updateDescriptorSets() const;
-    void createDescriptorSets();
 };
