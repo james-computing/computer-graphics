@@ -36,4 +36,16 @@ vk::raii::ImageView createView(
     uint32_t const mipLevels
 );
 
+void transitionImageLayout(
+    vk::Image const & image, // not vk::raii::Image, because swapChain.getImages returns vk::Image
+    vk::ImageLayout const oldLayout,
+    vk::ImageLayout const newLayout,
+    vk::AccessFlags2 const srcAccessMask,
+    vk::AccessFlags2 const dstAccessMask,
+    vk::PipelineStageFlags2 const srcStageMask,
+    vk::PipelineStageFlags2 const dstStageMask,
+    vk::ImageAspectFlags const imageAspectFlags,
+    vk::raii::CommandBuffer const & commandBuffer
+);
+
 }

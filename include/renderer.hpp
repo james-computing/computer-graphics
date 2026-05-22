@@ -96,18 +96,6 @@ public:
     vk::raii::CommandPool const & getCommandPool() const override;
 
 private:
-    void transitionImageLayout(
-        vk::Image const & image, // not vk::raii::Image, because swapChain.getImages returns vk::Image
-        vk::ImageLayout const oldLayout,
-        vk::ImageLayout const newLayout,
-        vk::AccessFlags2 const srcAccessMask,
-        vk::AccessFlags2 const dstAccessMask,
-        vk::PipelineStageFlags2 const srcStageMask,
-        vk::PipelineStageFlags2 const dstStageMask,
-        vk::ImageAspectFlags const imageAspectFlags,
-        vk::raii::CommandBuffer const & commandBuffer
-    ) const;
-
     void recordCommandBuffer(
         uint32_t const imageIndex,
         std::vector<vk::raii::DescriptorSet> const & descriptorSets,

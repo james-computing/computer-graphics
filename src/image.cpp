@@ -70,4 +70,44 @@ vk::raii::ImageView createView(
     return vk::raii::ImageView(device, imageViewCreateInfo);
 }
 
+void transitionImageLayout(
+    vk::Image const & image,
+    vk::ImageLayout const oldLayout,
+    vk::ImageLayout const newLayout,
+    vk::AccessFlags2 const srcAccessMask,
+    vk::AccessFlags2 const dstAccessMask,
+    vk::PipelineStageFlags2 const srcStageMask,
+    vk::PipelineStageFlags2 const dstStageMask,
+    vk::ImageAspectFlags const imageAspectFlags,
+    vk::raii::CommandBuffer const & commandBuffer
+) {
+    // Use a barrier to change the image layout
+    vk::ImageMemoryBarrier2 const barrier {
+        .srcStageMask = srcStageMask,
+        .srcAccessMask = srcAccessMask,
+        .dstStageMask = dstStageMask,
+        .dstAccessMask = dstAccessMask,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = image,
+        .subresourceRange = vk::ImageSubresourceRange {
+            .aspectMask = imageAspectFlags,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    vk::DependencyInfo const dependencyInfo {
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+
+    commandBuffer.pipelineBarrier2(dependencyInfo);
+}
+
 }

@@ -75,46 +75,6 @@ void Renderer::cleanup() {
     window.cleanup();
 }
 
-void Renderer::transitionImageLayout(
-    vk::Image const & image,
-    vk::ImageLayout const oldLayout,
-    vk::ImageLayout const newLayout,
-    vk::AccessFlags2 const srcAccessMask,
-    vk::AccessFlags2 const dstAccessMask,
-    vk::PipelineStageFlags2 const srcStageMask,
-    vk::PipelineStageFlags2 const dstStageMask,
-    vk::ImageAspectFlags const imageAspectFlags,
-    vk::raii::CommandBuffer const & commandBuffer
-) const {
-    // Use a barrier to change the image layout
-    vk::ImageMemoryBarrier2 const barrier {
-        .srcStageMask = srcStageMask,
-        .srcAccessMask = srcAccessMask,
-        .dstStageMask = dstStageMask,
-        .dstAccessMask = dstAccessMask,
-        .oldLayout = oldLayout,
-        .newLayout = newLayout,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = image,
-        .subresourceRange = vk::ImageSubresourceRange {
-            .aspectMask = imageAspectFlags,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-        }
-    };
-
-    vk::DependencyInfo const dependencyInfo {
-        .dependencyFlags = {},
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &barrier
-    };
-
-    commandBuffer.pipelineBarrier2(dependencyInfo);
-}
-
 void Renderer::recordCommandBuffer(
     uint32_t const imageIndex,
     std::vector<vk::raii::DescriptorSet> const & descriptorSets,
@@ -125,7 +85,7 @@ void Renderer::recordCommandBuffer(
     commandBuffer.begin({});
 
     // Before start rendering, transition the swap chain image layout to COLOR_ATTACHMENT_OPTIMAL
-    transitionImageLayout(
+    Image::transitionImageLayout(
         swapChain.images[imageIndex],
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -138,7 +98,7 @@ void Renderer::recordCommandBuffer(
     );
 
     // Transition multisampled color image to eColorAttachmentOptimal
-    transitionImageLayout(
+    Image::transitionImageLayout(
         *msaa.colorImage,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -151,7 +111,7 @@ void Renderer::recordCommandBuffer(
     );
 
     // Is it necessary to make this transition for every frame? There is a single transition for the depth buffer.
-    transitionImageLayout(
+    Image::transitionImageLayout(
         *depthStencil.depthImage,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthAttachmentOptimal,
@@ -232,7 +192,7 @@ void Renderer::recordCommandBuffer(
     commandBuffer.endRendering();
 
     // After rendering, transition the swapchain image to PRESENT_SRC
-    transitionImageLayout(
+    Image::transitionImageLayout(
         swapChain.images[imageIndex],
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
