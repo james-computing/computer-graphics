@@ -31,7 +31,5 @@ public:
 
 private:
     void createUniformBuffers(ICore const & core, uint32_t const quantity);
-
     void updateDescriptorSets(ICore const & core, vk::raii::Sampler const & textureSampler, uint32_t const quantity) const;
-    void createDescriptorSets(ICore const & core, IRenderer const & renderer, vk::raii::Sampler const & textureSampler);
 };

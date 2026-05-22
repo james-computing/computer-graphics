@@ -3,11 +3,13 @@
 void Object::init(Model const & model, ICore const & core, IRenderer const & renderer, vk::raii::Sampler const & textureSampler) {
     _modelPtr = &model;
 
-    // depends on MAX_FRAMES_IN_FLIGHT. Also calls createBuffer, which depends on the logical device.
-    createUniformBuffers(core, renderer.getMaxFramesInFlight());
+    uint32_t const quantity {renderer.getMaxFramesInFlight()};
 
-    // depends on descriptorSetLayout, descriptorPool, uniform buffer, texture sampler, texture image view...
-    createDescriptorSets(core, renderer, textureSampler);
+    createUniformBuffers(core, quantity);
+
+    // Create the descriptor sets
+    renderer.allocateDescriptorSets(quantity, descriptorSets);
+    updateDescriptorSets(core, textureSampler, quantity);
 }
 
 void Object::createUniformBuffers(ICore const & core, uint32_t const quantity) {
@@ -35,42 +37,6 @@ void Object::createUniformBuffers(ICore const & core, uint32_t const quantity) {
         // Map uniform buffer to a pointer, so we can transfer data from the pointer to the uniform buffer
         uniformBuffersMapped.emplace_back(uniformBuffersMemories[i].mapMemory(0, bufferSize));
     }
-}
-
-void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight) {
-    // Get the start time from the first call to this function.
-    // Later calls won't update the start time.
-    static auto const startTime {std::chrono::high_resolution_clock::now()};
-
-    // Compute the time elapsed from start time to now. Elapsed time will parameterize the rotation.
-    auto const currenTime {std::chrono::high_resolution_clock::now()};
-    float const elapsedTime {std::chrono::duration<float, std::chrono::seconds::period>(currenTime - startTime).count()};
-
-    // Update the uniform buffer
-    UniformBufferObject ubo;
-
-    glm::vec3 constexpr up {glm::vec3(0.0f, 0.0f, 1.0f)};
-
-    // Rotate model around the z axis, according to the elapsed time.
-    glm::mat4 constexpr identity {glm::mat4(1.0f)};
-    ubo.model = glm::rotate(identity, elapsedTime * glm::radians(90.0f), up);
-
-    // View the model from a 45° angle
-    glm::vec3 constexpr eye {glm::vec3(2.0f, 2.0f, 2.0f)};
-    glm::vec3 constexpr center {glm::vec3(0.0f, 0.0f, 0.0f)};
-    ubo.view = glm::lookAt(eye, center, up);
-
-    // Perspective projection
-    float const aspectRatio {static_cast<float>(swapChainExtentWidth)/static_cast<float>(swapChainExtentHeight)};
-    float constexpr near {0.1f};
-    float constexpr far {10.f};
-    ubo.proj = glm::perspective(glm::radians(45.0f), aspectRatio, near, far);
-    // GLM was made for OpenGL. For Vulkan we need to flip the sign of the Y scaling factor.
-    ubo.proj[1][1] *= -1;
-
-    // Copy the ubo to the corresponding uniform buffer memory.
-    // It would be more efficient to use push constants.
-    memcpy(uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
 
 void Object::updateDescriptorSets(ICore const & core, vk::raii::Sampler const & textureSampler, uint32_t const quantity) const {
@@ -121,7 +87,38 @@ void Object::updateDescriptorSets(ICore const & core, vk::raii::Sampler const & 
     }
 }
 
-void Object::createDescriptorSets(ICore const & core, IRenderer const & renderer, vk::raii::Sampler const & textureSampler) {
-    renderer.allocateDescriptorSets(renderer.getMaxFramesInFlight(), descriptorSets);
-    updateDescriptorSets(core, textureSampler, renderer.getMaxFramesInFlight());
+void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight) {
+    // Get the start time from the first call to this function.
+    // Later calls won't update the start time.
+    static auto const startTime {std::chrono::high_resolution_clock::now()};
+
+    // Compute the time elapsed from start time to now. Elapsed time will parameterize the rotation.
+    auto const currenTime {std::chrono::high_resolution_clock::now()};
+    float const elapsedTime {std::chrono::duration<float, std::chrono::seconds::period>(currenTime - startTime).count()};
+
+    // Update the uniform buffer
+    UniformBufferObject ubo;
+
+    glm::vec3 constexpr up {glm::vec3(0.0f, 0.0f, 1.0f)};
+
+    // Rotate model around the z axis, according to the elapsed time.
+    glm::mat4 constexpr identity {glm::mat4(1.0f)};
+    ubo.model = glm::rotate(identity, elapsedTime * glm::radians(90.0f), up);
+
+    // View the model from a 45° angle
+    glm::vec3 constexpr eye {glm::vec3(2.0f, 2.0f, 2.0f)};
+    glm::vec3 constexpr center {glm::vec3(0.0f, 0.0f, 0.0f)};
+    ubo.view = glm::lookAt(eye, center, up);
+
+    // Perspective projection
+    float const aspectRatio {static_cast<float>(swapChainExtentWidth)/static_cast<float>(swapChainExtentHeight)};
+    float constexpr near {0.1f};
+    float constexpr far {10.f};
+    ubo.proj = glm::perspective(glm::radians(45.0f), aspectRatio, near, far);
+    // GLM was made for OpenGL. For Vulkan we need to flip the sign of the Y scaling factor.
+    ubo.proj[1][1] *= -1;
+
+    // Copy the ubo to the corresponding uniform buffer memory.
+    // It would be more efficient to use push constants.
+    memcpy(uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
