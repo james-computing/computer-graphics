@@ -118,47 +118,4 @@ private:
 
     // Group swap chain recreation with color and depth resources recreation
     void recreateSwapChainColorDepth();
-
-    template <typename T>
-    void copyVectorToBuffer(
-        std::vector<T> const & v,
-        vk::DeviceSize const & dstOffset,
-        vk::raii::Buffer const & buffer
-    ) const;
 };
-
-// Templates must be in the header file
-template <typename T>
-void Renderer::copyVectorToBuffer(
-    std::vector<T> const & v,
-    vk::DeviceSize const & dstOffset,
-    vk::raii::Buffer const & buffer
-) const {
-    vk::DeviceSize bufferSize {v.size() * sizeof(T)};
-
-    // Create a staging buffer to transfer data from the host to the device
-    vk::BufferUsageFlags constexpr stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
-    vk::MemoryPropertyFlags constexpr stagingBufferMemoryProperties {
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-    };
-    vk::raii::Buffer stagingBuffer {nullptr};
-    vk::raii::DeviceMemory stagingBufferMemory {nullptr};
-    Buffer::create(
-        _corePtr->getPhysicalDevice(),
-        _corePtr->getDevice(),
-        bufferSize,
-        stagingBufferUsage,
-        stagingBufferMemoryProperties,
-        stagingBuffer,
-        stagingBufferMemory
-    );
-
-    // Copy the data from the vertices vector to the staging buffer memory
-    void * data {stagingBufferMemory.mapMemory(0, bufferSize)};
-    memcpy(data, v.data(), bufferSize);
-    stagingBufferMemory.unmapMemory();
-    data = nullptr;
-
-    // Copy data from staging buffer to vertex buffer
-    Buffer::copyToBuffer(_corePtr->getDevice(), _corePtr->getQueue(), command.pool, stagingBuffer, buffer, dstOffset, bufferSize);
-}

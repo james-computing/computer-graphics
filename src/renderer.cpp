@@ -338,14 +338,30 @@ void Renderer::copyVerticesToVertexBuffer(
     std::vector<Vertex> const & vertices,
     vk::DeviceSize const & dstOffset
 ) const {
-    copyVectorToBuffer<Vertex>(vertices, dstOffset, vertexBuffer.buffer);
+    Buffer::copyVectorToBuffer<Vertex>(
+        _corePtr->getPhysicalDevice(),
+        _corePtr->getDevice(),
+        _corePtr->getQueue(),
+        command.pool,
+        vertices,
+        dstOffset,
+        vertexBuffer.buffer
+    );
 }
 
 void Renderer::copyIndicesToIndexBuffer(
     std::vector<uint32_t> const & indices,
     vk::DeviceSize const & dstOffset
 ) const {
-    copyVectorToBuffer<uint32_t>(indices, dstOffset, indexBuffer.buffer);
+    Buffer::copyVectorToBuffer<uint32_t>(
+        _corePtr->getPhysicalDevice(),
+        _corePtr->getDevice(),
+        _corePtr->getQueue(),
+        command.pool,
+        indices,
+        dstOffset,
+        indexBuffer.buffer
+    );
 }
 
 void Renderer::allocateDescriptorSets(
