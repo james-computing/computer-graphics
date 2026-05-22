@@ -1,5 +1,7 @@
 #include "../include/object.hpp"
 
+#include <cmath>
+
 void Object::init(Model const & model, ICore const & core, IRenderer const & renderer, vk::raii::Sampler const & textureSampler) {
     _modelPtr = &model;
 
@@ -124,6 +126,8 @@ void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapC
     //ubo.model = glm::rotate(identity, elapsedTime * glm::radians(90.0f), up);
 
     rotation.z = elapsedTime * glm::radians(90.0f);
+
+    position.z = 0.5f * sinf(elapsedTime);
 
     ubo.model = getModelMatrix();
 
