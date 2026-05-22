@@ -120,7 +120,7 @@ private:
     void recreateSwapChainColorDepth();
 
     template <typename T>
-    void copyToBuffer(
+    void copyVectorToBuffer(
         std::vector<T> const & v,
         vk::DeviceSize const & dstOffset,
         vk::raii::Buffer const & buffer
@@ -129,7 +129,7 @@ private:
 
 // Templates must be in the header file
 template <typename T>
-void Renderer::copyToBuffer(
+void Renderer::copyVectorToBuffer(
     std::vector<T> const & v,
     vk::DeviceSize const & dstOffset,
     vk::raii::Buffer const & buffer
