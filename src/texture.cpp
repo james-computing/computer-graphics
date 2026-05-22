@@ -248,14 +248,14 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
     data = nullptr;
     
     // Copy texture from staging buffer to image
-    core.copyBufferToImage(
+    Buffer::copyToImage(
+        core.getDevice(),
+        core.getQueue(),
+        renderer.getCommandPool(),
         stagingBuffer,
         image,
         static_cast<uint32_t>(textureWidth),
-        static_cast<uint32_t>(textureHeight),
-        core.getDevice(),
-        core.getQueue(),
-        renderer.getCommandPool()
+        static_cast<uint32_t>(textureHeight)
     );
 
     // The image layout will be transitioned to be used by the shader when generating the mipmaps.
@@ -265,7 +265,7 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
 void Texture::createTextureImageView(
     ICore const & core
 ) {
-    imageView = Image::createView(core.getDevice() ,image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
+    imageView = Image::createView(core.getDevice(), image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
 }
 
 void Texture::load(ICore const & core, IRenderer const & renderer, char const * const texturePath) {

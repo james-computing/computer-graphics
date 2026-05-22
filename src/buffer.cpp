@@ -58,4 +58,45 @@ void copy(
     SingleTimeCommands::end(queue, commandCopyBuffer);
 }
 
+void copyToImage(
+    vk::raii::Device const & device,
+    vk::raii::Queue const & queue,
+    vk::raii::CommandPool const & commandPool,
+    vk::raii::Buffer const & buffer,
+    vk::raii::Image const & image,
+    uint32_t const width,
+    uint32_t const height
+) {
+    vk::raii::CommandBuffer commandBuffer {nullptr};
+    SingleTimeCommands::begin(device, commandPool, commandBuffer);
+
+    vk::ImageSubresourceLayers constexpr imageSubresource {
+        .aspectMask = vk::ImageAspectFlagBits::eColor,
+        .mipLevel = 0,
+        .baseArrayLayer = 0,
+        .layerCount = 1
+    };
+    vk::Offset3D constexpr offset3D {
+        .x = 0,
+        .y = 0,
+        .z = 0
+    };
+    vk::BufferImageCopy const region {
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = imageSubresource,
+        .imageOffset = offset3D, 
+        .imageExtent = vk::Extent3D {
+            .width = width,
+            .height = height,
+            .depth = 1
+        }
+    };
+
+    commandBuffer.copyBufferToImage(*buffer, *image, vk::ImageLayout::eTransferDstOptimal, region);
+
+    SingleTimeCommands::end(queue, commandBuffer);
+}
+
 }

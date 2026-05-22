@@ -34,4 +34,14 @@ void copy(
     vk::raii::CommandPool const & commandPool
 );
 
+void copyToImage(
+    vk::raii::Device const & device,
+    vk::raii::Queue const & queue,
+    vk::raii::CommandPool const & commandPool,
+    vk::raii::Buffer const & buffer,
+    vk::raii::Image const & image,
+    uint32_t const width,
+    uint32_t const height
+);
+
 }
