@@ -30,6 +30,7 @@ public:
     void updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight);
 
 private:
+    glm::mat4 getModelMatrix() const;
     void createUniformBuffers(ICore const & core, uint32_t const quantity);
     void updateDescriptorSets(ICore const & core, vk::raii::Sampler const & textureSampler, uint32_t const quantity) const;
 };

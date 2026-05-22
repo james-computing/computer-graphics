@@ -10,6 +10,10 @@ void Object::init(Model const & model, ICore const & core, IRenderer const & ren
     // Create the descriptor sets
     renderer.allocateDescriptorSets(quantity, descriptorSets);
     updateDescriptorSets(core, textureSampler, quantity);
+
+    position = glm::vec3(0, 0, 0);
+    rotation = glm::vec3(0, 0, 0);
+    scale = glm::vec3(1.0f, 1.0f, 1.0f);
 }
 
 void Object::createUniformBuffers(ICore const & core, uint32_t const quantity) {
@@ -87,6 +91,20 @@ void Object::updateDescriptorSets(ICore const & core, vk::raii::Sampler const & 
     }
 }
 
+glm::mat4 Object::getModelMatrix() const {
+    glm::mat4 model {glm::mat4(1.0f)};
+
+    model = glm::translate(model, position);
+
+    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0, 0));
+    model = glm::rotate(model, rotation.y, glm::vec3(0, 1.0f, 0));
+    model = glm::rotate(model, rotation.z, glm::vec3(0, 0, 1.0f));
+
+    model = glm::scale(model, scale);
+
+    return model;
+};
+
 void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight) {
     // Get the start time from the first call to this function.
     // Later calls won't update the start time.
@@ -102,8 +120,12 @@ void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapC
     glm::vec3 constexpr up {glm::vec3(0.0f, 0.0f, 1.0f)};
 
     // Rotate model around the z axis, according to the elapsed time.
-    glm::mat4 constexpr identity {glm::mat4(1.0f)};
-    ubo.model = glm::rotate(identity, elapsedTime * glm::radians(90.0f), up);
+    //glm::mat4 constexpr identity {glm::mat4(1.0f)};
+    //ubo.model = glm::rotate(identity, elapsedTime * glm::radians(90.0f), up);
+
+    rotation.z = elapsedTime * glm::radians(90.0f);
+
+    ubo.model = getModelMatrix();
 
     // View the model from a 45° angle
     glm::vec3 constexpr eye {glm::vec3(2.0f, 2.0f, 2.0f)};
