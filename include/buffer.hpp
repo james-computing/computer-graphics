@@ -51,7 +51,7 @@ void copyVectorToBuffer(
     vk::raii::Queue const & queue,
     vk::raii::CommandPool const & commandPool, 
     std::vector<T> const & v,
-    vk::DeviceSize const & dstOffset,
+    size_t const & offset,
     vk::raii::Buffer const & buffer
 );
 
@@ -65,7 +65,7 @@ void Buffer::copyVectorToBuffer(
     vk::raii::Queue const & queue,
     vk::raii::CommandPool const & commandPool, 
     std::vector<T> const & v,
-    vk::DeviceSize const & dstOffset,
+    size_t const & offset,
     vk::raii::Buffer const & buffer
 ) {
     vk::DeviceSize bufferSize {v.size() * sizeof(T)};
@@ -94,5 +94,6 @@ void Buffer::copyVectorToBuffer(
     data = nullptr;
 
     // Copy data from staging buffer to buffer
+    vk::DeviceSize const dstOffset {offset * sizeof(T)};
     copyToBuffer(device, queue, commandPool, stagingBuffer, buffer, dstOffset, bufferSize);
 }

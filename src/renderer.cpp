@@ -296,7 +296,7 @@ void Renderer::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptor
 
 void Renderer::copyVerticesToVertexBuffer(
     std::vector<Vertex> const & vertices,
-    vk::DeviceSize const & dstOffset
+    size_t const & offset
 ) const {
     Buffer::copyVectorToBuffer<Vertex>(
         _corePtr->getPhysicalDevice(),
@@ -304,14 +304,14 @@ void Renderer::copyVerticesToVertexBuffer(
         _corePtr->getQueue(),
         command.pool,
         vertices,
-        dstOffset,
+        offset,
         vertexBuffer.buffer
     );
 }
 
 void Renderer::copyIndicesToIndexBuffer(
     std::vector<uint32_t> const & indices,
-    vk::DeviceSize const & dstOffset
+    size_t const & offset
 ) const {
     Buffer::copyVectorToBuffer<uint32_t>(
         _corePtr->getPhysicalDevice(),
@@ -319,7 +319,7 @@ void Renderer::copyIndicesToIndexBuffer(
         _corePtr->getQueue(),
         command.pool,
         indices,
-        dstOffset,
+        offset,
         indexBuffer.buffer
     );
 }

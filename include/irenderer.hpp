@@ -29,11 +29,11 @@ public:
 
     virtual void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
-        vk::DeviceSize const & dstOffset
+        size_t const & offset
     ) const = 0;
     virtual void copyIndicesToIndexBuffer(
         std::vector<uint32_t> const & indices,
-        vk::DeviceSize const & dstOffset
+        size_t const & offset
     ) const = 0;
 
     virtual void allocateDescriptorSets(
