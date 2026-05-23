@@ -127,7 +127,8 @@ void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapC
 
     rotation.z = elapsedTime * glm::radians(90.0f);
 
-    position.z = 0.5f * sinf(elapsedTime);
+    //position.z = 0.2f * sinf(elapsedTime);
+    //scale = (1.0f + 0.5f * sinf(elapsedTime)) * glm::vec3(1.0f, 1.0f, 1.0f);
 
     ubo.model = getModelMatrix();
 
