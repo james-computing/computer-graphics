@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring> // for memcpy
+#include <iostream>
 
 // Force depth in [0,1], for correct perspective matrix for Vulkan
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -52,6 +53,7 @@ glm::mat4 Object::getModelMatrix() const {
 
     model = glm::translate(model, location);
 
+    // This is inneficient! Should use quaternions internally!
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0, 0));
     model = glm::rotate(model, rotation.y, glm::vec3(0, 1.0f, 0));
     model = glm::rotate(model, rotation.z, glm::vec3(0, 0, 1.0f));
@@ -61,7 +63,7 @@ glm::mat4 Object::getModelMatrix() const {
     return model;
 };
 
-void Object::updateUniformBuffer(uint32_t const frameIndex) {
+void Object::updateModelMatrix() {
     // Get the start time from the first call to this function.
     // Later calls won't update the start time.
     static auto const startTime {std::chrono::high_resolution_clock::now()};
@@ -70,11 +72,16 @@ void Object::updateUniformBuffer(uint32_t const frameIndex) {
     auto const currenTime {std::chrono::high_resolution_clock::now()};
     float const elapsedTime {std::chrono::duration<float, std::chrono::seconds::period>(currenTime - startTime).count()};
 
+    // y is up in Vulkan
+    rotation.y = elapsedTime * glm::radians(90.0f);
+}
+
+void Object::updateUniformBuffer(uint32_t const frameIndex) {
+    updateModelMatrix();
+
     // Update the uniform buffer
     ObjectUBO ubo;
 
-    // y is up in Vulkan
-    rotation.y = elapsedTime * glm::radians(90.0f);
     ubo.model = getModelMatrix();
 
     // Copy the ubo to the corresponding uniform buffer memory.

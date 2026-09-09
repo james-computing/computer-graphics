@@ -30,4 +30,5 @@ public:
 private:
     glm::mat4 getModelMatrix() const;
     void createUniformBuffers(ICore const & core, uint32_t const maxFramesInFlight);
+    void updateModelMatrix();
 };
