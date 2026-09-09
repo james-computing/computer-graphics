@@ -7,7 +7,7 @@
 
 // Tiny obj loader is for loading the 3d model.
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "../libraries/tinyobjloader/tiny_obj_loader.h"
+#include "../libraries/tinyobjloader/tiny_obj_loader.h" // already inlcudes <cstring>, which has memcpy
 
 void Model::loadVertices(IRenderer const & renderer, std::string_view const modelPath) {
     tinyobj::attrib_t attrib;
@@ -34,9 +34,15 @@ void Model::loadVertices(IRenderer const & renderer, std::string_view const mode
 
             triple_vertex_index = 3 * index.vertex_index;
             vertex.position = {
+                /*
                 attrib.vertices[triple_vertex_index],
                 attrib.vertices[triple_vertex_index + 1],
                 attrib.vertices[triple_vertex_index + 2]
+                */
+                // Correct for y up
+                attrib.vertices[triple_vertex_index + 1],
+                attrib.vertices[triple_vertex_index + 2],
+                attrib.vertices[triple_vertex_index]
             };
 
             double_texture_index = 2 * index.texcoord_index;

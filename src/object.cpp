@@ -1,27 +1,28 @@
 #include "../include/object.hpp"
 
 #include <cmath>
+#include <cstring> // for memcpy
 
-void Object::init(Model const & model, ICore const & core, IRenderer const & renderer, vk::raii::Sampler const & textureSampler) {
-    _modelPtr = &model;
+// Force depth in [0,1], for correct perspective matrix for Vulkan
+#ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#endif
+#include <glm/glm.hpp> // for vectors and matrices for computer graphics
+#include <glm/gtc/matrix_transform.hpp> // for model view projection
+#include <glm/gtx/string_cast.hpp>
 
-    uint32_t const quantity {renderer.getMaxFramesInFlight()};
+void Object::init(ICore const & core, uint32_t const maxFramesInFlight) {
+    createUniformBuffers(core, maxFramesInFlight);
 
-    createUniformBuffers(core, quantity);
-
-    // Create the descriptor sets
-    renderer.allocateDescriptorSets(quantity, descriptorSets);
-    updateDescriptorSets(core, textureSampler, quantity);
-
-    position = glm::vec3(0, 0, 0);
+    location = glm::vec3(0, 0, 0);
     rotation = glm::vec3(0, 0, 0);
     scale = glm::vec3(1.0f, 1.0f, 1.0f);
 }
 
-void Object::createUniformBuffers(ICore const & core, uint32_t const quantity) {
-    for (size_t i {0}; i < quantity; ++i) {
+void Object::createUniformBuffers(ICore const & core, uint32_t const maxFramesInFlight) {
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
         // Create uniform buffer, allocate memory for it and bind it
-        vk::DeviceSize constexpr bufferSize {sizeof(UniformBufferObject)};
+        vk::DeviceSize constexpr bufferSize {sizeof(ObjectUBO)};
         vk::BufferUsageFlags constexpr bufferUsage {vk::BufferUsageFlagBits::eUniformBuffer};
         vk::MemoryPropertyFlags constexpr memoryProperties {
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
@@ -45,58 +46,11 @@ void Object::createUniformBuffers(ICore const & core, uint32_t const quantity) {
     }
 }
 
-void Object::updateDescriptorSets(ICore const & core, vk::raii::Sampler const & textureSampler, uint32_t const quantity) const {
-    // Configure descriptor sets.
-    // Maybe could build an array of vk::WriteDescriptorSet and call device.updateDescriptorSets once.
-    for (size_t i {0}; i < quantity; ++i) {
-        // uniform buffer
-
-        vk::DescriptorBufferInfo const descriptorBufferInfo {
-            .buffer = uniformBuffers[i],
-            .offset = 0,
-            .range = sizeof(UniformBufferObject)
-        };
-
-        vk::WriteDescriptorSet const uniformBufferWriteDescriptorSet {
-            .dstSet = descriptorSets[i],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &descriptorBufferInfo
-        };
-
-        // Combined image sampler
-
-        vk::DescriptorImageInfo const descriptorImageInfo {
-            .sampler = textureSampler,
-            .imageView = _modelPtr->texture.imageView,
-            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
-        };
-
-        vk::WriteDescriptorSet const combinedImageSamplerWriteDescriptorSet {
-            .dstSet = descriptorSets[i],
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = &descriptorImageInfo
-        };
-
-        std::vector<vk::WriteDescriptorSet> writeDescriptorSets {
-            uniformBufferWriteDescriptorSet,
-            combinedImageSamplerWriteDescriptorSet
-        };
-
-        // update
-        core.getDevice().updateDescriptorSets(writeDescriptorSets, {});
-    }
-}
-
 glm::mat4 Object::getModelMatrix() const {
+    // start with identity matrix
     glm::mat4 model {glm::mat4(1.0f)};
 
-    model = glm::translate(model, position);
+    model = glm::translate(model, location);
 
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0, 0));
     model = glm::rotate(model, rotation.y, glm::vec3(0, 1.0f, 0));
@@ -107,7 +61,7 @@ glm::mat4 Object::getModelMatrix() const {
     return model;
 };
 
-void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight) {
+void Object::updateUniformBuffer(uint32_t const frameIndex) {
     // Get the start time from the first call to this function.
     // Later calls won't update the start time.
     static auto const startTime {std::chrono::high_resolution_clock::now()};
@@ -117,33 +71,11 @@ void Object::updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapC
     float const elapsedTime {std::chrono::duration<float, std::chrono::seconds::period>(currenTime - startTime).count()};
 
     // Update the uniform buffer
-    UniformBufferObject ubo;
+    ObjectUBO ubo;
 
-    glm::vec3 constexpr up {glm::vec3(0.0f, 0.0f, 1.0f)};
-
-    // Rotate model around the z axis, according to the elapsed time.
-    //glm::mat4 constexpr identity {glm::mat4(1.0f)};
-    //ubo.model = glm::rotate(identity, elapsedTime * glm::radians(90.0f), up);
-
-    rotation.z = elapsedTime * glm::radians(90.0f);
-
-    //position.z = 0.2f * sinf(elapsedTime);
-    //scale = (1.0f + 0.5f * sinf(elapsedTime)) * glm::vec3(1.0f, 1.0f, 1.0f);
-
+    // y is up in Vulkan
+    rotation.y = elapsedTime * glm::radians(90.0f);
     ubo.model = getModelMatrix();
-
-    // View the model from a 45° angle
-    glm::vec3 constexpr eye {glm::vec3(2.0f, 2.0f, 2.0f)};
-    glm::vec3 constexpr center {glm::vec3(0.0f, 0.0f, 0.0f)};
-    ubo.view = glm::lookAt(eye, center, up);
-
-    // Perspective projection
-    float const aspectRatio {static_cast<float>(swapChainExtentWidth)/static_cast<float>(swapChainExtentHeight)};
-    float constexpr near {0.1f};
-    float constexpr far {10.f};
-    ubo.proj = glm::perspective(glm::radians(45.0f), aspectRatio, near, far);
-    // GLM was made for OpenGL. For Vulkan we need to flip the sign of the Y scaling factor.
-    ubo.proj[1][1] *= -1;
 
     // Copy the ubo to the corresponding uniform buffer memory.
     // It would be more efficient to use push constants.

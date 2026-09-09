@@ -4,9 +4,9 @@ void GraphicsPipeline::create(
     vk::raii::Device const & device,
     vk::Extent2D const & swapChainExtent,
     vk::SampleCountFlagBits msaaSamples,
-    vk::raii::DescriptorSetLayout const & descriptorSetLayout,
     vk::Format const * const colorAttachmentFormats,
-    vk::Format depthFormat
+    vk::Format depthFormat,
+    std::vector<vk::DescriptorSetLayout> const & descriptorSetLayouts
 ) {
     std::vector<char> const shaderCode {Shader::readFile("shaders/slang.spv")};
     std::cout << "Shader code size = " << shaderCode.size() << " bytes" << std::endl;
@@ -103,9 +103,10 @@ void GraphicsPipeline::create(
         .pAttachments =     &pipelineColorBlendAttachmentState
     };
 
+    std::cout << "num layouts in pipeline = " << descriptorSetLayouts.size() << std::endl;
     vk::PipelineLayoutCreateInfo const pipelineLayoutCreateInfo {
-        .setLayoutCount = 1,
-        .pSetLayouts = &*descriptorSetLayout,
+        .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+        .pSetLayouts = descriptorSetLayouts.data(),
         .pushConstantRangeCount = 0
     };
 

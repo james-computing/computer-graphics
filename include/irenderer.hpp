@@ -25,7 +25,7 @@ public:
     virtual bool step() const = 0;
     virtual void cleanup() = 0;
 
-    virtual void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) = 0;
+    virtual void drawFrame(uint32_t const indexCount) = 0;
 
     virtual void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
@@ -34,11 +34,6 @@ public:
     virtual void copyIndicesToIndexBuffer(
         std::vector<uint32_t> const & indices,
         size_t const & offset
-    ) const = 0;
-
-    virtual void allocateDescriptorSets(
-        uint32_t const descriptorSetCount,
-        std::vector<vk::raii::DescriptorSet> & descriptorSets
     ) const = 0;
 
     virtual vk::raii::SurfaceKHR const & getSurface() const = 0;
@@ -50,4 +45,10 @@ public:
     virtual uint32_t getFrameIndex() const = 0;
 
     virtual vk::raii::CommandPool const & getCommandPool() const = 0;
+
+    virtual void updateDescriptorSets(
+        vk::raii::ImageView const & textureImageView,
+        std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
+        std::vector<vk::raii::Buffer> const & objectUniformBuffers
+    ) const = 0;
 };

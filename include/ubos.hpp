@@ -2,8 +2,10 @@
 
 #include <glm/glm.hpp> // for vectors and matrices for computer graphics
 
-struct UniformBufferObject {
+struct ObjectUBO {
     alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
+};
+
+struct CameraUBO {
+    alignas(16) glm::mat4 pv; // projection * view
 };

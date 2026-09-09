@@ -23,12 +23,7 @@ void Renderer::initRest(ICore const & core) {
     swapChain.create(core.getPhysicalDevice(), core.getDevice(), surface.vkraii, window);
     
     std::cout << "Create descriptor" << std::endl;
-    descriptor.create(
-        core.getDevice(),
-        MAX_FRAMES_IN_FLIGHT,
-        MAX_FRAMES_IN_FLIGHT,
-        MAX_FRAMES_IN_FLIGHT
-    );
+    descriptor.create(core.getDevice(), MAX_FRAMES_IN_FLIGHT);
 
     std::cout << "Create command" << std::endl;
     command.create(core.getDevice(), core.getQueueFamilyIndex(), MAX_FRAMES_IN_FLIGHT);
@@ -37,17 +32,26 @@ void Renderer::initRest(ICore const & core) {
     std::cout << "Create sync objects" << std::endl;
     createSyncObjects(core);
 
-    // depends on descriptorSetLayout
+    // depends on descriptorSetLayouts
 
     std::cout << "Create graphics pipeline" << std::endl;
+
+    // The order is important! It is used by the shader!
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts {
+        *descriptor.setLayoutCombinedImageSampler, // set = 0
+        *descriptor.setLayoutCamera, // set = 1
+        *descriptor.setLayoutObject // set = 2
+    };
+
     graphicsPipeline.create(
         core.getDevice(),
         swapChain.extent,
         msaa.samples,
-        descriptor.setLayout,
         &swapChain.surfaceFormat.format,
-        depthStencil.depthFormat
+        depthStencil.depthFormat,
+        descriptorSetLayouts
     );
+
     // For MSAA. Color resources are used only in recordCommandBuffer.
     msaa.createColorResources(core, swapChain.surfaceFormat.format, swapChain.extent.width, swapChain.extent.height);
     // Depth resources are used only in recordCommandBuffer.
@@ -58,6 +62,8 @@ void Renderer::initRest(ICore const & core) {
     indexBuffer.create(core);
 
     _corePtr = &core;
+
+    TextureSampler::create(core.getPhysicalDevice(), core.getDevice(), textureSampler);
 }
 
 bool Renderer::step() const {
@@ -77,7 +83,7 @@ void Renderer::cleanup() {
 
 void Renderer::recordCommandBuffer(
     uint32_t const imageIndex,
-    std::vector<vk::raii::DescriptorSet> const & descriptorSets,
+    std::vector<vk::DescriptorSet> const & descriptorSets,
     uint32_t const indexCount
 ) const {
     vk::raii::CommandBuffer const & commandBuffer {command.buffers[frameIndex]};
@@ -184,8 +190,13 @@ void Renderer::recordCommandBuffer(
 
     commandBuffer.setScissor(0, scissor);
 
-    // descriptorSet = *(descriptorSets[frameIndex])
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, graphicsPipeline.pipelineLayout, 0, *(descriptorSets[frameIndex]), nullptr);
+    commandBuffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        graphicsPipeline.pipelineLayout,
+        0, // firstSet = 1, which is the index for the descriptor set of the camera
+        descriptorSets,
+        nullptr
+    );
 
     commandBuffer.drawIndexed(indexCount, 1, 0, 0, 0);
 
@@ -225,7 +236,7 @@ void Renderer::createSyncObjects(ICore const & core) {
     }
 }
 
-void Renderer::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) {
+void Renderer::drawFrame(uint32_t const indexCount) {
     vk::raii::CommandBuffer & commandBuffer {command.buffers[frameIndex]};
     vk::raii::Semaphore & presentCompleteSemaphore {syncObjects.presentCompleteSemaphores[frameIndex]};
     vk::raii::Fence & drawFence {syncObjects.inFlightFences[frameIndex]};
@@ -254,6 +265,12 @@ void Renderer::drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptor
     uint32_t const imageIndex {resultValueAcquireNextImage.value};
 
     commandBuffer.reset();
+
+    std::vector<vk::DescriptorSet> descriptorSets {
+        *descriptor.sets[frameIndex], // combined texture image sampler. I don't want to send this information to the GPU every frame...
+        *descriptor.sets[MAX_FRAMES_IN_FLIGHT + frameIndex], // camera
+        *descriptor.sets[2 * MAX_FRAMES_IN_FLIGHT + frameIndex] // object
+    };
     recordCommandBuffer(imageIndex, descriptorSets, indexCount);
 
     vk::raii::Semaphore const & renderFinishedSemaphore {syncObjects.renderFinishedSemaphores[imageIndex]}; // imageIndex, not frameIndex
@@ -324,24 +341,6 @@ void Renderer::copyIndicesToIndexBuffer(
     );
 }
 
-void Renderer::allocateDescriptorSets(
-    uint32_t const descriptorSetCount,
-    std::vector<vk::raii::DescriptorSet> & descriptorSets
-) const {
-    // Vector with descriptorSetCount copies of *descriptorSetLayout.
-    // It is needed because descriptorSetAllocateInfo receives an array of layouts.
-    std::vector<vk::DescriptorSetLayout> const descriptorSetLayouts {std::vector(descriptorSetCount, *descriptor.setLayout)};
-
-    // Allocate descriptor sets
-    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
-        .descriptorPool = descriptor.pool,
-        .descriptorSetCount = descriptorSetCount,
-        .pSetLayouts = descriptorSetLayouts.data()
-    };
-
-    descriptorSets = _corePtr->getDevice().allocateDescriptorSets(descriptorSetAllocateInfo);
-}
-
 // GETTERS
 
 vk::raii::SurfaceKHR const & Renderer::getSurface() const {
@@ -372,4 +371,19 @@ void Renderer::recreateSwapChainColorDepth() {
     swapChain.recreateSwapChain(_corePtr->getPhysicalDevice(), _corePtr->getDevice(), surface.vkraii, window);
     msaa.createColorResources(*_corePtr, swapChain.surfaceFormat.format, swapChain.extent.width, swapChain.extent.height);
     depthStencil.createDepthResources(*_corePtr, swapChain.extent.width, swapChain.extent.height, msaa.samples);
+}
+
+void Renderer::updateDescriptorSets(
+    vk::raii::ImageView const & textureImageView,
+    std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
+    std::vector<vk::raii::Buffer> const & objectUniformBuffers
+) const {
+    descriptor.updateDescriptorSets(
+        _corePtr->getDevice(),
+        MAX_FRAMES_IN_FLIGHT,
+        textureSampler,
+        textureImageView,
+        cameraUniformBuffers,
+        objectUniformBuffers
+    );
 }

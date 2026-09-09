@@ -9,12 +9,14 @@
 import vulkan_hpp;
 #endif
 
+// Include glm in header file, because it is used in Vertex struct
+// Force depth in [0,1], for correct perspective matrix for Vulkan
 #ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #endif
 #include <glm/glm.hpp> // for vectors and matrices for computer graphics
 
-// For using a map indexed by Vertex
+// For using a map indexed by Vertex.
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 

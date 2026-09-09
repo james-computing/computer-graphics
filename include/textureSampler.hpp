@@ -10,11 +10,9 @@ import vulkan_hpp;
 #endif
 
 namespace TextureSampler {
-    
-void create(
-    vk::raii::PhysicalDevice const & physicalDevice,
-    vk::raii::Device const & device,
-    vk::raii::Sampler & textureSampler
-);
-
-}
+    void create(
+        vk::raii::PhysicalDevice const & physicalDevice,
+        vk::raii::Device const & device,
+        vk::raii::Sampler & textureSampler
+    );
+};

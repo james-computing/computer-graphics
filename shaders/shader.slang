@@ -4,12 +4,14 @@ struct VSInput {
     float2 textureCoord;
 };
 
-struct UniformBuffer {
-    float4x4 model;
-    float4x4 view;
-    float4x4 proj;
+struct CameraUBO {
+    float4x4 pv;
 };
-ConstantBuffer<UniformBuffer> ubo;
+
+
+struct ObjectUBO {
+    float4x4 model;
+};
 
 struct VSOutput {
     float4 sv_position : SV_Position;
@@ -17,17 +19,27 @@ struct VSOutput {
     float2 textureCoord;
 };
 
+[[vk::binding(0, 0)]]
+//ParameterBlock<Sampler2D> texture;
+Sampler2D texture;
+
+[[vk::binding(0, 1)]]
+//ParameterBlock<ConstantBuffer<CameraUBO>> cameraUBO;
+ConstantBuffer<CameraUBO> cameraUBO;
+
+[[vk::binding(0, 2)]]
+//ParameterBlock<ConstantBuffer<ObjectUBO>> objectUBO;
+ConstantBuffer<ObjectUBO> objectUBO;
+
 [shader("vertex")]
 VSOutput vertMain(VSInput input) {
     VSOutput output;
     float4 vertexPosition = float4(input.position, 1.0);
-    output.sv_position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, vertexPosition)));
+    output.sv_position = mul(cameraUBO.pv, mul(objectUBO.model, vertexPosition));
     //output.color = input.color;
     output.textureCoord = input.textureCoord;
     return output;
 }
-
-Sampler2D texture;
 
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_Target {

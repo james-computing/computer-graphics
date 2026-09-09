@@ -7,9 +7,6 @@
 #include <cstdint> // For uint32_t
 #include <limits> // for std::numeric_limits
 #include <algorithm> // for std::clamp
-#ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#endif
 #include <unordered_map>
 
 #include "../include/icore.hpp"
@@ -23,8 +20,10 @@
 #include "../include/msaa.hpp"
 #include "../include/vertexBuffer.hpp"
 #include "../include/indexBuffer.hpp"
+#include "../include/textureSampler.hpp"
 
 #include "../libraries/stb/stb_image.h"
+
 
 // Used in drawFrame
 struct SyncObjects {
@@ -59,6 +58,8 @@ private:
     // multisampling
     MSAA msaa;
 
+    vk::raii::Sampler textureSampler {nullptr};
+
 public:
     void initWindow() override;
     void initSurface(vk::raii::Instance const & instance) override;
@@ -66,7 +67,7 @@ public:
     bool step() const override;
     void cleanup() override;
 
-    void drawFrame(std::vector<vk::raii::DescriptorSet> const & descriptorSets, uint32_t const indexCount) override;
+    void drawFrame(uint32_t const indexCount) override;
 
     void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
@@ -75,11 +76,6 @@ public:
     void copyIndicesToIndexBuffer(
         std::vector<uint32_t> const & indices,
         size_t const & offset
-    ) const override;
-
-    void allocateDescriptorSets(
-        uint32_t const descriptorSetCount,
-        std::vector<vk::raii::DescriptorSet> & descriptorSets
     ) const override;
 
     vk::raii::SurfaceKHR const & getSurface() const override;
@@ -95,7 +91,7 @@ public:
 private:
     void recordCommandBuffer(
         uint32_t const imageIndex,
-        std::vector<vk::raii::DescriptorSet> const & descriptorSets,
+        std::vector<vk::DescriptorSet> const & descriptorSets,
         uint32_t const indexCount
     ) const;
 
@@ -103,4 +99,11 @@ private:
 
     // Group swap chain recreation with color and depth resources recreation
     void recreateSwapChainColorDepth();
+
+public:
+    void updateDescriptorSets(
+        vk::raii::ImageView const & textureImageView,
+        std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
+        std::vector<vk::raii::Buffer> const & objectUniformBuffers
+    ) const override;
 };

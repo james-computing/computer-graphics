@@ -23,8 +23,8 @@ public:
         vk::raii::Device const & device,
         vk::Extent2D const & swapChainExtent,
         vk::SampleCountFlagBits msaaSamples,
-        vk::raii::DescriptorSetLayout const & descriptorSetLayout,
         vk::Format const * const colorAttachmentFormats,
-        vk::Format depthFormat
+        vk::Format depthFormat,
+        std::vector<vk::DescriptorSetLayout> const & descriptorSetLayouts
     );
 };

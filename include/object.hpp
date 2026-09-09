@@ -3,34 +3,31 @@
 // An object will use a model, which has the texture and vertex data.
 // It will also have additional information to modify its position, rotation and scale.
 
-#include "model.hpp"
-#include "mvp.hpp"
-#include <glm/glm.hpp> // for vectors and matrices for computer graphics
-#include <glm/gtc/matrix_transform.hpp> // for model view projection
-#include <chrono> // for model view projection
+#include "irenderer.hpp"
+#include "buffer.hpp"
+#include "ubos.hpp"
+#include <chrono> // for animation
+
+#include "transforms.hpp"
 
 class Object {
 public:
-    glm::vec3 position;
+    glm::vec3 location;
     glm::vec3 rotation;
     glm::vec3 scale;
 
-    std::vector<vk::raii::DescriptorSet> descriptorSets;
+    std::vector<vk::raii::Buffer> uniformBuffers; // model matrix is stored in uniform buffers
 
 private:
-    Model const * _modelPtr;
-
-    std::vector<vk::raii::Buffer> uniformBuffers; // model view projection matrices are stored in uniform buffers
     std::vector<vk::raii::DeviceMemory> uniformBuffersMemories;
     std::vector<void*> uniformBuffersMapped; // pointers to transfer data from host to uniform buffers
     
 public:
-    void init(Model const & model, ICore const & core, IRenderer const & renderer, vk::raii::Sampler const & textureSampler);
+    void init(ICore const & core, uint32_t const maxFramesInFlight);
 
-    void updateUniformBuffer(uint32_t const frameIndex, uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight);
+    void updateUniformBuffer(uint32_t const frameIndex);
 
 private:
     glm::mat4 getModelMatrix() const;
-    void createUniformBuffers(ICore const & core, uint32_t const quantity);
-    void updateDescriptorSets(ICore const & core, vk::raii::Sampler const & textureSampler, uint32_t const quantity) const;
+    void createUniformBuffers(ICore const & core, uint32_t const maxFramesInFlight);
 };

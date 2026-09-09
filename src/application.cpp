@@ -17,24 +17,26 @@ void Application::init() {
 
     renderer.initRest(core);
 
-    std::cout << "Create texture sampler" << std::endl;
-    // depends on the logical and physical devices.
-    // Used in createDescriptorSets.
-    TextureSampler::create(core.getPhysicalDevice(), core.getDevice(), textureSampler);
+    camera.init(core, renderer.getMaxFramesInFlight());
     
     std::cout << "model load" << std::endl;
     model.load(core, renderer, modelPath, texturePath);
 
     std::cout << "create object" << std::endl;
-    object.init(model, core, renderer, textureSampler);
+    object.init(core, renderer.getMaxFramesInFlight());
+
+    std::cout << "renderer.updateDescriptorSets" << std::endl;
+    renderer.updateDescriptorSets(model.texture.imageView, camera.uniformBuffers, object.uniformBuffers);
 }
 
 void Application::run() {
     init();
     
+    std::cout << "while loop" << std::endl;
     while (renderer.step()) {
-        object.updateUniformBuffer(renderer.getFrameIndex(), renderer.getSwapChainExtentWidth(), renderer.getSwapChainExtentHeight());
-        renderer.drawFrame(object.descriptorSets, model.getNumIndices());
+        camera.updateUniformBuffer(renderer.getFrameIndex(), renderer.getSwapChainExtentWidth(), renderer.getSwapChainExtentHeight());
+        object.updateUniformBuffer(renderer.getFrameIndex());
+        renderer.drawFrame(model.getNumIndices());
     }
 
     renderer.cleanup();
