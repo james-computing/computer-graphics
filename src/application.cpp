@@ -36,7 +36,7 @@ void Application::run() {
     while (renderer.step()) {
         camera.updateUniformBuffer(renderer.getFrameIndex(), renderer.getSwapChainExtentWidth(), renderer.getSwapChainExtentHeight());
         object.updateUniformBuffer(renderer.getFrameIndex());
-        renderer.drawFrame(model.getNumIndices());
+        renderer.drawFrame(model.getNumIndices(), 1);
     }
 
     renderer.cleanup();

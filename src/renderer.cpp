@@ -84,7 +84,8 @@ void Renderer::cleanup() {
 void Renderer::recordCommandBuffer(
     uint32_t const imageIndex,
     std::vector<vk::DescriptorSet> const & descriptorSets,
-    uint32_t const indexCount
+    uint32_t const indexCount,
+    uint32_t const instanceCount
 ) const {
     vk::raii::CommandBuffer const & commandBuffer {command.buffers[frameIndex]};
 
@@ -198,7 +199,7 @@ void Renderer::recordCommandBuffer(
         nullptr
     );
 
-    commandBuffer.drawIndexed(indexCount, 1, 0, 0, 0);
+    commandBuffer.drawIndexed(indexCount, instanceCount, 0, 0, 0);
 
     commandBuffer.endRendering();
 
@@ -236,7 +237,7 @@ void Renderer::createSyncObjects(ICore const & core) {
     }
 }
 
-void Renderer::drawFrame(uint32_t const indexCount) {
+void Renderer::drawFrame(uint32_t const indexCount, uint32_t const instanceCount) {
     vk::raii::CommandBuffer & commandBuffer {command.buffers[frameIndex]};
     vk::raii::Semaphore & presentCompleteSemaphore {syncObjects.presentCompleteSemaphores[frameIndex]};
     vk::raii::Fence & drawFence {syncObjects.inFlightFences[frameIndex]};
@@ -271,7 +272,7 @@ void Renderer::drawFrame(uint32_t const indexCount) {
         *descriptor.sets[MAX_FRAMES_IN_FLIGHT + frameIndex], // camera
         *descriptor.sets[2 * MAX_FRAMES_IN_FLIGHT + frameIndex] // object
     };
-    recordCommandBuffer(imageIndex, descriptorSets, indexCount);
+    recordCommandBuffer(imageIndex, descriptorSets, indexCount, instanceCount);
 
     vk::raii::Semaphore const & renderFinishedSemaphore {syncObjects.renderFinishedSemaphores[imageIndex]}; // imageIndex, not frameIndex
     vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);

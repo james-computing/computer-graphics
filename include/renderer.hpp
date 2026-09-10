@@ -67,7 +67,7 @@ public:
     bool step() const override;
     void cleanup() override;
 
-    void drawFrame(uint32_t const indexCount) override;
+    void drawFrame(uint32_t const indexCount, uint32_t const instanceCount) override;
 
     void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
@@ -92,7 +92,8 @@ private:
     void recordCommandBuffer(
         uint32_t const imageIndex,
         std::vector<vk::DescriptorSet> const & descriptorSets,
-        uint32_t const indexCount
+        uint32_t const indexCount,
+        uint32_t const instanceCount
     ) const;
 
     void createSyncObjects(ICore const & core);

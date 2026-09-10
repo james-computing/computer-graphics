@@ -25,7 +25,7 @@ public:
     virtual bool step() const = 0;
     virtual void cleanup() = 0;
 
-    virtual void drawFrame(uint32_t const indexCount) = 0;
+    virtual void drawFrame(uint32_t const indexCount, uint32_t const instanceCount) = 0;
 
     virtual void copyVerticesToVertexBuffer(
         std::vector<Vertex> const & vertices,
