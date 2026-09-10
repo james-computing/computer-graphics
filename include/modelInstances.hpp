@@ -20,7 +20,8 @@ private:
     std::vector<void*> shaderStorageBuffersMapped; // pointers to transfer data from host to shader storage buffers
 
     void createSSBOs(ICore const & core, uint32_t const maxFramesInFlight);
-    glm::mat4 getModelMatrix(uint32_t instance) const;
+    glm::mat4 getModelMatrix(uint32_t const instance) const;
+    void updateTransform(uint32_t const instance);
 
 public:
     void init(ICore const & core, uint32_t const maxFramesInFlight);

@@ -59,16 +59,20 @@ void ModelInstances::createSSBOs(ICore const & core, uint32_t const maxFramesInF
     }
 }
 
-glm::mat4 ModelInstances::getModelMatrix(uint32_t instance) const {
+glm::mat4 ModelInstances::getModelMatrix(uint32_t const instance) const {
     return transforms[instance].getModelMatrix();
 };
+
+void ModelInstances::updateTransform(uint32_t const instance) {
+    transforms[instance].rotation.y += 0.05f;
+}
 
 void ModelInstances::updateShaderStorageBuffer(uint32_t const frameIndex) {
     std::vector<glm::mat4> modelMatrices;
     modelMatrices.reserve(instanceCount);
 
     for (uint32_t instance {0}; instance < instanceCount; ++instance) {
-        //updateTransform(instance);
+        updateTransform(instance);
         modelMatrices[instance] = getModelMatrix(instance);
     }
 
