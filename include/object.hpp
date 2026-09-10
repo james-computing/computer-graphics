@@ -2,7 +2,7 @@
 
 // An object will use a model, which has the texture and vertex data.
 // It will also have additional information to modify its position, rotation and scale.
-
+/*
 #include "irenderer.hpp"
 #include "buffer.hpp"
 #include "ubos.hpp"
@@ -32,3 +32,4 @@ private:
     void createUniformBuffers(ICore const & core, uint32_t const maxFramesInFlight);
     void updateModelMatrix();
 };
+*/

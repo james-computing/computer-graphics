@@ -27,15 +27,20 @@ Sampler2D texture;
 //ParameterBlock<ConstantBuffer<CameraUBO>> cameraUBO;
 ConstantBuffer<CameraUBO> cameraUBO;
 
+//[[vk::binding(0, 2)]]
+//ConstantBuffer<ObjectUBO> objectUBO;
+
 [[vk::binding(0, 2)]]
-//ParameterBlock<ConstantBuffer<ObjectUBO>> objectUBO;
-ConstantBuffer<ObjectUBO> objectUBO;
+StructuredBuffer<float4x4> modelMatrices;
 
 [shader("vertex")]
-VSOutput vertMain(VSInput input) {
+VSOutput vertMain(VSInput input, uint instanceID : SV_InstanceID) {
     VSOutput output;
     float4 vertexPosition = float4(input.position, 1.0);
-    output.sv_position = mul(cameraUBO.pv, mul(objectUBO.model, vertexPosition));
+
+    //output.sv_position = mul(cameraUBO.pv, mul(objectUBO.model, vertexPosition));
+    output.sv_position = mul(cameraUBO.pv, mul(modelMatrices[instanceID], vertexPosition));
+    
     //output.color = input.color;
     output.textureCoord = input.textureCoord;
     return output;
@@ -47,4 +52,5 @@ float4 fragMain(VSOutput vertIn) : SV_Target {
     //return float4(color, 1.0);
 
     return texture.Sample(vertIn.textureCoord);
+    //return float4(1.0, 1.0, 1.0, 1.0);
 }

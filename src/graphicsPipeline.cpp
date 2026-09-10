@@ -103,7 +103,6 @@ void GraphicsPipeline::create(
         .pAttachments =     &pipelineColorBlendAttachmentState
     };
 
-    std::cout << "num layouts in pipeline = " << descriptorSetLayouts.size() << std::endl;
     vk::PipelineLayoutCreateInfo const pipelineLayoutCreateInfo {
         .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
         .pSetLayouts = descriptorSetLayouts.data(),

@@ -5,7 +5,8 @@
 #include "descriptor.hpp"
 #include "camera.hpp"
 #include "model.hpp"
-#include "object.hpp"
+//#include "object.hpp"
+#include "modelInstances.hpp"
 
 class Application {
 private:
@@ -17,7 +18,8 @@ private:
     Model model;
     std::string const modelPath {"./models/viking_room.obj"};
     std::string const texturePath {"./textures/viking_room.png"};
-    Object object;
+    //Object object;
+    ModelInstances modelInstances;
 
 public:
     void run();

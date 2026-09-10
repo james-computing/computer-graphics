@@ -1,5 +1,5 @@
 #include "../include/object.hpp"
-
+/*
 #include <cmath>
 #include <cstring> // for memcpy
 #include <iostream>
@@ -86,3 +86,4 @@ void Object::updateUniformBuffer(uint32_t const frameIndex) {
     // Copy the ubo to the corresponding uniform buffer memory.
     memcpy(uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
+*/

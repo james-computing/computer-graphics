@@ -36,7 +36,8 @@ public:
     // The descriptor set layout is used by the graphics pipeline, to know how to bind the descriptor sets
     vk::raii::DescriptorSetLayout setLayoutCombinedImageSampler {nullptr};
     vk::raii::DescriptorSetLayout setLayoutCamera {nullptr};
-    vk::raii::DescriptorSetLayout setLayoutObject {nullptr};
+    //vk::raii::DescriptorSetLayout setLayoutObject {nullptr};
+    vk::raii::DescriptorSetLayout setLayoutModelInstances {nullptr};
 
     // The declaration order determines the destruction order.
     // For this reason, the descriptor sets must be declared after the descriptor pool.
@@ -61,6 +62,8 @@ public:
         vk::raii::Sampler const & textureSampler,
         vk::raii::ImageView const & textureImageView,
         std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-        std::vector<vk::raii::Buffer> const & objectUniformBuffers
+        //std::vector<vk::raii::Buffer> const & objectUniformBuffers
+        std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
+        uint32_t const instanceCount
     ) const;
 };

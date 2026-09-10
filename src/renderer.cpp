@@ -40,7 +40,8 @@ void Renderer::initRest(ICore const & core) {
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts {
         *descriptor.setLayoutCombinedImageSampler, // set = 0
         *descriptor.setLayoutCamera, // set = 1
-        *descriptor.setLayoutObject // set = 2
+        //*descriptor.setLayoutObject // set = 2
+        *descriptor.setLayoutModelInstances // set = 2
     };
 
     graphicsPipeline.create(
@@ -270,7 +271,7 @@ void Renderer::drawFrame(uint32_t const indexCount, uint32_t const instanceCount
     std::vector<vk::DescriptorSet> descriptorSets {
         *descriptor.sets[frameIndex], // combined texture image sampler. I don't want to send this information to the GPU every frame...
         *descriptor.sets[MAX_FRAMES_IN_FLIGHT + frameIndex], // camera
-        *descriptor.sets[2 * MAX_FRAMES_IN_FLIGHT + frameIndex] // object
+        *descriptor.sets[2 * MAX_FRAMES_IN_FLIGHT + frameIndex] // object, or modelInstances
     };
     recordCommandBuffer(imageIndex, descriptorSets, indexCount, instanceCount);
 
@@ -377,7 +378,9 @@ void Renderer::recreateSwapChainColorDepth() {
 void Renderer::updateDescriptorSets(
     vk::raii::ImageView const & textureImageView,
     std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-    std::vector<vk::raii::Buffer> const & objectUniformBuffers
+    //std::vector<vk::raii::Buffer> const & objectUniformBuffers
+    std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
+    uint32_t const instanceCount
 ) const {
     descriptor.updateDescriptorSets(
         _corePtr->getDevice(),
@@ -385,6 +388,8 @@ void Renderer::updateDescriptorSets(
         textureSampler,
         textureImageView,
         cameraUniformBuffers,
-        objectUniformBuffers
+        //objectUniformBuffers,
+        modelInstancesSSBOs,
+        instanceCount
     );
 }

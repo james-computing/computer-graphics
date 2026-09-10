@@ -49,6 +49,8 @@ public:
     virtual void updateDescriptorSets(
         vk::raii::ImageView const & textureImageView,
         std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-        std::vector<vk::raii::Buffer> const & objectUniformBuffers
+        //std::vector<vk::raii::Buffer> const & objectUniformBuffers
+        std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
+        uint32_t const instanceCount
     ) const = 0;
 };

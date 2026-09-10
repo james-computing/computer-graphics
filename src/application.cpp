@@ -22,11 +22,21 @@ void Application::init() {
     std::cout << "model load" << std::endl;
     model.load(core, renderer, modelPath, texturePath);
 
+    /*
     std::cout << "create object" << std::endl;
     object.init(core, renderer.getMaxFramesInFlight());
+    */
+
+    std::cout << "create model instances" << std::endl;
+    modelInstances.init(core, renderer.getMaxFramesInFlight());
 
     std::cout << "renderer.updateDescriptorSets" << std::endl;
-    renderer.updateDescriptorSets(model.texture.imageView, camera.uniformBuffers, object.uniformBuffers);
+    renderer.updateDescriptorSets(
+        model.texture.imageView,
+        camera.uniformBuffers,
+        modelInstances.shaderStorageBuffers,
+        modelInstances.getInstanceCount()
+    );
 }
 
 void Application::run() {
@@ -35,8 +45,9 @@ void Application::run() {
     std::cout << "while loop" << std::endl;
     while (renderer.step()) {
         camera.updateUniformBuffer(renderer.getFrameIndex(), renderer.getSwapChainExtentWidth(), renderer.getSwapChainExtentHeight());
-        object.updateUniformBuffer(renderer.getFrameIndex());
-        renderer.drawFrame(model.getNumIndices(), 1);
+        //object.updateUniformBuffer(renderer.getFrameIndex());
+        modelInstances.updateShaderStorageBuffer(renderer.getFrameIndex());
+        renderer.drawFrame(model.getNumIndices(), modelInstances.getInstanceCount());
     }
 
     renderer.cleanup();
