@@ -12,7 +12,9 @@ import vulkan_hpp;
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class Window {
+#include "iinputListener.hpp"
+
+class Window : public IInputListener{
 public:
     uint32_t const WIDTH {800};
     uint32_t const HEIGHT {600};
@@ -31,4 +33,11 @@ public:
     
 private:
     static void frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height);
+
+    static void keyCallback(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods);
+
+    KeysActive keysActive;
+
+public:
+    bool getKeyActive(char const c) const override;
 };
