@@ -63,16 +63,17 @@ glm::mat4 ModelInstances::getModelMatrix(uint32_t const instance) const {
     return transforms[instance].getModelMatrix();
 };
 
-void ModelInstances::updateTransform(uint32_t const instance) {
-    transforms[instance].rotation.y += 0.05f;
+void ModelInstances::updateTransform(uint32_t const instance, float const deltaTime) {
+    float constexpr rotationSpeed {1.0};
+    transforms[instance].rotation.y += rotationSpeed * deltaTime;
 }
 
-void ModelInstances::updateShaderStorageBuffer(uint32_t const frameIndex) {
+void ModelInstances::updateShaderStorageBuffer(uint32_t const frameIndex, float const deltaTime) {
     std::vector<glm::mat4> modelMatrices;
     modelMatrices.reserve(instanceCount);
 
     for (uint32_t instance {0}; instance < instanceCount; ++instance) {
-        updateTransform(instance);
+        updateTransform(instance, deltaTime);
         modelMatrices[instance] = getModelMatrix(instance);
     }
 

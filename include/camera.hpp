@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "irenderer.hpp"
+#include "iinputListener.hpp"
 
 class Camera {
 public:
@@ -14,14 +15,15 @@ public:
 
     std::vector<vk::raii::Buffer> uniformBuffers;
 
-    void init(ICore const & core, uint32_t const maxFramesInFlight);
+    void init(ICore const & core, IInputListener const & inputListener, uint32_t const maxFramesInFlight);
     //glm::mat4 getModelMatrix() const;
     glm::mat4 view() const;
     glm::mat4 projection(uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight) const;
     void updateUniformBuffer(
         uint32_t const frameIndex,
         uint32_t const swapChainExtentWidth,
-        uint32_t const swapChainExtentHeight
+        uint32_t const swapChainExtentHeight,
+        float const deltaTime
     );
 
 private:
@@ -29,4 +31,8 @@ private:
     std::vector<void*> uniformBuffersMapped; // pointers to transfer data from host to uniform buffers
 
     void createUniformBuffers(ICore const & core, uint32_t const maxFramesInFlight);
+
+    IInputListener const * inputListenerPtr;
+
+    void updateLocationRotation(float const deltaTime);
 };

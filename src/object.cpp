@@ -68,8 +68,8 @@ void Object::updateModelMatrix() {
     static auto const startTime {std::chrono::high_resolution_clock::now()};
 
     // Compute the time elapsed from start time to now. Elapsed time will parameterize the rotation.
-    auto const currenTime {std::chrono::high_resolution_clock::now()};
-    float const elapsedTime {std::chrono::duration<float, std::chrono::seconds::period>(currenTime - startTime).count()};
+    auto const currentTime {std::chrono::high_resolution_clock::now()};
+    float const elapsedTime {std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count()};
 
     // y is up in Vulkan
     rotation.y = elapsedTime * glm::radians(90.0f);

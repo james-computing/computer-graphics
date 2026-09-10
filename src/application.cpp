@@ -1,5 +1,7 @@
 #include "../include/application.hpp"
 
+#include <chrono> // for animation
+
 void Application::init() {
     std::cout << "Application init" << std::endl;
 
@@ -17,7 +19,7 @@ void Application::init() {
 
     renderer.initRest(core);
 
-    camera.init(core, renderer.getMaxFramesInFlight());
+    camera.init(core, renderer.getInputListener(),renderer.getMaxFramesInFlight());
     
     std::cout << "model load" << std::endl;
     model.load(core, renderer, modelPath, texturePath);
@@ -43,11 +45,29 @@ void Application::run() {
     init();
     
     std::cout << "while loop" << std::endl;
+
+    auto previousTime {std::chrono::high_resolution_clock::now()};
+    auto currentTime {previousTime}; // assign to previousTime just for auto to work
+    float deltaTime;
+
     while (renderer.step()) {
-        camera.updateUniformBuffer(renderer.getFrameIndex(), renderer.getSwapChainExtentWidth(), renderer.getSwapChainExtentHeight());
+        currentTime = std::chrono::high_resolution_clock::now();
+        deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - previousTime).count();
+
+        camera.updateUniformBuffer(
+            renderer.getFrameIndex(),
+            renderer.getSwapChainExtentWidth(),
+            renderer.getSwapChainExtentHeight(),
+            deltaTime
+        );
         //object.updateUniformBuffer(renderer.getFrameIndex());
-        modelInstances.updateShaderStorageBuffer(renderer.getFrameIndex());
+        modelInstances.updateShaderStorageBuffer(
+            renderer.getFrameIndex(),
+            deltaTime
+        );
         renderer.drawFrame(model.getNumIndices(), modelInstances.getInstanceCount());
+
+        previousTime = currentTime;
     }
 
     renderer.cleanup();

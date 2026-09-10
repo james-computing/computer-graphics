@@ -21,10 +21,10 @@ private:
 
     void createSSBOs(ICore const & core, uint32_t const maxFramesInFlight);
     glm::mat4 getModelMatrix(uint32_t const instance) const;
-    void updateTransform(uint32_t const instance);
+    void updateTransform(uint32_t const instance, float const deltaTime);
 
 public:
     void init(ICore const & core, uint32_t const maxFramesInFlight);
-    void updateShaderStorageBuffer(uint32_t const frameIndex);
+    void updateShaderStorageBuffer(uint32_t const frameIndex, float const deltaTime);
     uint32_t getInstanceCount() const;
 };

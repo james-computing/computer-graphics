@@ -393,3 +393,7 @@ void Renderer::updateDescriptorSets(
         instanceCount
     );
 }
+
+Window const & Renderer::getInputListener() {
+    return window;
+}

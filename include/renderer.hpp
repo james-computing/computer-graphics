@@ -109,4 +109,6 @@ public:
         std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
         uint32_t const instanceCount
     ) const override;
+
+    Window const & getInputListener();
 };

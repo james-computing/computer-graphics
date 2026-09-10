@@ -8,7 +8,9 @@
 #include "../include/transforms.hpp"
 #include "../include/buffer.hpp"
 
-void Camera::init(ICore const & core, uint32_t const maxFramesInFlight) {
+void Camera::init(ICore const & core, IInputListener const & inputListener, uint32_t const maxFramesInFlight) {
+    inputListenerPtr = &inputListener;
+
     createUniformBuffers(core, maxFramesInFlight);
 
     //location = glm::vec3(0, 0, 0);
@@ -50,11 +52,38 @@ void Camera::createUniformBuffers(ICore const & core, uint32_t const maxFramesIn
     }
 }
 
+void Camera::updateLocationRotation(float const deltaTime) {
+    float constexpr translationSpeed {1.8f};
+    float const step {translationSpeed * deltaTime};
+    
+    if(inputListenerPtr->getKeyActive('q')) {
+        location.y -= step;
+    }
+    if(inputListenerPtr->getKeyActive('e')) {
+        location.y += step;
+    }
+    if(inputListenerPtr->getKeyActive('w')) {
+        location.z -= step;
+    }
+    if(inputListenerPtr->getKeyActive('s')) {
+        location.z += step;
+    }
+    if(inputListenerPtr->getKeyActive('a')) {
+        location.x -= step;
+    }
+    if(inputListenerPtr->getKeyActive('d')) {
+        location.x += step;
+    }
+}
+
 void Camera::updateUniformBuffer(
     uint32_t const frameIndex,
     uint32_t const swapChainExtentWidth,
-    uint32_t const swapChainExtentHeight
+    uint32_t const swapChainExtentHeight,
+    float const deltaTime
 ) {
+    updateLocationRotation(deltaTime);
+
     // Update the uniform buffer
     CameraUBO ubo;
     ubo.pv = projection(swapChainExtentWidth, swapChainExtentHeight) * view();
