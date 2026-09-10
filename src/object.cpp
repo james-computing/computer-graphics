@@ -85,6 +85,5 @@ void Object::updateUniformBuffer(uint32_t const frameIndex) {
     ubo.model = getModelMatrix();
 
     // Copy the ubo to the corresponding uniform buffer memory.
-    // It would be more efficient to use push constants.
     memcpy(uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
