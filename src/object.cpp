@@ -53,7 +53,6 @@ glm::mat4 Object::getModelMatrix() const {
 
     model = glm::translate(model, location);
 
-    // This is inneficient! Should use quaternions internally!
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0, 0));
     model = glm::rotate(model, rotation.y, glm::vec3(0, 1.0f, 0));
     model = glm::rotate(model, rotation.z, glm::vec3(0, 0, 1.0f));
