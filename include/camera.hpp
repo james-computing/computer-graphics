@@ -35,4 +35,9 @@ private:
     IInputListener const * inputListenerPtr;
 
     void updateLocationRotation(float const deltaTime);
+
+    glm::vec3 right;
+    glm::vec3 front;
+
+    void computeCameraAxis();
 };

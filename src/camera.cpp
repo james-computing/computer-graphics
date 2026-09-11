@@ -52,27 +52,53 @@ void Camera::createUniformBuffers(ICore const & core, uint32_t const maxFramesIn
     }
 }
 
+void Camera::computeCameraAxis() {
+    // Probably inefficient ...
+    glm::mat4 R {glm::mat4(1.0f)};
+    R = glm::rotate(R, rotation.z, glm::vec3(0, 0, 1.0f));
+    R = glm::rotate(R, rotation.x, glm::vec3(1.0f, 0, 0));
+    R = glm::rotate(R, rotation.y, glm::vec3(0, 1.0f, 0));
+
+    glm::vec4 x4 {glm::vec4(1.0f, 0.0f, 0.0f ,1.0f)};
+    glm::vec4 mz4 {glm::vec4(0.0f, 0.0f, -1.0f ,1.0f)}; // camera looks at -z
+    glm::vec4 right4 {R * x4};
+    glm::vec4 front4 {R * mz4};
+
+    right.x = right4.x;
+    right.y = right4.y;
+    right.z = right4.z;
+
+    front.x = front4.x;
+    front.y = front4.y;
+    front.z = front4.z;
+}
+
 void Camera::updateLocationRotation(float const deltaTime) {
     float constexpr translationSpeed {1.8f};
     float const step {translationSpeed * deltaTime};
     
+    // Q moves y down, E moves z up
     if(inputListenerPtr->getKeyActive('q')) {
         location.y -= step;
     }
     if(inputListenerPtr->getKeyActive('e')) {
         location.y += step;
     }
+
+    // W moves camera front, S moves camera back
     if(inputListenerPtr->getKeyActive('w')) {
-        location.z -= step;
+        location += step * front;
     }
     if(inputListenerPtr->getKeyActive('s')) {
-        location.z += step;
+        location -= step * front;
     }
+
+    // A moves camera left, D moves camera right
     if(inputListenerPtr->getKeyActive('a')) {
-        location.x -= step;
+        location -= step * right;
     }
     if(inputListenerPtr->getKeyActive('d')) {
-        location.x += step;
+        location += step * right;
     }
 }
 
@@ -82,6 +108,7 @@ void Camera::updateUniformBuffer(
     uint32_t const swapChainExtentHeight,
     float const deltaTime
 ) {
+    computeCameraAxis();
     updateLocationRotation(deltaTime);
 
     // Update the uniform buffer
