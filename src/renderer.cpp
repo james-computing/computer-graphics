@@ -7,7 +7,7 @@ void Renderer::initWindow() {
 
 void Renderer::initSurface(vk::raii::Instance const & instance) {
     std::cout << "init surface" << std::endl;
-    surface.create(instance, window.glfw);
+    surface.create(instance, window.glfwWindow);
 }
 
 void Renderer::initRest(ICore const & core) {

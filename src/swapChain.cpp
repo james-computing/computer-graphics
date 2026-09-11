@@ -158,9 +158,9 @@ void SwapChain::recreateSwapChain(
     // Handle window minimization by waiting for width and height to be non zero
     int width;
     int height;
-    glfwGetFramebufferSize(window.glfw, &width, &height);
+    glfwGetFramebufferSize(window.glfwWindow, &width, &height);
     while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window.glfw, &width, &height);
+        glfwGetFramebufferSize(window.glfwWindow, &width, &height);
         glfwWaitEvents();
     }
 

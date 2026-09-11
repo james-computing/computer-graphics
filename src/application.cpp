@@ -60,6 +60,7 @@ void Application::run() {
             renderer.getSwapChainExtentHeight(),
             deltaTime
         );
+        
         //object.updateUniformBuffer(renderer.getFrameIndex());
         modelInstances.updateShaderStorageBuffer(
             renderer.getFrameIndex(),

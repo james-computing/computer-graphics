@@ -9,7 +9,7 @@
 
 class ModelInstances {
 private:
-    uint32_t const instanceCount {9};
+    uint32_t const instanceCount {1};
     std::vector<Transform> transforms;
 
 public:

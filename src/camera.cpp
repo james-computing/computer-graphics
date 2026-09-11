@@ -1,8 +1,11 @@
 #include "../include/camera.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::translate
+#include <glm/gtx/string_cast.hpp>
+
 #include <iostream>
 #include <cstring> // for memcpy
+#include <cmath>
 
 #include "../include/ubos.hpp"
 #include "../include/transforms.hpp"
@@ -13,16 +16,21 @@ void Camera::init(ICore const & core, IInputListener const & inputListener, uint
 
     createUniformBuffers(core, maxFramesInFlight);
 
-    //location = glm::vec3(0, 0, 0);
-    //rotation = glm::vec3(0, 0, 0);
-
+    /*
     rotation.x = -45.0f;
     rotation.y = 0.0f;
-    rotation.z = 0.0f;
+    rotation.z = 0.0f;]
+    */
 
     location.x = 0.0f;
     location.y = 2.5f;
     location.z = 2.5f;
+
+    // Construct quaternion from euler angles
+    //quaternion = glm::quat(glm::vec3(-45.0f, 0.0f, 0.0f));
+    theta = -45.0f;
+    phi = 0.0f;
+    computeCameraAxis();
 }
 
 void Camera::createUniformBuffers(ICore const & core, uint32_t const maxFramesInFlight) {
@@ -54,6 +62,7 @@ void Camera::createUniformBuffers(ICore const & core, uint32_t const maxFramesIn
 
 void Camera::computeCameraAxis() {
     // Probably inefficient ...
+    /*
     glm::mat4 R {glm::mat4(1.0f)};
     R = glm::rotate(R, rotation.z, glm::vec3(0, 0, 1.0f));
     R = glm::rotate(R, rotation.x, glm::vec3(1.0f, 0, 0));
@@ -71,35 +80,98 @@ void Camera::computeCameraAxis() {
     front.x = front4.x;
     front.y = front4.y;
     front.z = front4.z;
+    */
+
+    /*
+    right = quaternion * glm::vec3(1.0f, 0.0f, 0.0f);
+    up = quaternion * glm::vec3(0.0f, 1.0f, 0.0f);
+    front = quaternion * glm::vec3(0.0f, 0.0f, -1.0f); // camera looks at -z, if not rotated
+    */
+
+    float const cosTheta {cosf(theta)};
+    
+    front = glm::vec3(
+        cosTheta * sinf(phi),
+        sinf(theta),
+        -cosTheta * cosf(phi)
+    );
+
+    right = glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f));
+    right = glm::normalize(right);
+
+    up = glm::cross(right, front);
 }
 
-void Camera::updateLocationRotation(float const deltaTime) {
+void Camera::updateLocation(float const deltaTime, KeysActive const & keysActive) {
     float constexpr translationSpeed {1.8f};
-    float const step {translationSpeed * deltaTime};
+    float step {translationSpeed * deltaTime};
+
+    // Move faster if holding left shift key
+    if(keysActive.shift) {
+        step *= 2;
+    }
     
     // Q moves y down, E moves z up
-    if(inputListenerPtr->getKeyActive('q')) {
+    if(keysActive.q) {
         location.y -= step;
     }
-    if(inputListenerPtr->getKeyActive('e')) {
+    if(keysActive.e) {
         location.y += step;
     }
 
     // W moves camera front, S moves camera back
-    if(inputListenerPtr->getKeyActive('w')) {
+    if(keysActive.w) {
         location += step * front;
     }
-    if(inputListenerPtr->getKeyActive('s')) {
+    if(keysActive.s) {
         location -= step * front;
     }
 
     // A moves camera left, D moves camera right
-    if(inputListenerPtr->getKeyActive('a')) {
+    if(keysActive.a) {
         location -= step * right;
     }
-    if(inputListenerPtr->getKeyActive('d')) {
+    if(keysActive.d) {
         location += step * right;
+    }   
+}
+
+void Camera::updateRotation(float const deltaTime, KeysActive const & keysActive) {
+    // Couldn't use the mouse, so use arrow keys instead
+    //float constexpr rotationSpeed {20.0f};
+    //MouseInput const & mouseInput = inputListenerPtr->getMouseInput();
+    //rotation.x += rotationSpeed * mouseInput.dx;
+    //rotation.y = rotationSpeed * mouseInput.x;
+
+    float constexpr rotationSpeed {1.5f};
+    float const step {rotationSpeed * deltaTime};
+    float angleHorizontal {0.0f};
+    float angleVertical {0.0f};
+    if(keysActive.up) {
+        angleVertical = step;
     }
+    if(keysActive.down) {
+        angleVertical = -step;
+    }
+    
+    if(keysActive.left) {
+        angleHorizontal = -step;
+    }
+    if(keysActive.right) {
+        angleHorizontal = step;
+    }
+
+    float constexpr maxTheta {glm::radians(49.0f)};
+    theta += angleVertical;
+    theta = std::clamp(theta, -maxTheta, maxTheta);
+    
+    phi += angleHorizontal;
+
+    /*
+    quaternion = glm::rotate(quaternion, angleVertical, right);
+    computeCameraAxis();
+    quaternion = glm::rotate(quaternion, angleHorizontal, up);
+    */
 }
 
 void Camera::updateUniformBuffer(
@@ -108,8 +180,12 @@ void Camera::updateUniformBuffer(
     uint32_t const swapChainExtentHeight,
     float const deltaTime
 ) {
+    KeysActive const & keysActive {inputListenerPtr->getKeysActive()};
+    updateRotation(deltaTime, keysActive);
     computeCameraAxis();
-    updateLocationRotation(deltaTime);
+    updateLocation(deltaTime, keysActive);
+    //std::cout << "q = (" << quaternion.x << "," << quaternion.y << "," << quaternion.z << "," << quaternion.w << ")" << std::endl;
+
 
     // Update the uniform buffer
     CameraUBO ubo;
@@ -120,32 +196,37 @@ void Camera::updateUniformBuffer(
     memcpy(uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
 
-/*
-glm::mat4 Camera::getModelMatrix() const {
-    // start with identity matrix
-    glm::mat4 model {glm::mat4(1.0f)};
-
-    model = glm::translate(model, location);
-
-    model = glm::rotate(model, rotation.z, glm::vec3(0, 0, 1.0f));
-    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0, 0));
-    model = glm::rotate(model, rotation.y, glm::vec3(0, 1.0f, 0));
-
-    return model;
-}
-*/
-
 // Transformation that puts camera at origin, looking at -z.
 // It is the inverse of getModelMatrix
 glm::mat4 Camera::view() const {
+    /*
+    // Euler angles are inefficient
     // start with identity matrix
     glm::mat4 view {glm::mat4(1.0f)};
-
+    
     view = glm::rotate(view, -glm::radians(rotation.y), glm::vec3(0, 1.0f, 0));
     view = glm::rotate(view, -glm::radians(rotation.x), glm::vec3(1.0f, 0, 0));
     view = glm::rotate(view, -glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
+    */
 
-    view = glm::translate(view, -location);
+    /*
+    glm::mat4 const rotation {glm::mat4_cast(quaternion)}; // rotation of the camera
+    glm::mat4 view = glm::transpose(rotation); // inverse rotation, for the camera to look at -z
+    */
+
+    glm::mat4 inverseRotation {glm::mat4(0.0f)};
+    inverseRotation[0][0] = right[0];
+    inverseRotation[1][0] = right[1];
+    inverseRotation[2][0] = right[2];
+    inverseRotation[0][1] = up[0];
+    inverseRotation[1][1] = up[1];
+    inverseRotation[2][1] = up[2];
+    inverseRotation[0][2] = -front[0];
+    inverseRotation[1][2] = -front[1];
+    inverseRotation[2][2] = -front[2];
+    inverseRotation[3][3] = 1.0f;
+
+    glm::mat4 view = glm::translate(inverseRotation, -location);
 
 /*
     glm::vec3 constexpr eye {glm::vec3(2.0f, 2.0f, 2.0f)}; // location of the camera
@@ -153,6 +234,9 @@ glm::mat4 Camera::view() const {
     glm::vec3 constexpr up {glm::vec3(0.0f, 0.0f, 1.0f)};
     glm::mat4 const view {transforms::lookAt(eye, center, up)};
 */
+
+    //std::cout << "view =\n" << glm::to_string(view) << std::endl;
+
     return view;
 }
 

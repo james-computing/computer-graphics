@@ -11,8 +11,8 @@ void ModelInstances::init(ICore const & core, uint32_t const maxFramesInFlight) 
     transforms.reserve(instanceCount);
     float constexpr s {0.5f};
     float constexpr space {1.0f};
-    float x = -space;
-    float z = -space;
+    float x = 0.0f;
+    float z = 0.0f;
     for (uint32_t instance {0}; instance < instanceCount; ++instance) {
         std::cout << "(x,z) = (" << x << "," << z << ")" << std::endl;
 
@@ -22,8 +22,8 @@ void ModelInstances::init(ICore const & core, uint32_t const maxFramesInFlight) 
         transform.scale = glm::vec3(s, s, s);
         
         x += space;
-        if (x > space) {
-            x = -space;
+        if (x > 2 * space) {
+            x = 0.0f;
             z += space;
         }
     }

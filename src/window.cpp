@@ -11,12 +11,28 @@ void Window::init() {
     // Create a window.
     // The 4th parameter is to specify a monitor,
     // The 5th is for OpenGL.
-    glfw = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    glfwWindow = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 
-    glfwSetWindowUserPointer(glfw, this);
-    glfwSetFramebufferSizeCallback(glfw, frameBufferResizeCallback);
+    glfwSetWindowUserPointer(glfwWindow, this);
+    glfwSetFramebufferSizeCallback(glfwWindow, frameBufferResizeCallback);
 
-    glfwSetKeyCallback(glfw, keyCallback);
+    glfwSetKeyCallback(glfwWindow, keyCallback);
+
+    // Use raw mouse motion for camera rotation
+    // Not working correctly?
+    /*
+    glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (glfwRawMouseMotionSupported()) {
+        glfwSetInputMode(glfwWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        std::cout << "GLFW_RAW_MOUSE_MOTION = TRUE" << std::endl;
+    } else {
+        std::cout << "GLFW_RAW_MOUSE_MOTION = FALSE" << std::endl;
+    }
+    
+    glfwSetCursorPosCallback(glfwWindow, cursorPositionCallback);
+    //glfwSetWindowFocusCallback(glfwWindow, windowFocusCallback);
+    glfwSetCursorEnterCallback(glfwWindow, cursorEnterCallBack);
+    */
 }
 
 void Window::frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int height) {
@@ -25,7 +41,7 @@ void Window::frameBufferResizeCallback(GLFWwindow * glfwWindow, int width, int h
 }
 
 void Window::getFramebufferSize(int & width, int & height) const {
-    glfwGetFramebufferSize(glfw, &width, &height);
+    glfwGetFramebufferSize(glfwWindow, &width, &height);
 }
 
 bool Window::getFrameBufferResized() const {
@@ -33,7 +49,7 @@ bool Window::getFrameBufferResized() const {
 }
 
 bool Window::shouldClose() const {
-    return glfwWindowShouldClose(glfw);
+    return glfwWindowShouldClose(glfwWindow);
 }
 
 void Window::pollEvents() const {
@@ -41,7 +57,7 @@ void Window::pollEvents() const {
 }
 
 void Window::cleanup() const {
-    glfwDestroyWindow(glfw);
+    glfwDestroyWindow(glfwWindow);
     glfwTerminate();
 }
 
@@ -67,6 +83,23 @@ void Window::keyCallback(GLFWwindow* glfwWindow, int key, int scancode, int acti
         case GLFW_KEY_D:
             windowPtr->keysActive.d = true;
             break;
+        // shift
+        case GLFW_KEY_LEFT_SHIFT:
+            windowPtr->keysActive.shift = true;
+            break;
+        // arrow keys
+        case GLFW_KEY_UP:
+            windowPtr->keysActive.up = true;
+            break;
+        case GLFW_KEY_DOWN:
+            windowPtr->keysActive.down = true;
+            break;
+        case GLFW_KEY_LEFT:
+            windowPtr->keysActive.left = true;
+            break;
+        case GLFW_KEY_RIGHT:
+            windowPtr->keysActive.right = true;
+            break;
         }
     } else if (action == GLFW_RELEASE) {
         switch(key) {
@@ -88,26 +121,89 @@ void Window::keyCallback(GLFWwindow* glfwWindow, int key, int scancode, int acti
         case GLFW_KEY_D:
             windowPtr->keysActive.d = false;
             break;
+        // shift
+        case GLFW_KEY_LEFT_SHIFT:
+            windowPtr->keysActive.shift = false;
+            break;
+        // arrow keys
+        case GLFW_KEY_UP:
+            windowPtr->keysActive.up = false;
+            break;
+        case GLFW_KEY_DOWN:
+            windowPtr->keysActive.down = false;
+            break;
+        case GLFW_KEY_LEFT:
+            windowPtr->keysActive.left = false;
+            break;
+        case GLFW_KEY_RIGHT:
+            windowPtr->keysActive.right = false;
+            break;
         }
     }
 }
 
-bool Window::getKeyActive(char const c) const {
-    switch (c)
-    {
-    case 'q':
-        return keysActive.q;
-    case 'w':
-        return keysActive.w;
-    case 'e':
-        return keysActive.e;
-    case 'a':
-        return keysActive.a;
-    case 's':
-        return keysActive.s;
-    case 'd':
-        return keysActive.d;
-    default:
-        throw std::runtime_error("Checking for invalid key in Window::getKeyActive");
+KeysActive const & Window::getKeysActive() const {
+    return keysActive;
+}
+
+/*
+void Window::cursorPositionCallback(GLFWwindow* glfwWindow, double xpos, double ypos) {
+    Window * const windowPtr {reinterpret_cast<Window *>(glfwGetWindowUserPointer(glfwWindow))};
+    
+    //std::cout << "(x,y) = (" << xpos << "," << ypos << ")" << std::endl;
+    
+    windowPtr->previousRawMouseInput.xpos = windowPtr->currentRawMouseInput.xpos;
+    windowPtr->previousRawMouseInput.ypos = windowPtr->currentRawMouseInput.ypos;
+
+    windowPtr->currentRawMouseInput.xpos = xpos;
+    windowPtr->currentRawMouseInput.ypos = ypos;
+
+    windowPtr->mouseInput.dx = windowPtr->currentRawMouseInput.xpos - windowPtr->previousRawMouseInput.xpos;
+    windowPtr->mouseInput.dy = windowPtr->currentRawMouseInput.ypos - windowPtr->previousRawMouseInput.ypos;
+
+    
+}
+
+MouseInput const & Window::getMouseInput() const {
+    return mouseInput;
+}
+
+void Window::resetMouseInput() {
+    previousRawMouseInput = currentRawMouseInput;
+    mouseInput.dx = 0;
+    mouseInput.dy = 0;
+}
+
+void Window::cursorEnterCallBack(GLFWwindow* glfwWindow, int entered) {
+    Window * const windowPtr {reinterpret_cast<Window *>(glfwGetWindowUserPointer(glfwWindow))};
+
+    if(entered) {
+        std::cout << "entered" << std::endl;
+        windowPtr->entered = true;
+    } else {
+        std::cout << "exited" << std::endl;
+        windowPtr->entered = false;
+    }
+    windowPtr->resetMouseInput();
+}
+
+void Window::windowFocusCallback(GLFWwindow* glfwWindow, int focused) {
+    Window * const windowPtr {reinterpret_cast<Window *>(glfwGetWindowUserPointer(glfwWindow))};
+
+    if(focused) {
+        windowPtr->focused = true;
+        //windowPtr->resetRawMouseInput();
+        std::cout << "focused" << std::endl;
+    } else {
+        std::cout << "unfocused" << std::endl;
+        windowPtr->focused = false;
+        windowPtr->mouseInput.dx = 0;
+        windowPtr->mouseInput.dy = 0;
     }
 }
+
+bool Window::isWindowFocused() const {
+    return focused;
+}
+*/
+

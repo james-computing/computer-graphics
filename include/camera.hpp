@@ -11,12 +11,14 @@
 class Camera {
 public:
     glm::vec3 location; // (x, y, z)
-    glm::vec3 rotation; // the 3 euler angles, in degrees
+    //glm::vec3 rotation; // the 3 euler angles, in degrees
+    //glm::quat quaternion;
+    float theta; // vertical
+    float phi; // horizontal
 
     std::vector<vk::raii::Buffer> uniformBuffers;
 
     void init(ICore const & core, IInputListener const & inputListener, uint32_t const maxFramesInFlight);
-    //glm::mat4 getModelMatrix() const;
     glm::mat4 view() const;
     glm::mat4 projection(uint32_t const swapChainExtentWidth, uint32_t const swapChainExtentHeight) const;
     void updateUniformBuffer(
@@ -34,10 +36,12 @@ private:
 
     IInputListener const * inputListenerPtr;
 
-    void updateLocationRotation(float const deltaTime);
+    void updateLocation(float const deltaTime, KeysActive const & keysActive);
+    void updateRotation(float const deltaTime, KeysActive const & keysActive);
 
     glm::vec3 right;
     glm::vec3 front;
+    glm::vec3 up;
 
     void computeCameraAxis();
 };
