@@ -28,7 +28,7 @@ void Camera::init(ICore const & core, IInputListener const & inputListener, uint
 
     // Construct quaternion from euler angles
     //quaternion = glm::quat(glm::vec3(-45.0f, 0.0f, 0.0f));
-    theta = -45.0f;
+    theta = -glm::radians(45.0f);
     phi = 0.0f;
     computeCameraAxis();
 }
@@ -161,7 +161,7 @@ void Camera::updateRotation(float const deltaTime, KeysActive const & keysActive
         angleHorizontal = step;
     }
 
-    float constexpr maxTheta {glm::radians(49.0f)};
+    float constexpr maxTheta {glm::radians(89.99f)};
     theta += angleVertical;
     theta = std::clamp(theta, -maxTheta, maxTheta);
     

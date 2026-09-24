@@ -49,6 +49,8 @@ void Application::run() {
         renderer.drawFrame(deltaTime);
 
         previousTime = currentTime;
+        // FPS
+        //std::cout << 1.0f/deltaTime << '\n';
     }
 
     renderer.cleanup();
