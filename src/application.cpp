@@ -31,14 +31,14 @@ void Application::run() {
     
     std::cout << "while loop" << std::endl;
 
-    auto previousTime {std::chrono::high_resolution_clock::now()};
+    auto previousTime {std::chrono::steady_clock::now()};
     auto currentTime {previousTime}; // assign to previousTime just for auto to work
     float deltaTime;
 
     while (renderer.step()) {
-        currentTime = std::chrono::high_resolution_clock::now();
+        currentTime = std::chrono::steady_clock::now();
         deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - previousTime).count();
-
+        
         camera.updateUniformBuffer(
             renderer.getFrameIndex(),
             renderer.getSwapChainExtentWidth(),
