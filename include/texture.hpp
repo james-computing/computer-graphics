@@ -3,10 +3,10 @@
 #include <cmath>
 #include <cstdint> // For uint32_t
 #include <iostream>
-#include "irenderer.hpp"
-#include "../include/singleTimeCommands.hpp"
-#include "../include/buffer.hpp"
-#include "../include/image.hpp"
+#include "icore.hpp"
+#include "singleTimeCommands.hpp"
+#include "buffer.hpp"
+#include "image.hpp"
 #include "../libraries/stb/stb_image.h"
 
 class Texture {
@@ -25,12 +25,12 @@ public:
     void computeMipLevels(int const textureWidth, int const textureHeight);
     void transitionTextureImageLayout(
         ICore const & core,
-        IRenderer const & renderer,
+        vk::raii::CommandPool const & commandPool,
         vk::ImageLayout const oldLayout,
         vk::ImageLayout const newLayout
     ) const;
-    void generateMipmaps(ICore const & core, IRenderer const & renderer, vk::Format imageFormat) const;
-    void createTextureImage(ICore const & core, IRenderer const & renderer, stbi_uc const * const pixels);
+    void generateMipmaps(ICore const & core, vk::raii::CommandPool const & commandPool, vk::Format imageFormat) const;
+    void createTextureImage(ICore const & core, vk::raii::CommandPool const & commandPool, stbi_uc const * const pixels);
     void createTextureImageView(ICore const & core);
-    void load(ICore const & core, IRenderer const & renderer, char const * const texturePath);
+    void load(ICore const & core, vk::raii::CommandPool const & commandPool, char const * const texturePath);
 };

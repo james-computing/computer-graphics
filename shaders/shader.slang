@@ -1,56 +1,49 @@
-struct VSInput {
-    float3 position;
-    //float3 color;
-    float2 textureCoord;
-};
+[[vk::binding(0, 0)]]
+Sampler2D textures[]; // combined image samplers (texture image + texture sampler)
 
 struct CameraUBO {
     float4x4 pv;
 };
 
+[[vk::binding(0, 1)]]
+ConstantBuffer<CameraUBO> cameraUBO;
 
-struct ObjectUBO {
-    float4x4 model;
+// Data that is specific to each model instance.
+// Up until now only have model matrices.
+[[vk::binding(0, 2)]]
+StructuredBuffer<float4x4> modelMatrices;
+
+struct VSInput {
+    float3 position;
+    float2 textureCoord;
 };
 
 struct VSOutput {
     float4 sv_position : SV_Position;
-    float3 color;
+    uint textureID : TEXID;
     float2 textureCoord;
 };
 
-[[vk::binding(0, 0)]]
-//ParameterBlock<Sampler2D> texture;
-Sampler2D texture;
-
-[[vk::binding(0, 1)]]
-//ParameterBlock<ConstantBuffer<CameraUBO>> cameraUBO;
-ConstantBuffer<CameraUBO> cameraUBO;
-
-//[[vk::binding(0, 2)]]
-//ConstantBuffer<ObjectUBO> objectUBO;
-
-[[vk::binding(0, 2)]]
-StructuredBuffer<float4x4> modelMatrices;
-
 [shader("vertex")]
-VSOutput vertMain(VSInput input, uint instanceID : SV_InstanceID) {
+VSOutput vertMain(
+    VSInput input,
+    uint drawID: SV_DrawIndex,
+    uint instanceID: SV_InstanceID,
+    uint instanceIDOffset: SV_StartInstanceLocation // instanceIDOffset is the firstInstance from drawIndexedIndirectDrawCommands
+) {
     VSOutput output;
     float4 vertexPosition = float4(input.position, 1.0);
 
-    //output.sv_position = mul(cameraUBO.pv, mul(objectUBO.model, vertexPosition));
-    output.sv_position = mul(cameraUBO.pv, mul(modelMatrices[instanceID], vertexPosition));
-    
-    //output.color = input.color;
+    output.sv_position = mul(cameraUBO.pv, mul(modelMatrices[instanceIDOffset + instanceID], vertexPosition));
+
+    // Since every model have a single texture, we can use drawID as the textureId.
+    // When using more complex models, drawID can be used to read the offset from an array.
+    output.textureID = drawID;
     output.textureCoord = input.textureCoord;
     return output;
 }
 
 [shader("fragment")]
-float4 fragMain(VSOutput vertIn) : SV_Target {
-    //float3 color = vertIn.color;
-    //return float4(color, 1.0);
-
-    return texture.Sample(vertIn.textureCoord);
-    //return float4(1.0, 1.0, 1.0, 1.0);
+float4 fragMain(VSOutput input) : SV_Target {
+    return textures[input.textureID].Sample(input.textureCoord);
 }

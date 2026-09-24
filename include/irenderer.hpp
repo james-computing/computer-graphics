@@ -14,8 +14,7 @@ import vulkan_hpp;
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "../include/icore.hpp"
-#include "../include/vertex.hpp"
+#include "icore.hpp"
 
 class IRenderer {
 public:
@@ -25,16 +24,9 @@ public:
     virtual bool step() const = 0;
     virtual void cleanup() = 0;
 
-    virtual void drawFrame(uint32_t const indexCount, uint32_t const instanceCount) = 0;
+    virtual void drawFrame(float const deltaTime) = 0;
 
-    virtual void copyVerticesToVertexBuffer(
-        std::vector<Vertex> const & vertices,
-        size_t const & offset
-    ) const = 0;
-    virtual void copyIndicesToIndexBuffer(
-        std::vector<uint32_t> const & indices,
-        size_t const & offset
-    ) const = 0;
+    virtual void loadModels(std::vector<std::string_view> const & modelPaths , std::vector<std::string_view> const texturePaths) = 0;
 
     virtual vk::raii::SurfaceKHR const & getSurface() const = 0;
 
@@ -47,10 +39,6 @@ public:
     virtual vk::raii::CommandPool const & getCommandPool() const = 0;
 
     virtual void updateDescriptorSets(
-        vk::raii::ImageView const & textureImageView,
-        std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-        //std::vector<vk::raii::Buffer> const & objectUniformBuffers
-        std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
-        uint32_t const instanceCount
+        std::vector<vk::raii::Buffer> const & cameraUniformBuffers
     ) const = 0;
 };

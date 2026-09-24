@@ -40,17 +40,21 @@ bool PhysicalDevice::isSuitable(vk::raii::PhysicalDevice const & physicalDevice)
         physicalDevice.template getFeatures2<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceVulkan11Features, // for shader module creation
+            vk::PhysicalDeviceVulkan12Features,
             vk::PhysicalDeviceVulkan13Features,
             vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
         >()
     };
     bool const supportsRequiredFeatures {
-        
         features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters && // for shader module creation
+        features.template get<vk::PhysicalDeviceVulkan12Features>().descriptorBindingPartiallyBound && // for descriptor indexing
+        features.template get<vk::PhysicalDeviceVulkan12Features>().descriptorBindingVariableDescriptorCount && // for descriptor indexing
+        features.template get<vk::PhysicalDeviceVulkan12Features>().runtimeDescriptorArray && // for drawId in shader
         features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
         features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
         features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
-        features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy // for texture sampler
+        features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy && // for texture sampler
+        features.template get<vk::PhysicalDeviceFeatures2>().features.multiDrawIndirect// for DrawIndexedIndirect
     };
 
     return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;

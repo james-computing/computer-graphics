@@ -1,5 +1,7 @@
 #include "../include/buffer.hpp"
 
+#include <iostream>
+
 namespace Buffer {
 
 void create(
@@ -16,7 +18,7 @@ void create(
         .usage = bufferUsage,
         .sharingMode = vk::SharingMode::eExclusive
     };
-
+    
     buffer = vk::raii::Buffer(device, bufferCreateInfo);
 
     vk::MemoryRequirements const memoryRequirements {buffer.getMemoryRequirements()};

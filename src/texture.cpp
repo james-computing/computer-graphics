@@ -7,12 +7,12 @@ void Texture::computeMipLevels(int const textureWidth, int const textureHeight) 
 
 void Texture::transitionTextureImageLayout(
     ICore const & core,
-    IRenderer const & renderer,
+    vk::raii::CommandPool const & commandPool,
     vk::ImageLayout const oldLayout,
     vk::ImageLayout const newLayout
 ) const {
     vk::raii::CommandBuffer commandBuffer {nullptr};
-    SingleTimeCommands::begin(core.getDevice(), renderer.getCommandPool(), commandBuffer);
+    SingleTimeCommands::begin(core.getDevice(), commandPool, commandBuffer);
 
     vk::ImageMemoryBarrier barrier {
         .oldLayout = oldLayout,
@@ -51,7 +51,7 @@ void Texture::transitionTextureImageLayout(
     SingleTimeCommands::end(core.getQueue(), commandBuffer);
 }
 
-void Texture::generateMipmaps(ICore const & core, IRenderer const & renderer, vk::Format imageFormat) const {
+void Texture::generateMipmaps(ICore const & core, vk::raii::CommandPool const & commandPool, vk::Format imageFormat) const {
     // Check if linear blitting is supported
     vk::FormatProperties const formatProperties {core.getPhysicalDevice().getFormatProperties(imageFormat)};
     if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
@@ -69,7 +69,7 @@ void Texture::generateMipmaps(ICore const & core, IRenderer const & renderer, vk
     // it is transitioned directly to the layout eShaderReadOnlyOptimal in the end.
     
     vk::raii::CommandBuffer commandBuffer {nullptr};
-    SingleTimeCommands::begin(core.getDevice(), renderer.getCommandPool(), commandBuffer);
+    SingleTimeCommands::begin(core.getDevice(), commandPool, commandBuffer);
 
     vk::ImageMemoryBarrier barrier {
         // Redundant, same values will be set in for loop.
@@ -188,7 +188,7 @@ void Texture::generateMipmaps(ICore const & core, IRenderer const & renderer, vk
     SingleTimeCommands::end(core.getQueue(), commandBuffer);
 }
 
-void Texture::createTextureImage(ICore const & core, IRenderer const & renderer, stbi_uc const * const pixels) {
+void Texture::createTextureImage(ICore const & core, vk::raii::CommandPool const & commandPool, stbi_uc const * const pixels) {
     // First create the image
 
     vk::DeviceSize const imageSize {(vk::DeviceSize) (textureWidth * textureHeight * 4)};
@@ -218,7 +218,7 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
     // Transition image layout to receive texture later
     transitionTextureImageLayout(
         core,
-        renderer,
+        commandPool,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eTransferDstOptimal
     );
@@ -251,7 +251,7 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
     Buffer::copyToImage(
         core.getDevice(),
         core.getQueue(),
-        renderer.getCommandPool(),
+        commandPool,
         stagingBuffer,
         image,
         static_cast<uint32_t>(textureWidth),
@@ -259,16 +259,14 @@ void Texture::createTextureImage(ICore const & core, IRenderer const & renderer,
     );
 
     // The image layout will be transitioned to be used by the shader when generating the mipmaps.
-    generateMipmaps(core, renderer, vk::Format::eR8G8B8A8Srgb);
+    generateMipmaps(core, commandPool, vk::Format::eR8G8B8A8Srgb);
 }
 
-void Texture::createTextureImageView(
-    ICore const & core
-) {
+void Texture::createTextureImageView(ICore const & core) {
     imageView = Image::createView(core.getDevice(), image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
 }
 
-void Texture::load(ICore const & core, IRenderer const & renderer, char const * const texturePath) {
+void Texture::load(ICore const & core, vk::raii::CommandPool const & commandPool, char const * const texturePath) {
     std::cout << "Loading texture" << std::endl;
     // texturePath.c_str()
     stbi_uc * pixels = stbi_load(texturePath, &textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
@@ -284,7 +282,7 @@ void Texture::load(ICore const & core, IRenderer const & renderer, char const * 
 
     // copy pixels data to texture image
     // texture resources
-    createTextureImage(core, renderer, pixels);
+    createTextureImage(core, commandPool, pixels);
 
     // cleanup
     stbi_image_free(pixels);

@@ -1,5 +1,8 @@
 #include "../include/renderer.hpp"
 
+#include <thread>
+#include <chrono>
+
 void Renderer::initWindow() {
     std::cout << "init window" << std::endl;
     window.init();
@@ -41,7 +44,7 @@ void Renderer::initRest(ICore const & core) {
         *descriptor.setLayoutCombinedImageSampler, // set = 0
         *descriptor.setLayoutCamera, // set = 1
         //*descriptor.setLayoutObject // set = 2
-        *descriptor.setLayoutModelInstances // set = 2
+        *descriptor.setLayoutModelsInstances // set = 2
     };
 
     graphicsPipeline.create(
@@ -58,13 +61,35 @@ void Renderer::initRest(ICore const & core) {
     // Depth resources are used only in recordCommandBuffer.
     depthStencil.createDepthResources(core, swapChain.extent.width, swapChain.extent.height, msaa.samples);
 
-    // depends on logical device
-    vertexBuffer.create(core);
-    indexBuffer.create(core);
+    TextureSampler::create(core.getPhysicalDevice(), core.getDevice(), textureSampler);
 
     _corePtr = &core;
+}
 
-    TextureSampler::create(core.getPhysicalDevice(), core.getDevice(), textureSampler);
+void Renderer::loadModels(std::vector<std::string_view> const & modelPaths , std::vector<std::string_view> const texturePaths) {
+    std::cout << "Load models" << std::endl;
+    numModels = modelPaths.size();
+    if(numModels != texturePaths.size()) {
+        throw std::runtime_error("Different number of models and textures!");
+    }
+    std::cout << "numModels = " << numModels << std::endl;
+
+    modelData.init(*_corePtr, numModels);
+
+    for (size_t i {0}; i < numModels; ++i) {
+        modelData.load(*_corePtr, command.pool, modelPaths[i], texturePaths[i]);
+    }
+
+    std::cout << "create models instances" << std::endl;
+    std::vector<uint32_t> instanceCounts;
+    instanceCounts.reserve(numModels);
+    for (size_t i {0}; i < numModels; ++i) {
+        instanceCounts.emplace_back(i+1); // instanceCounts = {1,2,3,...}
+    } 
+    modelsInstances.init(*_corePtr, MAX_FRAMES_IN_FLIGHT, numModels, instanceCounts);
+
+    std::cout << "Create indirectDraw" << std::endl;
+    indirectDraw.create(*_corePtr, MAX_FRAMES_IN_FLIGHT, numModels, modelData, modelsInstances);
 }
 
 bool Renderer::step() const {
@@ -84,9 +109,7 @@ void Renderer::cleanup() {
 
 void Renderer::recordCommandBuffer(
     uint32_t const imageIndex,
-    std::vector<vk::DescriptorSet> const & descriptorSets,
-    uint32_t const indexCount,
-    uint32_t const instanceCount
+    std::vector<vk::DescriptorSet> const & descriptorSets
 ) const {
     vk::raii::CommandBuffer const & commandBuffer {command.buffers[frameIndex]};
 
@@ -166,13 +189,35 @@ void Renderer::recordCommandBuffer(
         .pDepthAttachment = &depthAttachmentInfo
     };
 
+    // Is it necessary to use a pipeline barrier for indirect drawing?
+    /*
+    vk::BufferMemoryBarrier2 bufferBarrierIndirectCommand{
+        .srcStageMask = vk::PipelineStageFlagBits2::eHost,
+        .srcAccessMask = vk::AccessFlagBits2::eHostWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eDrawIndirect,// | vk::PipelineStageFlagBits2::eAllGraphics,
+        .dstAccessMask = vk::AccessFlagBits2::eIndirectCommandRead,// | vk::AccessFlagBits2::eMemoryRead,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .buffer = indirectDraw.buffers[frameIndex],
+        .offset = 0,// current frame offset ??
+        .size = sizeof(vk::DrawIndexedIndirectCommand)
+    };
+
+    vk::DependencyInfo dependencyInfoIndirectCommand {
+        .bufferMemoryBarrierCount = 1,
+        .pBufferMemoryBarriers = &bufferBarrierIndirectCommand
+    };
+
+    commandBuffer.pipelineBarrier2(dependencyInfoIndirectCommand);
+    */
+
     commandBuffer.beginRendering(renderingInfo);
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline.vkraii);
 
-    commandBuffer.bindVertexBuffers(0, *vertexBuffer.buffer, {0});
+    commandBuffer.bindVertexBuffers(0, *modelData.vertexBuffer.buffer, {0});
     
-    commandBuffer.bindIndexBuffer(*indexBuffer.buffer, 0, vk::IndexType::eUint32);
+    commandBuffer.bindIndexBuffer(*modelData.indexBuffer.buffer, 0, vk::IndexType::eUint32);
 
     vk::Viewport const viewport {
         .x = 0.0f,
@@ -200,7 +245,14 @@ void Renderer::recordCommandBuffer(
         nullptr
     );
 
-    commandBuffer.drawIndexed(indexCount, instanceCount, 0, 0, 0);
+    // Use drawIndexedIndirect instead of drawIndexed 
+    //commandBuffer.drawIndexed(indexCount, instanceCount, 0, 0, 0);
+
+    // Draw the indirect commands
+    vk::DeviceSize constexpr offset {0};
+    uint32_t const drawCount {numModels}; // number of models
+    uint32_t constexpr stride {sizeof(vk::DrawIndexedIndirectCommand)};
+    commandBuffer.drawIndexedIndirect(indirectDraw.buffers[frameIndex], offset, drawCount, stride);
 
     commandBuffer.endRendering();
 
@@ -238,7 +290,12 @@ void Renderer::createSyncObjects(ICore const & core) {
     }
 }
 
-void Renderer::drawFrame(uint32_t const indexCount, uint32_t const instanceCount) {
+void Renderer::drawFrame(float const deltaTime) {
+    modelsInstances.updateShaderStorageBuffer(
+        frameIndex,
+        deltaTime
+    );
+
     vk::raii::CommandBuffer & commandBuffer {command.buffers[frameIndex]};
     vk::raii::Semaphore & presentCompleteSemaphore {syncObjects.presentCompleteSemaphores[frameIndex]};
     vk::raii::Fence & drawFence {syncObjects.inFlightFences[frameIndex]};
@@ -269,11 +326,11 @@ void Renderer::drawFrame(uint32_t const indexCount, uint32_t const instanceCount
     commandBuffer.reset();
 
     std::vector<vk::DescriptorSet> descriptorSets {
-        *descriptor.sets[frameIndex], // combined texture image sampler. I don't want to send this information to the GPU every frame...
-        *descriptor.sets[MAX_FRAMES_IN_FLIGHT + frameIndex], // camera
-        *descriptor.sets[2 * MAX_FRAMES_IN_FLIGHT + frameIndex] // object, or modelInstances
+        *descriptor.setsCombinedImageSampler[frameIndex], //I don't want to send this information to the GPU every frame...
+        *descriptor.setsCamera[frameIndex],
+        *descriptor.setsModelsInstances[frameIndex]
     };
-    recordCommandBuffer(imageIndex, descriptorSets, indexCount, instanceCount);
+    recordCommandBuffer(imageIndex, descriptorSets);
 
     vk::raii::Semaphore const & renderFinishedSemaphore {syncObjects.renderFinishedSemaphores[imageIndex]}; // imageIndex, not frameIndex
     vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -307,40 +364,18 @@ void Renderer::drawFrame(uint32_t const indexCount, uint32_t const instanceCount
         throw std::runtime_error("Failed to present image");
     }
 
+    /*
+    // Slow down to see each frame being rendered
+    static int counter = 0;
+    std::cout << "frame index = " << frameIndex << ' ' << counter << std::endl;
+    ++counter;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    */
+
     ++frameIndex;
     if (frameIndex == MAX_FRAMES_IN_FLIGHT) {
         frameIndex = 0;
     }
-}
-
-void Renderer::copyVerticesToVertexBuffer(
-    std::vector<Vertex> const & vertices,
-    size_t const & offset
-) const {
-    Buffer::copyVectorToBuffer<Vertex>(
-        _corePtr->getPhysicalDevice(),
-        _corePtr->getDevice(),
-        _corePtr->getQueue(),
-        command.pool,
-        vertices,
-        offset,
-        vertexBuffer.buffer
-    );
-}
-
-void Renderer::copyIndicesToIndexBuffer(
-    std::vector<uint32_t> const & indices,
-    size_t const & offset
-) const {
-    Buffer::copyVectorToBuffer<uint32_t>(
-        _corePtr->getPhysicalDevice(),
-        _corePtr->getDevice(),
-        _corePtr->getQueue(),
-        command.pool,
-        indices,
-        offset,
-        indexBuffer.buffer
-    );
 }
 
 // GETTERS
@@ -376,21 +411,16 @@ void Renderer::recreateSwapChainColorDepth() {
 }
 
 void Renderer::updateDescriptorSets(
-    vk::raii::ImageView const & textureImageView,
-    std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-    //std::vector<vk::raii::Buffer> const & objectUniformBuffers
-    std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
-    uint32_t const instanceCount
+    std::vector<vk::raii::Buffer> const & cameraUniformBuffers
 ) const {
     descriptor.updateDescriptorSets(
         _corePtr->getDevice(),
         MAX_FRAMES_IN_FLIGHT,
         textureSampler,
-        textureImageView,
+        modelData.textures,
         cameraUniformBuffers,
-        //objectUniformBuffers,
-        modelInstancesSSBOs,
-        instanceCount
+        modelsInstances.shaderStorageBuffers,
+        modelsInstances.getInstanceCountTotal()
     );
 }
 

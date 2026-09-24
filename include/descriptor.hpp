@@ -9,18 +9,14 @@
 import vulkan_hpp;
 #endif
 
-/*
-enum Binding {
-    combinedImageSampler,
-    cameraUBO,
-    objectUBO
-};
-*/
+#include "texture.hpp"
 
 class Descriptor {
 private:
     // The descriptor pool is only used when allocating descriptor sets
     vk::raii::DescriptorPool pool {nullptr};
+
+    uint32_t const maxTextures {16};
 
     void createDescriptorSetLayouts(vk::raii::Device const & device);
     void createDescriptorPool(
@@ -37,19 +33,17 @@ public:
     vk::raii::DescriptorSetLayout setLayoutCombinedImageSampler {nullptr};
     vk::raii::DescriptorSetLayout setLayoutCamera {nullptr};
     //vk::raii::DescriptorSetLayout setLayoutObject {nullptr};
-    vk::raii::DescriptorSetLayout setLayoutModelInstances {nullptr};
+    vk::raii::DescriptorSetLayout setLayoutModelsInstances {nullptr};
 
     // The declaration order determines the destruction order.
     // For this reason, the descriptor sets must be declared after the descriptor pool.
 
     // Couldn't use separate vectors, because can't break the vector obtained from device.allocateDescriptorSets
-    /*
     std::vector<vk::raii::DescriptorSet> setsCombinedImageSampler;
     std::vector<vk::raii::DescriptorSet> setsCamera;
-    std::vector<vk::raii::DescriptorSet> setsObject;
-    */
+    std::vector<vk::raii::DescriptorSet> setsModelsInstances;
     // Use a single vector instead
-    std::vector<vk::raii::DescriptorSet> sets;
+    //std::vector<vk::raii::DescriptorSet> sets;
 
     void create(
         vk::raii::Device const & device,
@@ -60,10 +54,9 @@ public:
         vk::raii::Device const & device,
         uint32_t const maxFramesInFlight,
         vk::raii::Sampler const & textureSampler,
-        vk::raii::ImageView const & textureImageView,
+        std::vector<Texture> const & textures,
         std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-        //std::vector<vk::raii::Buffer> const & objectUniformBuffers
-        std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
-        uint32_t const instanceCount
+        std::vector<vk::raii::Buffer> const & modelsInstancesSSBOs,
+        uint32_t const instanceCountTotal
     ) const;
 };

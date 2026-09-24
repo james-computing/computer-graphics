@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../include/irenderer.hpp"
+#include "irenderer.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -9,18 +9,19 @@
 #include <algorithm> // for std::clamp
 #include <unordered_map>
 
-#include "../include/icore.hpp"
-#include "../include/window.hpp"
-#include "../include/surface.hpp"
-#include "../include/swapChain.hpp"
-#include "../include/descriptor.hpp"
-#include "../include/graphicsPipeline.hpp"
-#include "../include/command.hpp"
-#include "../include/depthStencil.hpp"
-#include "../include/msaa.hpp"
-#include "../include/vertexBuffer.hpp"
-#include "../include/indexBuffer.hpp"
-#include "../include/textureSampler.hpp"
+#include "icore.hpp"
+#include "window.hpp"
+#include "surface.hpp"
+#include "swapChain.hpp"
+#include "descriptor.hpp"
+#include "graphicsPipeline.hpp"
+#include "command.hpp"
+#include "depthStencil.hpp"
+#include "msaa.hpp"
+//#include "managedBuffer.hpp"
+#include "modelData.hpp"
+#include "textureSampler.hpp"
+#include "indirectDraw.hpp"
 
 #include "../libraries/stb/stb_image.h"
 
@@ -41,6 +42,7 @@ private:
     GraphicsPipeline graphicsPipeline;
     
     Command command;
+    IndirectDraw indirectDraw;
 
     SyncObjects syncObjects;
 
@@ -49,8 +51,9 @@ private:
     // used by recordCommandBuffer and drawFrame
     uint32_t frameIndex {0};
 
-    VertexBuffer vertexBuffer;
-    IndexBuffer indexBuffer;
+    uint32_t numModels {0};
+    ModelData modelData;
+    ModelsInstances modelsInstances;
 
     Descriptor descriptor;
 
@@ -67,16 +70,9 @@ public:
     bool step() const override;
     void cleanup() override;
 
-    void drawFrame(uint32_t const indexCount, uint32_t const instanceCount) override;
+    void drawFrame(float const deltaTime) override;
 
-    void copyVerticesToVertexBuffer(
-        std::vector<Vertex> const & vertices,
-        size_t const & offset
-    ) const override;
-    void copyIndicesToIndexBuffer(
-        std::vector<uint32_t> const & indices,
-        size_t const & offset
-    ) const override;
+    void loadModels(std::vector<std::string_view> const & modelPaths , std::vector<std::string_view> const texturePaths) override;
 
     vk::raii::SurfaceKHR const & getSurface() const override;
 
@@ -91,9 +87,7 @@ public:
 private:
     void recordCommandBuffer(
         uint32_t const imageIndex,
-        std::vector<vk::DescriptorSet> const & descriptorSets,
-        uint32_t const indexCount,
-        uint32_t const instanceCount
+        std::vector<vk::DescriptorSet> const & descriptorSets
     ) const;
 
     void createSyncObjects(ICore const & core);
@@ -103,11 +97,7 @@ private:
 
 public:
     void updateDescriptorSets(
-        vk::raii::ImageView const & textureImageView,
-        std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-        //std::vector<vk::raii::Buffer> const & objectUniformBuffers
-        std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
-        uint32_t const instanceCount
+        std::vector<vk::raii::Buffer> const & cameraUniformBuffers
     ) const override;
 
     Window const & getInputListener();

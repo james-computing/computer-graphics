@@ -40,17 +40,29 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
     // In C, the chain is constructed using the pNext property.
     vk::StructureChain<
         vk::PhysicalDeviceFeatures2,
+        vk::PhysicalDeviceVulkan11Features,
+        vk::PhysicalDeviceVulkan12Features,
         vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
-        vk::PhysicalDeviceVulkan11Features
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
     > const featureChain {
-        {.features = {.samplerAnisotropy = true }},
+        {.features = 
+            {
+            .multiDrawIndirect = true, // for indirect draw
+            .samplerAnisotropy = true
+            }
+        },
+        {.shaderDrawParameters = true}, // for shader module creation
+        {
+            // for descriptor indexing
+            .descriptorBindingPartiallyBound = true,
+            .descriptorBindingVariableDescriptorCount = true,
+            .runtimeDescriptorArray = true // for drawId in shader
+        },
         {
             .synchronization2 = true, // sync objects
             .dynamicRendering = true
         },
-        {.extendedDynamicState = true},
-        {.shaderDrawParameters = true} // for shader module creation
+        {.extendedDynamicState = true}
     };
 
     std::vector<char const *> const requiredDeviceExtensions {

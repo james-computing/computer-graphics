@@ -18,27 +18,12 @@ void Application::init() {
     core.init2(renderer.getSurface());
 
     renderer.initRest(core);
+    renderer.loadModels(modelPaths, texturePaths);
 
-    camera.init(core, renderer.getInputListener(),renderer.getMaxFramesInFlight());
-    
-    std::cout << "model load" << std::endl;
-    model.load(core, renderer, modelPath, texturePath);
-
-    /*
-    std::cout << "create object" << std::endl;
-    object.init(core, renderer.getMaxFramesInFlight());
-    */
-
-    std::cout << "create model instances" << std::endl;
-    modelInstances.init(core, renderer.getMaxFramesInFlight());
+    camera.init(core, renderer.getInputListener(), renderer.getMaxFramesInFlight());
 
     std::cout << "renderer.updateDescriptorSets" << std::endl;
-    renderer.updateDescriptorSets(
-        model.texture.imageView,
-        camera.uniformBuffers,
-        modelInstances.shaderStorageBuffers,
-        modelInstances.getInstanceCount()
-    );
+    renderer.updateDescriptorSets(camera.uniformBuffers);
 }
 
 void Application::run() {
@@ -61,12 +46,7 @@ void Application::run() {
             deltaTime
         );
         
-        //object.updateUniformBuffer(renderer.getFrameIndex());
-        modelInstances.updateShaderStorageBuffer(
-            renderer.getFrameIndex(),
-            deltaTime
-        );
-        renderer.drawFrame(model.getNumIndices(), modelInstances.getInstanceCount());
+        renderer.drawFrame(deltaTime);
 
         previousTime = currentTime;
     }

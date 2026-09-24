@@ -7,7 +7,7 @@ void Instance::create(vk::raii::Context const & context, ValidationLayers const 
     std::cout << "validation layers enabled: " << validationLayers.enable << std::endl;
     std::cout << "Required GLFW extensions:\n";
     for (auto const & extension : requiredGLFWExtensions) {
-        std::cout << extension << '\n';
+        std::cout << '\t' << extension << '\n';
     }
     std::cout << std::endl;
 

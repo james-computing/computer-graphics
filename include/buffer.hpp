@@ -11,6 +11,7 @@ import vulkan_hpp;
 
 #include "../include/singleTimeCommands.hpp"
 #include "../include/memoryType.hpp"
+#include <iostream>
 
 namespace Buffer {
 
@@ -95,5 +96,6 @@ void Buffer::copyVectorToBuffer(
 
     // Copy data from staging buffer to buffer
     vk::DeviceSize const dstOffset {offset * sizeof(T)};
+    std::cout << "dstOffset = " << dstOffset << std::endl;
     copyToBuffer(device, queue, commandPool, stagingBuffer, buffer, dstOffset, bufferSize);
 }

@@ -1,4 +1,4 @@
-#include "../include/model.hpp"
+#include "../include/modelData.hpp"
 
 // Include here to avoid multiple implementation.
 // STB is for loading the texture image.
@@ -9,7 +9,20 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../libraries/tinyobjloader/tiny_obj_loader.h" // already inlcudes <cstring>, which has memcpy
 
-void Model::loadVertices(IRenderer const & renderer, std::string_view const modelPath) {
+void ModelData::init(ICore const & core, uint32_t const numTextures) {
+    size_t const maxVertices {numTextures * 3566}; // exactly for viking model
+    vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
+    vk::MemoryPropertyFlags constexpr vertexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    vertexBuffer.init(core, maxVertices, vertexbufferUsage, vertexBufferMemoryProperties);
+
+    // Create the index buffer
+    size_t const maxIndices {numTextures * 11484}; // exactly for viking model
+    vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
+    vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    indexBuffer.init(core, maxIndices, indexbufferUsage, indexBufferMemoryProperties);
+}
+
+void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & commandPool, std::string_view const modelPath) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -28,7 +41,9 @@ void Model::loadVertices(IRenderer const & renderer, std::string_view const mode
     // Make a map to store a vertex and the index attribute to it in its first appearance
     std::unordered_map<Vertex, uint32_t> uniqueVertices {};
     uint32_t newVertexIndex;
+    size_t numShapes {0};
     for (tinyobj::shape_t const & shape : shapes) {
+        ++numShapes;
         for (auto const & index : shape.mesh.indices) {
             Vertex vertex;
 
@@ -68,23 +83,31 @@ void Model::loadVertices(IRenderer const & renderer, std::string_view const mode
             indices.emplace_back(uniqueVertices[vertex]);
         }
     }
+    std::cout << "number of shapes = " << numShapes << std::endl;
 
-    numVertices = vertices.size();
-    numIndices = indices.size();
+    size_t const numVertices {vertices.size()};
+    size_t const numIndices {indices.size()};
     std::cout << "number of vertices = " << numVertices << std::endl;
     std::cout << "number of indices = " << numIndices << std::endl;
 
-    renderer.copyVerticesToVertexBuffer(vertices, 0);
-    renderer.copyIndicesToIndexBuffer(indices, 0);
+    std::cout << "vertexBuffer.pushItems" << std::endl;
+    vertexBuffer.pushItems(core, commandPool, vertices);
+    std::cout << "indexBuffer.pushItems" << std::endl;
+    indexBuffer.pushItems(core, commandPool, indices);
+    indexCounts.emplace_back(numIndices);
 }
 
-void Model::load(ICore const & core, IRenderer const & renderer, std::string_view const modelPath, std::string_view const texturePath) {
+void ModelData::load(
+    ICore const & core,
+    vk::raii::CommandPool const & commandPool,
+    std::string_view const modelPath,
+    std::string_view const texturePath
+) {
     std::cout << "load texture" << std::endl;
-    texture.load(core, renderer, texturePath.data());
+    Texture texture;
+    texture.load(core, commandPool, texturePath.data());
+    textures.emplace_back(std::move(texture));
+    
     std::cout << "load vertices" << std::endl;
-    loadVertices(renderer, modelPath.data());
-}
-
-uint32_t Model::getNumIndices() const {
-    return numIndices;
+    loadVertices(core, commandPool, modelPath.data());
 }

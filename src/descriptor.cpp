@@ -5,16 +5,25 @@
 
 void Descriptor::createDescriptorSetLayouts(vk::raii::Device const & device) {
     // combined image sampler
-    vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingCombinedImageSampler {
-        .binding = 0,//Binding::combinedImageSampler,
+    vk::DescriptorSetLayoutBinding const descriptorSetLayoutBindingCombinedImageSampler {
+        .binding = 0,
         .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = 1,
+        .descriptorCount = maxTextures,
         .stageFlags = vk::ShaderStageFlagBits::eFragment,
         .pImmutableSamplers = nullptr
     };
 
+    vk::DescriptorBindingFlags constexpr descriptorBindingFlagsCombinedImageSampler[] {
+        vk::DescriptorBindingFlagBits::ePartiallyBound | vk::DescriptorBindingFlagBits::eVariableDescriptorCount
+    };
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo const descriptorSetLayoutBindingFlagsCreateInfoCombinedImageSampler {
+        .bindingCount = 1, // number of elements in the array pBindingFlags
+        .pBindingFlags = descriptorBindingFlagsCombinedImageSampler,
+    };
+
     vk::DescriptorSetLayoutBinding bindingsCombinedImageSampler[] {descriptorSetLayoutBindingCombinedImageSampler};
     vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfoCombinedImageSampler {
+        .pNext = &descriptorSetLayoutBindingFlagsCreateInfoCombinedImageSampler, // chain the flags
         .bindingCount = 1,
         .pBindings = bindingsCombinedImageSampler
     };
@@ -23,7 +32,7 @@ void Descriptor::createDescriptorSetLayouts(vk::raii::Device const & device) {
 
     // camera ubo
     vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingCameraUBO {
-        .binding = 0,//Binding::cameraUBO,
+        .binding = 0,
         .descriptorType = vk::DescriptorType::eUniformBuffer,
         .descriptorCount = 1,
         .stageFlags = vk::ShaderStageFlagBits::eVertex,
@@ -57,7 +66,7 @@ void Descriptor::createDescriptorSetLayouts(vk::raii::Device const & device) {
     setLayoutObject = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoObject);
     */
 
-    vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingModelInstances {
+    vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingModelsInstances {
         .binding = 0,
         .descriptorType = vk::DescriptorType::eStorageBuffer,
         .descriptorCount = 1,
@@ -65,37 +74,21 @@ void Descriptor::createDescriptorSetLayouts(vk::raii::Device const & device) {
         .pImmutableSamplers = nullptr
     };
 
-    vk::DescriptorSetLayoutBinding bindingsModelInstances[] {descriptorSetLayoutBindingModelInstances};
-    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfoModelInstances {
+    vk::DescriptorSetLayoutBinding bindingsModelsInstances[] {descriptorSetLayoutBindingModelsInstances};
+    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfoModelsInstances {
         .bindingCount = 1,
-        .pBindings = bindingsModelInstances
+        .pBindings = bindingsModelsInstances
     };
 
-    setLayoutModelInstances = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoModelInstances);
-
-    /*
-    std::array<vk::DescriptorSetLayoutBinding, 3> bindings {
-        cameraUBODescriptorSetLayoutBinding,
-        objectUBODescriptorSetLayoutBinding, 
-        combinedImageSamplerDescriptorSetLayoutBinding
-    };
-
-    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfo {
-        .bindingCount = static_cast<uint32_t>(bindings.size()),
-        .pBindings = bindings.data()
-    };
-
-    setLayout = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfo);
-    */
+    setLayoutModelsInstances = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoModelsInstances);
 }
 
 void Descriptor::createDescriptorPool(
     vk::raii::Device const & device,
     uint32_t const maxFramesInFlight
 ) {
-    //uint32_t const uniformBufferCount {2 * maxFramesInFlight}; // camera and object
     uint32_t const uniformBufferCount {maxFramesInFlight}; // only camera
-    uint32_t const combinedImageSamplerCount {maxFramesInFlight};
+    uint32_t const combinedImageSamplerCount {maxTextures * maxFramesInFlight};
     uint32_t const shaderStorageBufferCount {maxFramesInFlight};
     uint32_t const maxSets {uniformBufferCount + combinedImageSamplerCount + shaderStorageBufferCount}; // sum, because each thing is in a separate descriptor set
 
@@ -134,26 +127,47 @@ void Descriptor::allocateDescriptorSets(
     vk::raii::Device const & device,
     uint32_t const maxFramesInFlight
 ) {
-    uint32_t const descriptorSetCount {3 * maxFramesInFlight}; // all descriptor sets
-
     // Vector with descriptorSetCount copies of *descriptorSetLayout.
     // It is needed because descriptorSetAllocateInfo receives an array of layouts.
-    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts; //{std::vector(descriptorSetCount, *descriptorSetLayout)};
-    descriptorSetLayouts.reserve(descriptorSetCount);
-    descriptorSetLayouts.insert(descriptorSetLayouts.end(), maxFramesInFlight, *setLayoutCombinedImageSampler);
-    descriptorSetLayouts.insert(descriptorSetLayouts.end(), maxFramesInFlight, *setLayoutCamera);
-    //descriptorSetLayouts.insert(descriptorSetLayouts.end(), maxFramesInFlight, *setLayoutObject);
-    descriptorSetLayouts.insert(descriptorSetLayouts.end(), maxFramesInFlight, *setLayoutModelInstances);
+    //std::vector<vk::DescriptorSetLayout> descriptorSetLayouts; //{std::vector(descriptorSetCount, *descriptorSetLayout)};
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsCombinedImageSampler{
+        std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutCombinedImageSampler)
+    };
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsCamera{
+        std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutCamera)
+    };
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsModelsInstances{
+        std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutModelsInstances)
+    };
     
-
-    // Allocate descriptor sets
-    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfo {
-        .descriptorPool = pool,
-        .descriptorSetCount = descriptorSetCount,
-        .pSetLayouts = descriptorSetLayouts.data()
+    std::vector<uint32_t> const descriptorCountsCombinedImageSampler {std::vector<uint32_t>(maxFramesInFlight, maxTextures)};
+    vk::DescriptorSetVariableDescriptorCountAllocateInfo const variableDescriptorCountInfo {
+        .descriptorSetCount = maxFramesInFlight, // number of combined image sampler descriptor sets
+        .pDescriptorCounts = descriptorCountsCombinedImageSampler.data()
     };
 
-    sets = device.allocateDescriptorSets(descriptorSetAllocateInfo);
+    // Allocate descriptor sets
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfoCombinedImageSampler {
+        .pNext = &variableDescriptorCountInfo,
+        .descriptorPool = pool,
+        .descriptorSetCount = maxFramesInFlight,
+        .pSetLayouts = descriptorSetLayoutsCombinedImageSampler.data()
+    };
+    setsCombinedImageSampler = device.allocateDescriptorSets(descriptorSetAllocateInfoCombinedImageSampler);
+
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfoCamera {
+        .descriptorPool = pool,
+        .descriptorSetCount = maxFramesInFlight,
+        .pSetLayouts = descriptorSetLayoutsCamera.data()
+    };
+    setsCamera = device.allocateDescriptorSets(descriptorSetAllocateInfoCamera);
+
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfoModelsInstances {
+        .descriptorPool = pool,
+        .descriptorSetCount = maxFramesInFlight,
+        .pSetLayouts = descriptorSetLayoutsModelsInstances.data()
+    };
+    setsModelsInstances = device.allocateDescriptorSets(descriptorSetAllocateInfoModelsInstances);
     
     /*
     // error: use of deleted function ‘vk::raii::DescriptorSet::DescriptorSet()’
@@ -179,31 +193,36 @@ void Descriptor::updateDescriptorSets(
     vk::raii::Device const & device,
     uint32_t const maxFramesInFlight,
     vk::raii::Sampler const & textureSampler,
-    vk::raii::ImageView const & textureImageView,
+    std::vector<Texture> const & textures,
     std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
-    //std::vector<vk::raii::Buffer> const & objectUniformBuffers
-    std::vector<vk::raii::Buffer> const & modelInstancesSSBOs,
-    uint32_t const instanceCount
+    std::vector<vk::raii::Buffer> const & modelsInstancesSSBOs,
+    uint32_t const instanceCountTotal
 ) const {
     std::cout << "Descriptor::updateDescriptorSets" << std::endl;
     // Configure descriptor sets.
     // It is one write for each descriptor set.
-    size_t i {0};
-    for (; i < maxFramesInFlight; ++i) {
-        // Combined image sampler
+
+    // Combined image sampler
+    size_t const numTextures {textures.size()};
+    std::vector<vk::DescriptorImageInfo> descriptorImageInfos;
+    descriptorImageInfos.reserve(numTextures);
+    for(size_t i {0}; i < numTextures; ++i) {
         vk::DescriptorImageInfo const descriptorImageInfo {
             .sampler = *textureSampler,
-            .imageView = *textureImageView,
+            .imageView = *textures[i].imageView,
             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
+        descriptorImageInfos.emplace_back(descriptorImageInfo);
+    }
 
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
         vk::WriteDescriptorSet const writeDescriptorSetCombinedImageSampler {
-            .dstSet = *sets[i],
-            .dstBinding = 0,//Binding::combinedImageSampler,
+            .dstSet = *setsCombinedImageSampler[i],
+            .dstBinding = 0,
             .dstArrayElement = 0,
-            .descriptorCount = 1,
+            .descriptorCount = static_cast<uint32_t>(numTextures), // length of pImageInfo array, since the descriptorType is eCombinedImageSampler
             .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = &descriptorImageInfo,
+            .pImageInfo = descriptorImageInfos.data(),
         };
 
         std::vector<vk::WriteDescriptorSet> const writeDescriptorSets {
@@ -212,18 +231,17 @@ void Descriptor::updateDescriptorSets(
         device.updateDescriptorSets(writeDescriptorSets, {});
     }
 
-    size_t j {0};
-    for (; i < 2 * maxFramesInFlight; ++i) {
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
         // camera uniform buffer
         vk::DescriptorBufferInfo const descriptorBufferInfoCamera {
-            .buffer = *(cameraUniformBuffers[j]),
+            .buffer = *(cameraUniformBuffers[i]),
             .offset = 0,
             .range = sizeof(CameraUBO)
         };
 
         vk::WriteDescriptorSet const writeDescriptorSetCameraUniformBuffer {
-            .dstSet = *sets[i],
-            .dstBinding = 0,//Binding::cameraUBO,
+            .dstSet = *setsCamera[i],
+            .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
             .descriptorType = vk::DescriptorType::eUniformBuffer,
@@ -234,11 +252,9 @@ void Descriptor::updateDescriptorSets(
             writeDescriptorSetCameraUniformBuffer
         };
         device.updateDescriptorSets(writeDescriptorSets, {});
-        ++j;
     }
 
-    size_t k {0};
-    for (; i < 3 * maxFramesInFlight; ++i) {
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
         // object uniform buffer
         /*
         vk::DescriptorBufferInfo const descriptorBufferInfoObject {
@@ -262,27 +278,25 @@ void Descriptor::updateDescriptorSets(
         device.updateDescriptorSets(writeDescriptorSets, {});
         */
 
-        vk::DescriptorBufferInfo const descriptorBufferInfoModelInstances {
-            .buffer = *modelInstancesSSBOs[k],
+        vk::DescriptorBufferInfo const descriptorBufferInfoModelsInstances {
+            .buffer = *modelsInstancesSSBOs[i],
             .offset = 0,
-            .range =  instanceCount * sizeof(glm::mat4)
+            .range =  instanceCountTotal * sizeof(glm::mat4)
         };
 
-        vk::WriteDescriptorSet const writeDescriptorSetModelInstances {
-            .dstSet = *sets[i],
-            .dstBinding = 0,//Binding::objectUBO,
+        vk::WriteDescriptorSet const writeDescriptorSetModelsInstances {
+            .dstSet = *setsModelsInstances[i],
+            .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
             .descriptorType = vk::DescriptorType::eStorageBuffer,
-            .pBufferInfo = &descriptorBufferInfoModelInstances
+            .pBufferInfo = &descriptorBufferInfoModelsInstances
         };
 
         std::vector<vk::WriteDescriptorSet> const writeDescriptorSets {
-            writeDescriptorSetModelInstances
+            writeDescriptorSetModelsInstances
         };
         device.updateDescriptorSets(writeDescriptorSets, {});
-
-        ++k;
     }
 }
 
