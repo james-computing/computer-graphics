@@ -432,7 +432,8 @@ void Renderer::updateDescriptorSets(
         modelData.textures,
         cameraUniformBuffers,
         modelsInstances.shaderStorageBuffers,
-        modelsInstances.getInstanceCountTotal()
+        modelsInstances.getInstanceCountTotal(),
+        accelerationStructures.tlas
     );
 }
 

@@ -32,18 +32,16 @@ public:
     // The descriptor set layout is used by the graphics pipeline, to know how to bind the descriptor sets
     vk::raii::DescriptorSetLayout setLayoutCombinedImageSampler {nullptr};
     vk::raii::DescriptorSetLayout setLayoutCamera {nullptr};
-    //vk::raii::DescriptorSetLayout setLayoutObject {nullptr};
     vk::raii::DescriptorSetLayout setLayoutModelsInstances {nullptr};
+    vk::raii::DescriptorSetLayout setLayoutAccelerationStructures {nullptr};
 
     // The declaration order determines the destruction order.
     // For this reason, the descriptor sets must be declared after the descriptor pool.
 
-    // Couldn't use separate vectors, because can't break the vector obtained from device.allocateDescriptorSets
     std::vector<vk::raii::DescriptorSet> setsCombinedImageSampler;
     std::vector<vk::raii::DescriptorSet> setsCamera;
     std::vector<vk::raii::DescriptorSet> setsModelsInstances;
-    // Use a single vector instead
-    //std::vector<vk::raii::DescriptorSet> sets;
+    std::vector<vk::raii::DescriptorSet> setsAccelerationStructures;
 
     void create(
         vk::raii::Device const & device,
@@ -57,6 +55,7 @@ public:
         std::vector<Texture> const & textures,
         std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
         std::vector<vk::raii::Buffer> const & modelsInstancesSSBOs,
-        uint32_t const instanceCountTotal
+        uint32_t const instanceCountTotal,
+        vk::raii::AccelerationStructureKHR const & tlas
     ) const;
 };
