@@ -42,7 +42,9 @@ bool PhysicalDevice::isSuitable(vk::raii::PhysicalDevice const & physicalDevice)
             vk::PhysicalDeviceVulkan11Features, // for shader module creation
             vk::PhysicalDeviceVulkan12Features,
             vk::PhysicalDeviceVulkan13Features,
-            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+            vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
+            vk::PhysicalDeviceRayQueryFeaturesKHR
         >()
     };
     bool const supportsRequiredFeatures {
@@ -50,11 +52,14 @@ bool PhysicalDevice::isSuitable(vk::raii::PhysicalDevice const & physicalDevice)
         features.template get<vk::PhysicalDeviceVulkan12Features>().descriptorBindingPartiallyBound && // for descriptor indexing
         features.template get<vk::PhysicalDeviceVulkan12Features>().descriptorBindingVariableDescriptorCount && // for descriptor indexing
         features.template get<vk::PhysicalDeviceVulkan12Features>().runtimeDescriptorArray && // for drawId in shader
+        features.template get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress && // for acceleration structures
         features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
         features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
         features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
         features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy && // for texture sampler
-        features.template get<vk::PhysicalDeviceFeatures2>().features.multiDrawIndirect// for DrawIndexedIndirect
+        features.template get<vk::PhysicalDeviceFeatures2>().features.multiDrawIndirect &&// for DrawIndexedIndirect
+        features.template get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>().accelerationStructure && // for acceleration structures
+        features.template get<vk::PhysicalDeviceRayQueryFeaturesKHR>().rayQuery // for ray query in shader
     };
 
     return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;

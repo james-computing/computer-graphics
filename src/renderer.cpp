@@ -74,9 +74,11 @@ void Renderer::loadModels(std::vector<std::string_view> const & modelPaths , std
     }
     std::cout << "numModels = " << numModels << std::endl;
 
+    std::cout << "modelData.init" << std::endl;
     modelData.init(*_corePtr, numModels);
 
     for (size_t i {0}; i < numModels; ++i) {
+        std::cout << "load model " << i << std::endl;
         modelData.load(*_corePtr, command.pool, modelPaths[i], texturePaths[i]);
     }
 
@@ -90,6 +92,16 @@ void Renderer::loadModels(std::vector<std::string_view> const & modelPaths , std
 
     std::cout << "Create indirectDraw" << std::endl;
     indirectDraw.create(*_corePtr, MAX_FRAMES_IN_FLIGHT, numModels, modelData, modelsInstances);
+
+    // put somewhere else?
+    accelerationStructures.create(
+        _corePtr->getPhysicalDevice(),
+        _corePtr->getDevice(),
+        _corePtr->getQueue(),
+        command.pool,
+        modelData,
+        numModels
+    );
 }
 
 bool Renderer::step() const {

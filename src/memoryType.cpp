@@ -3,7 +3,8 @@
 namespace MemoryType {
 
 uint32_t find(vk::raii::PhysicalDevice const & physicaldevice, uint32_t const typeFilter, vk::MemoryPropertyFlags const properties) {
-    vk::PhysicalDeviceMemoryProperties const memoryProperties {physicaldevice.getMemoryProperties()};
+    vk::PhysicalDeviceMemoryProperties2 const memoryProperties2 {physicaldevice.getMemoryProperties2()};
+    vk::PhysicalDeviceMemoryProperties const memoryProperties {memoryProperties2.memoryProperties};
 
     for (uint32_t i {0}; i < memoryProperties.memoryTypeCount; ++i) {
         if (

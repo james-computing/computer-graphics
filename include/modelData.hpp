@@ -7,6 +7,7 @@
 class ModelData {
 public:
     ManagedBuffer<Vertex> vertexBuffer;
+    std::vector<uint32_t> vertexCounts; // for BLAS (bottom level acceleration structure) in ray tracing
     ManagedBuffer<uint32_t> indexBuffer;
     std::vector<uint32_t> indexCounts;
     // use unique pointer, because Texture doesn't have a copy constructor, because of vk::raii::Image.

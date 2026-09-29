@@ -53,9 +53,6 @@ void BufferManager<T>::pushItems(
     std::vector<T> const & items
 ) {
     // push the items to the buffer
-    std::cout << "Buffer::copyVectorToBuffer" << std::endl;
-    std::cout << "items.size() = " << items.size() << std::endl;
-    std::cout << "offset = " << nextOffset << std::endl;
     Buffer::copyVectorToBuffer<T>(
         physicalDevice,
         device,
@@ -66,7 +63,6 @@ void BufferManager<T>::pushItems(
         *bufferPtr
     );
 
-    std::cout << "offsets.emplace_back" << std::endl;
     // update offsets
     offsets.emplace_back(nextOffset); // nextOffset is now the offset for the current push
 

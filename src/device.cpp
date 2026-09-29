@@ -43,30 +43,45 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
         vk::PhysicalDeviceVulkan11Features,
         vk::PhysicalDeviceVulkan12Features,
         vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+        vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
+        vk::PhysicalDeviceRayQueryFeaturesKHR
     > const featureChain {
+        // vk::PhysicalDeviceFeatures2
         {.features = 
             {
             .multiDrawIndirect = true, // for indirect draw
             .samplerAnisotropy = true
             }
         },
+        // vk::PhysicalDeviceVulkan11Features
         {.shaderDrawParameters = true}, // for shader module creation
+        // vk::PhysicalDeviceVulkan12Features
         {
             // for descriptor indexing
             .descriptorBindingPartiallyBound = true,
             .descriptorBindingVariableDescriptorCount = true,
-            .runtimeDescriptorArray = true // for drawId in shader
+            .runtimeDescriptorArray = true, // for drawId in shader
+            .bufferDeviceAddress = true // for acceleration structures
         },
+        // vk::PhysicalDeviceVulkan13Features
         {
             .synchronization2 = true, // sync objects
             .dynamicRendering = true
         },
-        {.extendedDynamicState = true}
+        // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        {.extendedDynamicState = true},
+        // vk::PhysicalDeviceAccelerationStructureFeaturesKHR
+        {.accelerationStructure = true}, // for acceleration structures
+        // vk::PhysicalDeviceRayQueryFeaturesKHR
+        {.rayQuery = true} // for ray query in shader
     };
 
     std::vector<char const *> const requiredDeviceExtensions {
-        vk::KHRSwapchainExtensionName
+        vk::KHRSwapchainExtensionName,
+        vk::KHRDeferredHostOperationsExtensionName, // required by vk::KHRAccelerationStructureExtensionName
+        vk::KHRAccelerationStructureExtensionName, // for acceleration structures
+        vk::KHRBufferDeviceAddressExtensionName // for acceleration structures
     };
 
     vk::DeviceCreateInfo const deviceCreateInfo {

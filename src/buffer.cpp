@@ -18,18 +18,33 @@ void create(
         .usage = bufferUsage,
         .sharingMode = vk::SharingMode::eExclusive
     };
-    
-    buffer = vk::raii::Buffer(device, bufferCreateInfo);
 
-    vk::MemoryRequirements const memoryRequirements {buffer.getMemoryRequirements()};
+    buffer = vk::raii::Buffer(device, bufferCreateInfo);
+    
+    //vk::MemoryRequirements const memoryRequirements {buffer.getMemoryRequirements()};
+    vk::BufferMemoryRequirementsInfo2 const memoryRequirementsInfo {
+        .buffer = *buffer
+    };
+    // vk::raii::Buffer doesn't have getMemoryRequirements2, so use the function from the device
+    vk::MemoryRequirements2 const memoryRequirements2 {device.getBufferMemoryRequirements2(memoryRequirementsInfo)};
+    vk::MemoryRequirements const memoryRequirements {memoryRequirements2.memoryRequirements};
 
     uint32_t const memoryTypeIndex {
         MemoryType::find(physicalDevice, memoryRequirements.memoryTypeBits, memoryProperties)
     };
-    vk::MemoryAllocateInfo const memoryAllocateInfo {
+    vk::MemoryAllocateInfo memoryAllocateInfo {
         .allocationSize = memoryRequirements.size,
         .memoryTypeIndex = memoryTypeIndex
     };
+
+    // MemoryAllocateFlagsInfo is only needed if the bufferUsage includes the eShaderDeviceAddress flag.
+    // Declare outside the if, otherwise it will be out of scope.
+    vk::MemoryAllocateFlagsInfo constexpr memoryAllocateFlagsInfo {
+        .flags = vk::MemoryAllocateFlagBits::eDeviceAddress // for acceleration structures
+    };
+    if (bufferUsage & vk::BufferUsageFlagBits::eShaderDeviceAddress) {
+        memoryAllocateInfo.pNext = &memoryAllocateFlagsInfo;
+    }
 
     bufferMemory = vk::raii::DeviceMemory(device, memoryAllocateInfo);
 

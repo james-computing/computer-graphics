@@ -22,6 +22,7 @@
 #include "modelData.hpp"
 #include "textureSampler.hpp"
 #include "indirectDraw.hpp"
+#include "accelerationStructures.hpp"
 
 #include "../libraries/stb/stb_image.h"
 
@@ -62,6 +63,8 @@ private:
     MSAA msaa;
 
     vk::raii::Sampler textureSampler {nullptr};
+
+    AccelerationStructures accelerationStructures;
 
 public:
     void initWindow() override;

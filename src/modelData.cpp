@@ -10,14 +10,29 @@
 #include "../libraries/tinyobjloader/tiny_obj_loader.h" // already inlcudes <cstring>, which has memcpy
 
 void ModelData::init(ICore const & core, uint32_t const numTextures) {
+    // Create the vertex buffer
+    std::cout << "Create vertex buffer" << std::endl;
     size_t const maxVertices {numTextures * 3566}; // exactly for viking model
-    vk::BufferUsageFlags constexpr vertexbufferUsage {vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst};
+    vk::BufferUsageFlags constexpr vertexbufferUsage {
+        vk::BufferUsageFlagBits::eVertexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst |
+        vk::BufferUsageFlagBits::eShaderDeviceAddress | // for acceleration structures
+        vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR
+    };
     vk::MemoryPropertyFlags constexpr vertexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    std::cout << "vertexBuffer.init" << std::endl;
     vertexBuffer.init(core, maxVertices, vertexbufferUsage, vertexBufferMemoryProperties);
 
     // Create the index buffer
+    std::cout << "Create index buffer" << std::endl;
     size_t const maxIndices {numTextures * 11484}; // exactly for viking model
-    vk::BufferUsageFlags constexpr indexbufferUsage {vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst};
+    vk::BufferUsageFlags constexpr indexbufferUsage {
+        vk::BufferUsageFlagBits::eIndexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst |
+        vk::BufferUsageFlagBits::eShaderDeviceAddress | // for acceleration structures
+        vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR // for acceleration structures
+        //vk::BufferUsageFlagBits::eStorageBuffer // for acceleration structures?
+    };
     vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
     indexBuffer.init(core, maxIndices, indexbufferUsage, indexBufferMemoryProperties);
 }
@@ -85,16 +100,15 @@ void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & c
     }
     std::cout << "number of shapes = " << numShapes << std::endl;
 
-    size_t const numVertices {vertices.size()};
-    size_t const numIndices {indices.size()};
-    std::cout << "number of vertices = " << numVertices << std::endl;
-    std::cout << "number of indices = " << numIndices << std::endl;
+    size_t const vertexCount {vertices.size()};
+    size_t const indexCount {indices.size()};
+    std::cout << "number of vertices = " << vertexCount << std::endl;
+    std::cout << "number of indices = " << indexCount << std::endl;
 
-    std::cout << "vertexBuffer.pushItems" << std::endl;
     vertexBuffer.pushItems(core, commandPool, vertices);
-    std::cout << "indexBuffer.pushItems" << std::endl;
     indexBuffer.pushItems(core, commandPool, indices);
-    indexCounts.emplace_back(numIndices);
+    indexCounts.emplace_back(indexCount);
+    vertexCounts.emplace_back(vertexCount);
 }
 
 void ModelData::load(
@@ -103,11 +117,9 @@ void ModelData::load(
     std::string_view const modelPath,
     std::string_view const texturePath
 ) {
-    std::cout << "load texture" << std::endl;
     Texture texture;
     texture.load(core, commandPool, texturePath.data());
     textures.emplace_back(std::move(texture));
-    
-    std::cout << "load vertices" << std::endl;
+
     loadVertices(core, commandPool, modelPath.data());
 }
