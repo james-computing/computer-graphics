@@ -43,8 +43,8 @@ void Renderer::initRest(ICore const & core) {
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts {
         *descriptor.setLayoutCombinedImageSampler, // set = 0
         *descriptor.setLayoutCamera, // set = 1
-        //*descriptor.setLayoutObject // set = 2
-        *descriptor.setLayoutModelsInstances // set = 2
+        *descriptor.setLayoutModelsInstances, // set = 2
+        *descriptor.setLayoutAccelerationStructures // set = 3
     };
 
     graphicsPipeline.create(
