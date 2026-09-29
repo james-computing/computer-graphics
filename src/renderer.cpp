@@ -340,7 +340,8 @@ void Renderer::drawFrame(float const deltaTime) {
     std::vector<vk::DescriptorSet> descriptorSets {
         *descriptor.setsCombinedImageSampler[frameIndex], //I don't want to send this information to the GPU every frame...
         *descriptor.setsCamera[frameIndex],
-        *descriptor.setsModelsInstances[frameIndex]
+        *descriptor.setsModelsInstances[frameIndex],
+        *descriptor.setsAccelerationStructures[frameIndex]
     };
     recordCommandBuffer(imageIndex, descriptorSets);
 

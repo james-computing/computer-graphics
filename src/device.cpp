@@ -81,7 +81,8 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
         vk::KHRSwapchainExtensionName,
         vk::KHRDeferredHostOperationsExtensionName, // required by vk::KHRAccelerationStructureExtensionName
         vk::KHRAccelerationStructureExtensionName, // for acceleration structures
-        vk::KHRBufferDeviceAddressExtensionName // for acceleration structures
+        vk::KHRBufferDeviceAddressExtensionName, // for acceleration structures
+        vk::KHRRayQueryExtensionName // for ray query
     };
 
     vk::DeviceCreateInfo const deviceCreateInfo {
