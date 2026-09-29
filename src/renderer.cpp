@@ -252,7 +252,7 @@ void Renderer::recordCommandBuffer(
     commandBuffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         graphicsPipeline.pipelineLayout,
-        0, // firstSet = 1, which is the index for the descriptor set of the camera
+        0,
         descriptorSets,
         nullptr
     );

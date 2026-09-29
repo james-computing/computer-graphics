@@ -13,6 +13,9 @@ ConstantBuffer<CameraUBO> cameraUBO;
 [[vk::binding(0, 2)]]
 StructuredBuffer<float4x4> modelMatrices;
 
+[[vk::binding(0, 3)]]
+RaytracingAccelerationStructure accelerationStructure;
+
 struct VSInput {
     float3 position;
     float2 textureCoord;
