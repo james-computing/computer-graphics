@@ -11,13 +11,6 @@ void AccelerationStructures::createBLAS(
     ModelData const & modelData,
     uint32_t const numModels
 ) {
-    vk::TransformMatrixKHR const identity {
-        std::array<std::array<float, 4>, 3>{
-            {std::array<float, 4>{1.f, 0.f, 0.f, 0.f},
-		    std::array<float, 4>{0.f, 1.f, 0.f, 0.f},
-		    std::array<float, 4>{0.f, 0.f, 1.f, 0.f}}}
-    };
-
     vk::BufferDeviceAddressInfo const vertexBufferAddressInfo {
         .buffer = *modelData.vertexBuffer.buffer
     };
@@ -130,22 +123,42 @@ void AccelerationStructures::createBLAS(
         commandBuffer.buildAccelerationStructuresKHR({blasBuildGeometryInfo}, {&blasRangeInfo});
         SingleTimeCommands::end(queue, commandBuffer);
 
+        // Update offsets
+        indexDataOffset += modelData.indexCounts[i] * sizeof(uint32_t);
+        vertexOffset += modelData.vertexCounts[i];
+    }
+}
+
+void AccelerationStructures::createInstances(
+    vk::raii::Device const & device,
+    ModelsInstances const & modelsInstances,
+    uint32_t const numModels
+) {
+    vk::TransformMatrixKHR const identity {
+        std::array<std::array<float, 4>, 3>{
+            {std::array<float, 4>{1.f, 0.f, 0.f, 0.f},
+		    std::array<float, 4>{0.f, 1.f, 0.f, 0.f},
+		    std::array<float, 4>{0.f, 0.f, 1.f, 0.f}}}
+    };
+
+    uint32_t const totalInstances {modelsInstances.getInstanceCountTotal()};
+    instances.reserve(totalInstances);
+    for (size_t i {0}; i < numModels; ++i) {
         vk::AccelerationStructureDeviceAddressInfoKHR const addrInfo {
             .accelerationStructure = *blasHandles[i]
         };
         vk::DeviceAddress const blasDeviceAddr {device.getAccelerationStructureAddressKHR(addrInfo)};
 
-        vk::AccelerationStructureInstanceKHR const instance {
-            .transform = identity,
-            .mask = 0xFF,
-            .accelerationStructureReference = blasDeviceAddr
-        };
+        uint32_t const instanceCount {modelsInstances.getInstanceCount(i)};
+        for (size_t j {0}; j < instanceCount; ++j) {
+            vk::AccelerationStructureInstanceKHR const instance {
+                .transform = identity, // should replace with the transform for the instance
+                .mask = 0xFF,
+                .accelerationStructureReference = blasDeviceAddr
+            };
 
-        instances.push_back(instance);
-
-        // Update offsets
-        indexDataOffset += modelData.indexCounts[i] * sizeof(uint32_t);
-        vertexOffset += modelData.vertexCounts[i];
+            instances.push_back(instance);
+        }
     }
 }
 
@@ -287,10 +300,12 @@ void AccelerationStructures::create(
     vk::raii::Queue const & queue,
     vk::raii::CommandPool const & commandPool,
     ModelData const & modelData,
-    uint32_t const numModels
+    uint32_t const numModels,
+    ModelsInstances const & modelsInstances
 ) {
     std::cout << "Create acceleration structures" << std::endl;
     createBLAS(physicalDevice, device, queue, commandPool, modelData, numModels);
+    createInstances(device, modelsInstances, numModels);
     createTLAS(physicalDevice, device, queue, commandPool);
 }
 
@@ -301,12 +316,11 @@ void AccelerationStructures::updateTLAS(
     vk::raii::CommandPool const & commandPool,
     std::vector<glm::mat4> const & modelMatrices
 ) {
-    
     uint32_t const instancesSize {static_cast<uint32_t>(instances.size())};
     if (instancesSize != modelMatrices.size()) {
         std::cout << "instancesSize = " << instancesSize << std::endl;
         std::cout << "modelMatrices.size() = " << modelMatrices.size() << std::endl;
-        throw std::runtime_error("modelMatrices should have size = instancesSize. Check if tlas have instancing support!");
+        throw std::runtime_error("modelMatrices should have size = instancesSize.");
     }
 
     for (size_t i {0}; i < instancesSize; ++i) {

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../include/modelData.hpp"
+#include "modelData.hpp"
+#include "modelsInstances.hpp"
 
 // Acceleration structures for ray tracing
 class AccelerationStructures {
@@ -28,7 +29,8 @@ public:
         vk::raii::Queue const & queue,
         vk::raii::CommandPool const & commandPool,
         ModelData const & modelData,
-        uint32_t const numModels
+        uint32_t const numModels,
+        ModelsInstances const & modelsInstances
     );
 
     void createBLAS(
@@ -37,6 +39,12 @@ public:
         vk::raii::Queue const & queue,
         vk::raii::CommandPool const & commandPool,
         ModelData const & modelData,
+        uint32_t const numModels
+    );
+
+    void createInstances(
+        vk::raii::Device const & device,
+        ModelsInstances const & modelsInstances,
         uint32_t const numModels
     );
 
