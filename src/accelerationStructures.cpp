@@ -143,7 +143,7 @@ void AccelerationStructures::createInstances(
 
     uint32_t const totalInstances {modelsInstances.getInstanceCountTotal()};
     instances.reserve(totalInstances);
-    for (size_t i {0}; i < numModels; ++i) {
+    for (uint32_t i {0}; i < numModels; ++i) {
         vk::AccelerationStructureDeviceAddressInfoKHR const addrInfo {
             .accelerationStructure = *blasHandles[i]
         };
@@ -153,6 +153,7 @@ void AccelerationStructures::createInstances(
         for (size_t j {0}; j < instanceCount; ++j) {
             vk::AccelerationStructureInstanceKHR const instance {
                 .transform = identity, // should replace with the transform for the instance
+                .instanceCustomIndex = i, // store the model index
                 .mask = 0xFF,
                 .accelerationStructureReference = blasDeviceAddr
             };
