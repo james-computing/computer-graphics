@@ -86,7 +86,7 @@ void Renderer::loadModels(std::vector<std::string_view> const & modelPaths , std
     std::vector<uint32_t> instanceCounts;
     instanceCounts.reserve(numModels);
     for (size_t i {0}; i < numModels; ++i) {
-        instanceCounts.emplace_back(i+1); // instanceCounts = {1,2,3,...}
+        instanceCounts.emplace_back(1); // instanceCounts = {1,2,3,...} // use 1 until tlas is modified to support instancing
     } 
     modelsInstances.init(*_corePtr, MAX_FRAMES_IN_FLIGHT, numModels, instanceCounts);
 
@@ -306,6 +306,14 @@ void Renderer::drawFrame(float const deltaTime) {
     modelsInstances.updateShaderStorageBuffer(
         frameIndex,
         deltaTime
+    );
+
+    accelerationStructures.updateTLAS(
+        _corePtr->getPhysicalDevice(),
+        _corePtr->getDevice(),
+        _corePtr->getQueue(),
+        command.pool,
+        modelsInstances.getModelMatrices()
     );
 
     vk::raii::CommandBuffer & commandBuffer {command.buffers[frameIndex]};

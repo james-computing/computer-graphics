@@ -24,7 +24,7 @@ private:
 
     void createSSBOs(ICore const & core, uint32_t const maxFramesInFlight, size_t const instanceCountTotal);
     void updateTransforms(float const deltaTime);
-    void computeModelMatrices(std::vector<glm::mat4> & modelMatrices);
+    void computeModelMatrices();
 
 public:
     void init(
@@ -34,6 +34,7 @@ public:
         std::vector<uint32_t> const & instanceCounts
     );
     void updateShaderStorageBuffer(uint32_t const frameIndex, float const deltaTime);
+    std::vector<glm::mat4> const & getModelMatrices() const;
     uint32_t getInstanceCountTotal() const;
     uint32_t getInstanceCount(size_t const index) const;
 };

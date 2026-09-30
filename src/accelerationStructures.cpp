@@ -155,7 +155,7 @@ void AccelerationStructures::createTLAS(
     vk::raii::Queue const & queue,
     vk::raii::CommandPool const & commandPool
 ) {
-    // Total number of subMeshes?
+    // Total number of models
     size_t const instancesSize {instances.size()};
     vk::DeviceSize const instanceBufferSize {instancesSize * sizeof(vk::AccelerationStructureInstanceKHR)};
     vk::BufferUsageFlags constexpr instanceBufferUsage {
@@ -201,6 +201,7 @@ void AccelerationStructures::createTLAS(
     // Can't be const, because we'll edit the scratchData later
     vk::AccelerationStructureBuildGeometryInfoKHR tlasBuildGeometryInfo {
         .type = vk::AccelerationStructureTypeKHR::eTopLevel,
+        .flags = vk::BuildAccelerationStructureFlagBitsKHR::eAllowUpdate,
         .mode = vk::BuildAccelerationStructureModeKHR::eBuild,
         .geometryCount = 1,
         .pGeometries = &tlasGeometry
@@ -291,4 +292,157 @@ void AccelerationStructures::create(
     std::cout << "Create acceleration structures" << std::endl;
     createBLAS(physicalDevice, device, queue, commandPool, modelData, numModels);
     createTLAS(physicalDevice, device, queue, commandPool);
+}
+
+void AccelerationStructures::updateTLAS(
+    vk::raii::PhysicalDevice const & physicalDevice,
+    vk::raii::Device const & device,
+    vk::raii::Queue const & queue,
+    vk::raii::CommandPool const & commandPool,
+    std::vector<glm::mat4> const & modelMatrices
+) {
+    
+    uint32_t const instancesSize {static_cast<uint32_t>(instances.size())};
+    if (instancesSize != modelMatrices.size()) {
+        std::cout << "instancesSize = " << instancesSize << std::endl;
+        std::cout << "modelMatrices.size() = " << modelMatrices.size() << std::endl;
+        throw std::runtime_error("modelMatrices should have size = instancesSize. Check if tlas have instancing support!");
+    }
+
+    for (size_t i {0}; i < instancesSize; ++i) {
+        glm::mat4 const & modelMatrix {modelMatrices[i]};
+        vk::TransformMatrixKHR transform {};
+        transform.matrix = std::array<std::array<float,4>,3>{{
+            std::array<float,4>{modelMatrix[0][0], modelMatrix[1][0], modelMatrix[2][0], modelMatrix[3][0]},
+            std::array<float,4>{modelMatrix[0][1], modelMatrix[1][1], modelMatrix[2][1], modelMatrix[3][1]},
+            std::array<float,4>{modelMatrix[0][2], modelMatrix[1][2], modelMatrix[2][2], modelMatrix[3][2]}
+        }};
+        instances[i].setTransform(transform);
+    }
+
+    vk::DeviceSize const instanceBufferSize {instancesSize * sizeof(vk::AccelerationStructureInstanceKHR)};
+
+    vk::raii::Buffer stagingBuffer {nullptr};
+    vk::raii::DeviceMemory stagingBufferMemory {nullptr};
+    vk::BufferUsageFlags stagingBufferUsage {vk::BufferUsageFlagBits::eTransferSrc};
+    vk::MemoryPropertyFlags stagingBufferMemoryProperties {
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+    };
+    Buffer::create(
+        physicalDevice,
+        device,
+        instanceBufferSize,
+        stagingBufferUsage,
+        stagingBufferMemoryProperties,
+        stagingBuffer,
+        stagingBufferMemory
+    );
+
+    void * data {stagingBufferMemory.mapMemory(0, instanceBufferSize)};
+    memcpy(data, instances.data(), instanceBufferSize);
+    stagingBufferMemory.unmapMemory();
+    data = nullptr;
+
+    Buffer::copyToBuffer(
+        device,
+        queue,
+        commandPool,
+        stagingBuffer,
+        instanceBuffer,
+        0, // dstOffset
+        instanceBufferSize
+    );
+
+    vk::BufferDeviceAddressInfo const instanceAddressInfo {
+        .buffer = instanceBuffer
+    };
+
+    vk::DeviceAddress const instanceAddress {device.getBufferAddress(instanceAddressInfo)};
+
+    vk::AccelerationStructureGeometryInstancesDataKHR const instanceData {
+        .arrayOfPointers = vk::False,
+        .data = instanceAddress
+    };
+
+    vk::AccelerationStructureGeometryDataKHR const geometryData(instanceData);
+
+    vk::AccelerationStructureGeometryKHR const tlasGeometry {
+        .geometryType = vk::GeometryTypeKHR::eInstances,
+        .geometry = geometryData
+    };
+
+    // Can't be const, because will edit the scratchData later
+    vk::AccelerationStructureBuildGeometryInfoKHR tlasBuildGeometryInfo {
+        .type = vk::AccelerationStructureTypeKHR::eTopLevel,
+        .flags = vk::BuildAccelerationStructureFlagBitsKHR::eAllowUpdate,
+        .mode = vk::BuildAccelerationStructureModeKHR::eUpdate,
+        .srcAccelerationStructure = *tlas,
+        .dstAccelerationStructure = *tlas,
+        .geometryCount = 1,
+        .pGeometries = &tlasGeometry
+    };
+
+    vk::BufferDeviceAddressInfo const tlasScratchBufferAddressInfo {
+        .buffer = *tlasScratchBuffer
+    };
+
+    vk::DeviceAddress const tlasScratchBufferAddress {device.getBufferAddress(tlasScratchBufferAddressInfo)};
+
+    tlasBuildGeometryInfo.scratchData.deviceAddress = tlasScratchBufferAddress;
+
+    vk::AccelerationStructureBuildRangeInfoKHR const tlasRangeInfo {
+        .primitiveCount = instancesSize,
+        .primitiveOffset = 0,
+        .firstVertex = 0,
+        .transformOffset = 0
+    };
+
+    vk::raii::CommandBuffer commandBuffer {nullptr};
+    SingleTimeCommands::begin(device, commandPool, commandBuffer);
+
+    vk::MemoryBarrier constexpr preBarrier {
+        .srcAccessMask = vk::AccessFlagBits::eAccelerationStructureWriteKHR | vk::AccessFlagBits::eTransferWrite | vk::AccessFlagBits::eShaderRead,
+        .dstAccessMask = vk::AccessFlagBits::eAccelerationStructureReadKHR | vk::AccessFlagBits::eAccelerationStructureWriteKHR
+    };
+    vk::PipelineStageFlags constexpr preSrcStageMask {
+        vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR |
+        vk::PipelineStageFlagBits::eTransfer |
+        vk::PipelineStageFlagBits::eFragmentShader
+    };
+    vk::PipelineStageFlags constexpr preDstStageMask {
+        vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR
+    };
+
+    // use pipelineBarrier2 instead?
+    commandBuffer.pipelineBarrier(
+        preSrcStageMask,
+        preDstStageMask,
+        {},
+        {preBarrier},
+        {},
+        {}
+    );
+
+    commandBuffer.buildAccelerationStructuresKHR({tlasBuildGeometryInfo}, {&tlasRangeInfo});
+
+    vk::MemoryBarrier constexpr postBarrier {
+        .srcAccessMask = vk::AccessFlagBits::eAccelerationStructureWriteKHR,
+        .dstAccessMask = vk::AccessFlagBits::eAccelerationStructureReadKHR | vk::AccessFlagBits::eShaderRead
+    };
+
+    vk::PipelineStageFlags constexpr postSrcStageMask {vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR};
+    vk::PipelineStageFlags constexpr postDstStageMask {
+        vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR | vk::PipelineStageFlagBits::eFragmentShader,
+    };
+
+    commandBuffer.pipelineBarrier(
+        postSrcStageMask,
+        postDstStageMask,
+        {},
+        {postBarrier},
+        {},
+        {}
+    );
+
+    SingleTimeCommands::end(queue, commandBuffer);
 }

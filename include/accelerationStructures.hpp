@@ -46,4 +46,12 @@ public:
         vk::raii::Queue const & queue,
         vk::raii::CommandPool const & commandPool
     );
+
+    void updateTLAS(
+        vk::raii::PhysicalDevice const & physicalDevice,
+        vk::raii::Device const & device,
+        vk::raii::Queue const & queue,
+        vk::raii::CommandPool const & commandPool,
+        std::vector<glm::mat4> const & modelMatrices
+    );
 };

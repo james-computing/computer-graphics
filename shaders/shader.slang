@@ -49,7 +49,7 @@ VSOutput vertMain(
     return output;
 }
 
-static const float3 lightDirection = float3(-0.7071067811865475, 0.0, 0.7071067811865475);
+static const float3 lightDirection = float3(-0.7071067811865475, 0.7071067811865475, 0.0); // points to the light source
 static const float EPSILON = 0.01;
 
 bool inShadow(float3 p) {
@@ -79,6 +79,7 @@ float4 fragMain(VSOutput input) : SV_Target {
     float3 p = input.worldPosition;
 
     float4 finalColor;
+    // Darken color if in shadow
     if (inShadow(p)) {
         finalColor = baseColor * 0.2;
     } else {

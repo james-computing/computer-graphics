@@ -21,7 +21,7 @@ void ModelsInstances::init(
 
     createSSBOs(core, maxFramesInFlight, instanceCountTotal);
 
-    transforms.reserve(instanceCountTotal);
+    transforms.resize(instanceCountTotal);
     float constexpr s {0.5f};
     float constexpr space {1.0f};
     float x = 0.0f;
@@ -46,7 +46,7 @@ void ModelsInstances::init(
         }
     }
 
-    modelMatrices.reserve(instanceCountTotal);
+    modelMatrices.resize(instanceCountTotal);
 };
 
 void ModelsInstances::createSSBOs(ICore const & core, uint32_t const maxFramesInFlight, size_t const instanceCountTotal) {
@@ -86,7 +86,7 @@ void ModelsInstances::updateTransforms(float const deltaTime) {
     }
 }
 
-void ModelsInstances::computeModelMatrices(std::vector<glm::mat4> & modelMatrices) {
+void ModelsInstances::computeModelMatrices() {
     for (size_t i {0}; i < instanceCountTotal; ++i) {
         modelMatrices[i] = transforms[i].getModelMatrix();
     }
@@ -94,17 +94,20 @@ void ModelsInstances::computeModelMatrices(std::vector<glm::mat4> & modelMatrice
 
 void ModelsInstances::updateShaderStorageBuffer(uint32_t const frameIndex, float const deltaTime) {
     updateTransforms(deltaTime);
-    computeModelMatrices(modelMatrices);
+    computeModelMatrices();
 
     // Copy the model matrices to the corresponding uniform buffer memory.
     size_t const size {instanceCountTotal * sizeof(glm::mat4)};
     memcpy(shaderStorageBuffersMapped[frameIndex], modelMatrices.data(), size);
 }
 
+std::vector<glm::mat4> const & ModelsInstances::getModelMatrices() const {
+    return modelMatrices;
+}
+
 uint32_t ModelsInstances::getInstanceCountTotal() const {
     return instanceCountTotal;
 }
-
 
 uint32_t ModelsInstances::getInstanceCount(size_t const index) const {
     return instanceCounts[index];
