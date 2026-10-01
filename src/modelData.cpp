@@ -17,7 +17,8 @@ void ModelData::init(ICore const & core, uint32_t const numTextures) {
         vk::BufferUsageFlagBits::eVertexBuffer |
         vk::BufferUsageFlagBits::eTransferDst |
         vk::BufferUsageFlagBits::eShaderDeviceAddress | // for acceleration structures
-        vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR
+        vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR |
+        vk::BufferUsageFlagBits::eStorageBuffer // for ray query
     };
     vk::MemoryPropertyFlags constexpr vertexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
     std::cout << "vertexBuffer.init" << std::endl;
@@ -26,15 +27,52 @@ void ModelData::init(ICore const & core, uint32_t const numTextures) {
     // Create the index buffer
     std::cout << "Create index buffer" << std::endl;
     size_t const maxIndices {numTextures * 11484}; // exactly for viking model
-    vk::BufferUsageFlags constexpr indexbufferUsage {
+    vk::BufferUsageFlags constexpr indexBufferUsage {
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst |
         vk::BufferUsageFlagBits::eShaderDeviceAddress | // for acceleration structures
-        vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR // for acceleration structures
-        //vk::BufferUsageFlagBits::eStorageBuffer // for acceleration structures?
+        vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR |// for acceleration structures
+        vk::BufferUsageFlagBits::eStorageBuffer // for ray query
     };
     vk::MemoryPropertyFlags constexpr indexBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    indexBuffer.init(core, maxIndices, indexbufferUsage, indexBufferMemoryProperties);
+    indexBuffer.init(core, maxIndices, indexBufferUsage, indexBufferMemoryProperties);
+
+    // Create the index offsets buffer
+    std::cout << "Create index offsets buffer" << std::endl;
+    vk::BufferUsageFlags constexpr indexOffsetsBufferUsage {
+        vk::BufferUsageFlagBits::eTransferDst |
+        vk::BufferUsageFlagBits::eStorageBuffer // for ray query
+    };
+    vk::MemoryPropertyFlags constexpr indexOffsetsBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    vk::DeviceSize const indexOffsetsBufferSize {maxVertices * sizeof(uint32_t)};
+    Buffer::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
+        indexOffsetsBufferSize,
+        indexOffsetsBufferUsage,
+        indexOffsetsBufferMemoryProperties,
+        indexOffsetsBuffer,
+        indexOffsetsBufferMemory
+    );
+
+    // Create the UV buffer
+    /*
+    std::cout << "Create index UV offsets buffer" << std::endl;
+    vk::BufferUsageFlags constexpr uvBufferUsage {
+        vk::BufferUsageFlagBits::eTransferDst |
+        vk::BufferUsageFlagBits::eStorageBuffer // for ray query
+    };
+    vk::MemoryPropertyFlags constexpr uvBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
+    vk::DeviceSize const uvBufferSize {maxVertices * sizeof(glm::vec2)};
+    Buffer::create(
+        core.getPhysicalDevice(),
+        core.getDevice(),
+        uvBufferSize,
+        uvBufferUsage,
+        uvBufferMemoryProperties,
+        uvBuffer,
+        uvBufferMemory
+    );*/
 }
 
 void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & commandPool, std::string_view const modelPath) {
@@ -105,6 +143,8 @@ void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & c
     std::cout << "number of vertices = " << vertexCount << std::endl;
     std::cout << "number of indices = " << indexCount << std::endl;
 
+    static size_t indexOffset {0};
+
     vertexBuffer.pushItems(core, commandPool, vertices);
     indexBuffer.pushItems(core, commandPool, indices);
     indexCounts.emplace_back(indexCount);
@@ -115,11 +155,27 @@ void ModelData::load(
     ICore const & core,
     vk::raii::CommandPool const & commandPool,
     std::string_view const modelPath,
-    std::string_view const texturePath
+    std::string_view const texturePath,
+    bool const alphaCut
 ) {
     Texture texture;
     texture.load(core, commandPool, texturePath.data());
     textures.emplace_back(std::move(texture));
 
     loadVertices(core, commandPool, modelPath.data());
+
+    alphaCuts.push_back(alphaCut);
+}
+
+// Call after loading all models
+void ModelData::updateIndexOffsetsBuffer(ICore const & core, vk::raii::CommandPool const & commandPool) {
+    Buffer::copyVectorToBuffer<uint32_t>(
+        core.getPhysicalDevice(),
+        core.getDevice(),
+        core.getQueue(),
+        commandPool,
+        indexBuffer.manager.getOffsets(),
+        0,
+        indexOffsetsBuffer
+    );
 }

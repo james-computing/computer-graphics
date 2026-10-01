@@ -36,10 +36,16 @@ void AccelerationStructures::createBLAS(
 
         vk::AccelerationStructureGeometryDataKHR const geometryData {vk::AccelerationStructureGeometryDataKHR(trianglesData)};
 
+        vk::GeometryFlagsKHR geometryFlags;
+        if (modelData.alphaCuts[i]) {
+            geometryFlags = vk::GeometryFlagsKHR(0);
+        } else {
+            geometryFlags = vk::GeometryFlagBitsKHR::eOpaque;
+        }
         vk::AccelerationStructureGeometryKHR const blasGeometry {
             .geometryType = vk::GeometryTypeKHR::eTriangles,
             .geometry = geometryData,
-            .flags = vk::GeometryFlagBitsKHR::eOpaque
+            .flags = geometryFlags
         };
 
         // Can't be const, because of scratchData, which will be set later

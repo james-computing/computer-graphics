@@ -25,6 +25,7 @@ public:
     BufferManager(vk::raii::Buffer const & buffer);
     ~BufferManager();
     uint32_t getOffset(size_t const index) const;
+    std::vector<uint32_t> const & getOffsets() const;
     void pushItems(
         vk::raii::PhysicalDevice const & physicalDevice,
         vk::raii::Device const & device,
@@ -42,6 +43,11 @@ BufferManager<T>::BufferManager(vk::raii::Buffer const & buffer) {
 template <typename T>
 uint32_t BufferManager<T>::getOffset(size_t const index) const {
     return offsets[index];
+}
+
+template <typename T>
+std::vector<uint32_t> const & BufferManager<T>::getOffsets() const {
+    return offsets;
 }
 
 template <typename T>

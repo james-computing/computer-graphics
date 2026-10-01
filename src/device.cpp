@@ -66,6 +66,7 @@ void Device::create(vk::raii::PhysicalDevice const & physicalDevice, vk::raii::S
         },
         // vk::PhysicalDeviceVulkan13Features
         {
+            .shaderDemoteToHelperInvocation = true, // for discard in shader
             .synchronization2 = true, // sync objects
             .dynamicRendering = true
         },

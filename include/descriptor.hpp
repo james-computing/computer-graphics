@@ -1,15 +1,7 @@
 #pragma once
 
-#define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
-//#define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
-#if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
-#include <vulkan/vulkan_raii.hpp>
-#else
-import vulkan_hpp;
-#endif
-
 #include "texture.hpp"
+#include "modelData.hpp"
 
 class Descriptor {
 private:
@@ -34,6 +26,9 @@ public:
     vk::raii::DescriptorSetLayout setLayoutCamera {nullptr};
     vk::raii::DescriptorSetLayout setLayoutModelsInstances {nullptr};
     vk::raii::DescriptorSetLayout setLayoutAccelerationStructures {nullptr};
+    vk::raii::DescriptorSetLayout setLayoutIndexBuffer {nullptr};
+    vk::raii::DescriptorSetLayout setLayoutIndexOffsetsBuffer {nullptr};
+    vk::raii::DescriptorSetLayout setLayoutVertexBuffer {nullptr};
 
     // The declaration order determines the destruction order.
     // For this reason, the descriptor sets must be declared after the descriptor pool.
@@ -42,6 +37,9 @@ public:
     std::vector<vk::raii::DescriptorSet> setsCamera;
     std::vector<vk::raii::DescriptorSet> setsModelsInstances;
     std::vector<vk::raii::DescriptorSet> setsAccelerationStructures;
+    std::vector<vk::raii::DescriptorSet> setsIndexBuffer;
+    std::vector<vk::raii::DescriptorSet> setsIndexOffsetsBuffer;
+    std::vector<vk::raii::DescriptorSet> setsVertexBuffer;
 
     void create(
         vk::raii::Device const & device,
@@ -56,6 +54,8 @@ public:
         std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
         std::vector<vk::raii::Buffer> const & modelsInstancesSSBOs,
         uint32_t const instanceCountTotal,
-        vk::raii::AccelerationStructureKHR const & tlas
+        vk::raii::AccelerationStructureKHR const & tlas,
+        ModelData const & modelData,
+        uint32_t const numModels
     ) const;
 };

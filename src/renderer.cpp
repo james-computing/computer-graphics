@@ -44,7 +44,10 @@ void Renderer::initRest(ICore const & core) {
         *descriptor.setLayoutCombinedImageSampler, // set = 0
         *descriptor.setLayoutCamera, // set = 1
         *descriptor.setLayoutModelsInstances, // set = 2
-        *descriptor.setLayoutAccelerationStructures // set = 3
+        *descriptor.setLayoutAccelerationStructures, // set = 3
+        *descriptor.setLayoutIndexBuffer, // 4
+        *descriptor.setLayoutIndexOffsetsBuffer, // 5
+        *descriptor.setLayoutVertexBuffer // 6
     };
 
     graphicsPipeline.create(
@@ -66,7 +69,11 @@ void Renderer::initRest(ICore const & core) {
     _corePtr = &core;
 }
 
-void Renderer::loadModels(std::vector<std::string_view> const & modelPaths , std::vector<std::string_view> const texturePaths) {
+void Renderer::loadModels(
+    std::vector<std::string_view> const & modelPaths,
+    std::vector<std::string_view> const & texturePaths,
+    std::vector<bool> const & alphaCuts
+) {
     std::cout << "Load models" << std::endl;
     numModels = modelPaths.size();
     if(numModels != texturePaths.size()) {
@@ -79,10 +86,12 @@ void Renderer::loadModels(std::vector<std::string_view> const & modelPaths , std
 
     for (size_t i {0}; i < numModels; ++i) {
         std::cout << "load model " << i << std::endl;
-        modelData.load(*_corePtr, command.pool, modelPaths[i], texturePaths[i]);
+        modelData.load(*_corePtr, command.pool, modelPaths[i], texturePaths[i], alphaCuts[i]);
     }
+    std::cout << "Update index offsets buffer" << std::endl;
+    modelData.updateIndexOffsetsBuffer(*_corePtr, command.pool);
 
-    std::cout << "create models instances" << std::endl;
+    std::cout << "Create models instances" << std::endl;
     std::vector<uint32_t> instanceCounts;
     instanceCounts.reserve(numModels);
     for (size_t i {0}; i < numModels; ++i) {
@@ -350,7 +359,10 @@ void Renderer::drawFrame(float const deltaTime) {
         *descriptor.setsCombinedImageSampler[frameIndex], //I don't want to send this information to the GPU every frame...
         *descriptor.setsCamera[frameIndex],
         *descriptor.setsModelsInstances[frameIndex],
-        *descriptor.setsAccelerationStructures[frameIndex]
+        *descriptor.setsAccelerationStructures[frameIndex],
+        *descriptor.setsIndexBuffer[frameIndex],
+        *descriptor.setsIndexOffsetsBuffer[frameIndex],
+        *descriptor.setsVertexBuffer[frameIndex]
     };
     recordCommandBuffer(imageIndex, descriptorSets);
 
@@ -443,7 +455,9 @@ void Renderer::updateDescriptorSets(
         cameraUniformBuffers,
         modelsInstances.shaderStorageBuffers,
         modelsInstances.getInstanceCountTotal(),
-        accelerationStructures.tlas
+        accelerationStructures.tlas,
+        modelData,
+        numModels
     );
 }
 

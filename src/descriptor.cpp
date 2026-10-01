@@ -98,6 +98,59 @@ void Descriptor::createDescriptorSetLayouts(vk::raii::Device const & device) {
     };
 
     setLayoutAccelerationStructures = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoAccelerationStructures);
+
+    // Ray query tutorial
+    // Index buffer
+    vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingIndexBuffer {
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eStorageBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    };
+
+    vk::DescriptorSetLayoutBinding const bindingsIndexBuffer[] {descriptorSetLayoutBindingIndexBuffer};
+    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfoIndexBuffer {
+        .bindingCount = 1,
+        .pBindings = bindingsIndexBuffer
+    };
+
+    setLayoutIndexBuffer = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoIndexBuffer);
+
+    // Index offsets
+    vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingIndexOffsetsBuffer {
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eStorageBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    };
+
+    vk::DescriptorSetLayoutBinding const bindingsIndexOffsetsBuffer[] {descriptorSetLayoutBindingIndexOffsetsBuffer};
+    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfoIndexOffsetsBuffer {
+        .bindingCount = 1,
+        .pBindings = bindingsIndexOffsetsBuffer
+    };
+
+    setLayoutIndexOffsetsBuffer = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoIndexOffsetsBuffer);
+
+    // Vertex buffer
+    vk::DescriptorSetLayoutBinding constexpr descriptorSetLayoutBindingVertexBuffer {
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eStorageBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    };
+
+    vk::DescriptorSetLayoutBinding const bindingsVertexBuffer[] {descriptorSetLayoutBindingVertexBuffer};
+    vk::DescriptorSetLayoutCreateInfo const descriptorSetLayoutCreateInfoVertexBuffer {
+        .bindingCount = 1,
+        .pBindings = bindingsVertexBuffer
+    };
+
+    setLayoutVertexBuffer = vk::raii::DescriptorSetLayout(device, descriptorSetLayoutCreateInfoVertexBuffer);
+    
 }
 
 void Descriptor::createDescriptorPool(
@@ -108,9 +161,13 @@ void Descriptor::createDescriptorPool(
     uint32_t const combinedImageSamplerCount {maxTextures * maxFramesInFlight};
     uint32_t const shaderStorageBufferCount {maxFramesInFlight};
     uint32_t const accelerationStructuresCount {maxFramesInFlight}; // a TLAS for frame
+    uint32_t const indexBufferCount {maxFramesInFlight};
+    uint32_t const indexOffsetsBufferCount {maxFramesInFlight};
+    uint32_t const vertexBufferCount {maxFramesInFlight};
     uint32_t const maxSets {
         // sum, because each thing is in a separate descriptor set
         uniformBufferCount + combinedImageSamplerCount + shaderStorageBufferCount + accelerationStructuresCount
+        + indexBufferCount + indexOffsetsBufferCount + vertexBufferCount
     };
 
     vk::DescriptorPoolSize const descriptorPoolSizeCombinedImageSampler {
@@ -133,11 +190,30 @@ void Descriptor::createDescriptorPool(
         .descriptorCount = accelerationStructuresCount
     };
 
-    std::array<vk::DescriptorPoolSize, 4> descriptorPoolSizes {
+    // Ray query tutorial
+    vk::DescriptorPoolSize const descriptorPoolSizeIndexBuffer {
+        .type = vk::DescriptorType::eStorageBuffer,
+        .descriptorCount = indexBufferCount
+    };
+
+    vk::DescriptorPoolSize const descriptorPoolSizeIndexOffsetsBuffer {
+        .type = vk::DescriptorType::eStorageBuffer,
+        .descriptorCount = indexOffsetsBufferCount
+    };
+
+    vk::DescriptorPoolSize const descriptorPoolSizeVertexBuffer {
+        .type = vk::DescriptorType::eStorageBuffer,
+        .descriptorCount = vertexBufferCount
+    };
+
+    std::array<vk::DescriptorPoolSize, 7> descriptorPoolSizes {
         descriptorPoolSizeCombinedImageSampler,
         descriptorPoolSizeUniformBuffer,
         descriptorPoolSizeShaderStorageBuffer,
-        descriptorPoolSizeAccelerationStructures
+        descriptorPoolSizeAccelerationStructures,
+        descriptorPoolSizeIndexBuffer,
+        descriptorPoolSizeIndexOffsetsBuffer,
+        descriptorPoolSizeVertexBuffer
     };
 
     vk::DescriptorPoolCreateInfo const descriptorPoolCreateInfo {
@@ -168,6 +244,15 @@ void Descriptor::allocateDescriptorSets(
     };
     std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsAccelerationStructures {
         std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutAccelerationStructures)
+    };
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsIndexBuffer {
+        std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutIndexBuffer)
+    };
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsIndexOffsetsBuffer {
+        std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutIndexOffsetsBuffer)
+    };
+    std::vector<vk::DescriptorSetLayout> const descriptorSetLayoutsVertexBuffer {
+        std::vector<vk::DescriptorSetLayout>(maxFramesInFlight, *setLayoutVertexBuffer)
     };
     
     std::vector<uint32_t> const descriptorCountsCombinedImageSampler {std::vector<uint32_t>(maxFramesInFlight, maxTextures)};
@@ -205,6 +290,27 @@ void Descriptor::allocateDescriptorSets(
         .pSetLayouts = descriptorSetLayoutsAccelerationStructures.data()
     };
     setsAccelerationStructures = device.allocateDescriptorSets(descriptorSetAllocateInfoAccelerationStructures);
+
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfoIndexBuffer {
+        .descriptorPool = pool,
+        .descriptorSetCount = maxFramesInFlight,
+        .pSetLayouts = descriptorSetLayoutsIndexBuffer.data()
+    };
+    setsIndexBuffer = device.allocateDescriptorSets(descriptorSetAllocateInfoIndexBuffer);
+
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfoIndexOffsetsBuffer {
+        .descriptorPool = pool,
+        .descriptorSetCount = maxFramesInFlight,
+        .pSetLayouts = descriptorSetLayoutsIndexOffsetsBuffer.data()
+    };
+    setsIndexOffsetsBuffer = device.allocateDescriptorSets(descriptorSetAllocateInfoIndexOffsetsBuffer);
+    
+    vk::DescriptorSetAllocateInfo const descriptorSetAllocateInfoVertexBuffer {
+        .descriptorPool = pool,
+        .descriptorSetCount = maxFramesInFlight,
+        .pSetLayouts = descriptorSetLayoutsVertexBuffer.data()
+    };
+    setsVertexBuffer = device.allocateDescriptorSets(descriptorSetAllocateInfoVertexBuffer);
     
     /*
     // error: use of deleted function ‘vk::raii::DescriptorSet::DescriptorSet()’
@@ -234,7 +340,9 @@ void Descriptor::updateDescriptorSets(
     std::vector<vk::raii::Buffer> const & cameraUniformBuffers,
     std::vector<vk::raii::Buffer> const & modelsInstancesSSBOs,
     uint32_t const instanceCountTotal,
-    vk::raii::AccelerationStructureKHR const & tlas
+    vk::raii::AccelerationStructureKHR const & tlas,
+    ModelData const & modelData,
+    uint32_t const numModels
 ) const {
     std::cout << "Descriptor::updateDescriptorSets" << std::endl;
     // Configure descriptor sets.
@@ -339,10 +447,6 @@ void Descriptor::updateDescriptorSets(
     }
 
     for (size_t i {0}; i < maxFramesInFlight; ++i) {
-        /*
-        vk::DescriptorBufferInfo const descriptorBufferInfoAccelerationStructures {
-            .buffer = 
-        };*/
         vk::WriteDescriptorSetAccelerationStructureKHR const writeDescriptorSetAccelerationStructure {
             .accelerationStructureCount = 1,
             .pAccelerationStructures = &*tlas
@@ -360,6 +464,84 @@ void Descriptor::updateDescriptorSets(
         std::vector<vk::WriteDescriptorSet> const writeDescriptorSets {
             writeDescriptorSet
         };
+        device.updateDescriptorSets(writeDescriptorSets, {});
+    }
+
+    // Index buffer
+    uint32_t indexCountTotal {0};
+    for (size_t i {0}; i < numModels; ++i) {
+        indexCountTotal += modelData.indexCounts[i];
+    }
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
+        vk::DescriptorBufferInfo const descriptorBufferInfoIndexBuffer {
+            .buffer = *modelData.indexBuffer.buffer,
+            .offset = 0,
+            .range =  indexCountTotal * sizeof(uint32_t) // use total or max?
+        };
+
+        vk::WriteDescriptorSet const writeDescriptorSetIndexBuffer {
+            .dstSet = *setsIndexBuffer[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eStorageBuffer,
+            .pBufferInfo = &descriptorBufferInfoIndexBuffer
+        };
+
+        std::vector<vk::WriteDescriptorSet> const writeDescriptorSets {
+            writeDescriptorSetIndexBuffer
+        };
+        device.updateDescriptorSets(writeDescriptorSets, {});
+    }
+
+    // Index offsets
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
+        vk::DescriptorBufferInfo const descriptorBufferInfoIndexOffsetsBuffer {
+            .buffer = *modelData.indexOffsetsBuffer,
+            .offset = 0,
+            .range =  numModels * sizeof(uint32_t)
+        };
+
+        vk::WriteDescriptorSet const writeDescriptorSetIndexOffsetsBuffer {
+            .dstSet = *setsIndexOffsetsBuffer[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eStorageBuffer,
+            .pBufferInfo = &descriptorBufferInfoIndexOffsetsBuffer
+        };
+
+        std::vector<vk::WriteDescriptorSet> const writeDescriptorSets {
+            writeDescriptorSetIndexOffsetsBuffer
+        };
+        device.updateDescriptorSets(writeDescriptorSets, {});
+    }
+
+    // Vertex buffer
+    uint32_t vertexCountTotal {0};
+    for (size_t i {0}; i < numModels; ++i) {
+        vertexCountTotal += modelData.vertexCounts[i];
+    }
+    for (size_t i {0}; i < maxFramesInFlight; ++i) {
+        vk::DescriptorBufferInfo const descriptorBufferInfoVertexBuffer {
+            .buffer = *modelData.vertexBuffer.buffer,
+            .offset = 0,
+            .range =  vertexCountTotal * sizeof(Vertex) // use total or max?
+        };
+
+        vk::WriteDescriptorSet const writeDescriptorSetVertexBuffer {
+            .dstSet = *setsVertexBuffer[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eStorageBuffer,
+            .pBufferInfo = &descriptorBufferInfoVertexBuffer
+        };
+
+        std::vector<vk::WriteDescriptorSet> const writeDescriptorSets {
+            writeDescriptorSetVertexBuffer
+        };
+        
         device.updateDescriptorSets(writeDescriptorSets, {});
     }
 }

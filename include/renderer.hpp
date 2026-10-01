@@ -75,7 +75,11 @@ public:
 
     void drawFrame(float const deltaTime) override;
 
-    void loadModels(std::vector<std::string_view> const & modelPaths , std::vector<std::string_view> const texturePaths) override;
+    void loadModels(
+        std::vector<std::string_view> const & modelPaths,
+        std::vector<std::string_view> const & texturePaths,
+        std::vector<bool> const & alphaCuts
+    ) override;
 
     vk::raii::SurfaceKHR const & getSurface() const override;
 

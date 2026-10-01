@@ -55,6 +55,7 @@ bool PhysicalDevice::isSuitable(vk::raii::PhysicalDevice const & physicalDevice)
         features.template get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress && // for acceleration structures
         features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
         features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
+        features.template get<vk::PhysicalDeviceVulkan13Features>().shaderDemoteToHelperInvocation && // for discard in shader
         features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
         features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy && // for texture sampler
         features.template get<vk::PhysicalDeviceFeatures2>().features.multiDrawIndirect &&// for DrawIndexedIndirect

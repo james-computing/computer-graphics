@@ -23,7 +23,6 @@ public:
     );
     uint32_t getOffset(size_t index) const;
 
-private:
     BufferManager<T> manager {nullptr};
 };
 

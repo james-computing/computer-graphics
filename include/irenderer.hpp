@@ -26,7 +26,11 @@ public:
 
     virtual void drawFrame(float const deltaTime) = 0;
 
-    virtual void loadModels(std::vector<std::string_view> const & modelPaths , std::vector<std::string_view> const texturePaths) = 0;
+    virtual void loadModels(
+        std::vector<std::string_view> const & modelPaths,
+        std::vector<std::string_view> const & texturePaths,
+        std::vector<bool> const & alphaCuts
+    ) = 0;
 
     virtual vk::raii::SurfaceKHR const & getSurface() const = 0;
 

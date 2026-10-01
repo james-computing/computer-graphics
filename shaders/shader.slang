@@ -16,6 +16,16 @@ StructuredBuffer<float4x4> modelMatrices;
 [[vk::binding(0, 3)]]
 RaytracingAccelerationStructure accelerationStructure;
 
+// All are model data. Should put into a single descriptor set or binding later.
+[[vk::binding(0, 4)]]
+StructuredBuffer<uint> indexBuffer;
+
+[[vk::binding(0, 5)]]
+StructuredBuffer<uint> indexOffsets;
+
+[[vk::binding(0, 6)]]
+StructuredBuffer<VSInput> vertexBuffer;
+
 struct VSInput {
     float3 position;
     float2 textureCoord;
@@ -52,6 +62,31 @@ VSOutput vertMain(
 static const float3 lightDirection = float3(-0.7071067811865475, 0.7071067811865475, 0.0); // points to the light source
 static const float EPSILON = 0.01;
 
+float2 intersectionUV(uint modelID, uint triangleIndex, float2 barycentrics) {
+    uint indexOffset = indexOffsets[NonUniformResourceIndex(modelID)];
+
+    // Compute the indices
+    // This requires the index buffer to be a storage buffer also
+    uint i0 = indexBuffer[indexOffset + (3 * triangleIndex + 0)];
+    uint i1 = indexBuffer[indexOffset + (3 * triangleIndex + 1)];
+    uint i2 = indexBuffer[indexOffset + (3 * triangleIndex + 2)];
+
+    // The vertex buffer also needs to be a storage buffer
+    float2 uv0 = vertexBuffer[i0].textureCoord;
+    float2 uv1 = vertexBuffer[i1].textureCoord;
+    float2 uv2 = vertexBuffer[i2].textureCoord;
+
+    // Compute the first barycentric coordinate from the other ones, and rename.
+    float w0 = 1.0 - barycentrics.x - barycentrics.y;
+    float w1 = barycentrics.x;
+    float w2 = barycentrics.y;
+
+    // Compute the uv coordinate by interpolating the uv's for each vertex
+    float2 uv = w0 * uv0 + w1 * uv1 + w2 * uv2;
+
+    return uv;
+}
+
 bool inShadow(float3 p) {
     RayDesc rayDesc;
     rayDesc.Origin = p;
@@ -64,7 +99,17 @@ bool inShadow(float3 p) {
     let rayFlags = RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
     rayQuery.TraceRayInline(accelerationStructure, rayFlags, 0xFF, rayDesc);
 
-    rayQuery.Proceed();
+    while (rayQuery.Proceed()) {
+        uint modelID = rayQuery.CandidateRayInstanceCustomIndex(); // id of the model hit by the ray
+        uint triangleIndex = rayQuery.CandidatePrimitiveIndex();
+        float2 barycentrics = rayQuery.CandidateTriangleBarycentrics(); // barycentric coordinates of the hit
+
+        float2 uv = intersectionUV(modelID, triangleIndex, barycentrics);
+        float4 intersectionColor = textures[NonUniformResourceIndex(modelID)].Sample(uv);
+        if (intersectionColor.a >= 0.5) {
+            rayQuery.CommitNonOpaqueTriangleHit();
+        }
+    }
 
     bool hit = (rayQuery.CommittedStatus() == COMMITTED_TRIANGLE_HIT);
 
@@ -72,9 +117,14 @@ bool inShadow(float3 p) {
 }
 
 [shader("fragment")]
-[require(spvRayQueryKHR)]
+[require(spvRayQueryKHR, SPV_KHR_non_semantic_info, spvShaderNonUniformEXT, SPV_GOOGLE_user_type, spvDerivativeControl, spvImageQuery, spvImageGatherExtended, spvSparseResidency, spvMinLod, spvFragmentFullyCoveredEXT)]
 float4 fragMain(VSOutput input) : SV_Target {
     float4 baseColor = textures[input.textureID].Sample(input.textureCoord);
+
+    // Alpha cut transparency. Discard the fragment if it is too transparent.
+    if (baseColor.a < 0.5) {
+        discard;
+    }
 
     float3 p = input.worldPosition;
 
