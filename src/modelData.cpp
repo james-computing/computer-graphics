@@ -57,6 +57,7 @@ void ModelData::init(ICore const & core, uint32_t const numTextures) {
 }
 
 void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & commandPool, std::string_view const modelPath) {
+    // TINYOBJ
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -84,11 +85,10 @@ void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & c
 
             triple_vertex_index = 3 * index.vertex_index;
             vertex.position = {
-                /*
-                attrib.vertices[triple_vertex_index],
-                attrib.vertices[triple_vertex_index + 1],
-                attrib.vertices[triple_vertex_index + 2]
-                */
+                //attrib.vertices[triple_vertex_index],
+                //attrib.vertices[triple_vertex_index + 1],
+                //attrib.vertices[triple_vertex_index + 2]
+                
                 // Correct for y up
                 attrib.vertices[triple_vertex_index + 1],
                 attrib.vertices[triple_vertex_index + 2],
