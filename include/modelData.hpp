@@ -34,5 +34,6 @@ public:
     void updateIndexOffsetsBuffer(ICore const & core, vk::raii::CommandPool const & commandPool);
 
 private:
+    void centralizeVertices(std::vector<Vertex> & vertices);
     void loadVertices(ICore const & core, vk::raii::CommandPool const & commandPool, std::string_view const modelPath);
 };

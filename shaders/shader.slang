@@ -184,10 +184,11 @@ float4 fragMain(VSOutput input) : SV_Target {
     // reflection
     // I'll consider that only the first texture is reflective.
     // The correct solution would be to get the property from the material.
+    /*
     if (input.textureID == 0) {
         // getting the normal from the vertex shader may be a problem, because of interpolation
         applyReflection(p, input.normal, baseColor);
-    }
+    }*/
 
     float4 finalColor;
     // Darken color if in shadow

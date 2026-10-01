@@ -23,7 +23,7 @@ void ModelsInstances::init(
 
     transforms.resize(instanceCountTotal);
     float constexpr s {0.5f};
-    float constexpr space {1.0f};
+    float constexpr space {0.85f};
     float x = 0.0f;
     float z = 0.0f;
     size_t i {0};

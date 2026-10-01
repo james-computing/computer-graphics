@@ -56,6 +56,33 @@ void ModelData::init(ICore const & core, uint32_t const numTextures) {
     );
 }
 
+void ModelData::centralizeVertices(std::vector<Vertex> & vertices) {
+    // Compute bounding box corners
+    float constexpr LOW {-10000.0f};
+    float constexpr HIGH {10000.0f};
+    glm::vec3 minCorner {glm::vec3(HIGH, HIGH, HIGH)};
+    glm::vec3 maxCorner {glm::vec3(LOW, LOW, LOW)};
+    for (Vertex const & vertex : vertices) {
+        glm::vec3 const location {vertex.position};
+        minCorner.x = std::min(minCorner.x, location.x);
+        minCorner.y = std::min(minCorner.y, location.y);
+        minCorner.z = std::min(minCorner.z, location.z);
+        maxCorner.x = std::max(maxCorner.x, location.x);
+        maxCorner.y = std::max(maxCorner.y, location.y);
+        maxCorner.z = std::max(maxCorner.z, location.z);
+    }
+    std::cout << "minCorner = (" << minCorner.x << ',' << minCorner.y << ',' << minCorner.z << ")\n";
+    std::cout << "maxCorner = (" << maxCorner.x << ',' << maxCorner.y << ',' << maxCorner.z << ')' << std::endl;
+
+    // Center of the bounding box
+    glm::vec3 const center {0.5f * (maxCorner + minCorner)};
+
+    // Translate the center to the origin. It is better for rotation animation.
+    for (Vertex & vertex : vertices) {
+        vertex.position -= center;
+    }
+}
+
 void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & commandPool, std::string_view const modelPath) {
     // TINYOBJ
     tinyobj::attrib_t attrib;
@@ -130,6 +157,9 @@ void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & c
     std::cout << "number of indices = " << indexCount << std::endl;
 
     static size_t indexOffset {0};
+
+    // Translate the bounding box center to the origin, which is better for rotation animation.
+    centralizeVertices(vertices);
 
     vertexBuffer.pushItems(core, commandPool, vertices);
     indexBuffer.pushItems(core, commandPool, indices);
