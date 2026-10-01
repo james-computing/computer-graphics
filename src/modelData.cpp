@@ -54,25 +54,6 @@ void ModelData::init(ICore const & core, uint32_t const numTextures) {
         indexOffsetsBuffer,
         indexOffsetsBufferMemory
     );
-
-    // Create the UV buffer
-    /*
-    std::cout << "Create index UV offsets buffer" << std::endl;
-    vk::BufferUsageFlags constexpr uvBufferUsage {
-        vk::BufferUsageFlagBits::eTransferDst |
-        vk::BufferUsageFlagBits::eStorageBuffer // for ray query
-    };
-    vk::MemoryPropertyFlags constexpr uvBufferMemoryProperties {vk::MemoryPropertyFlagBits::eDeviceLocal};
-    vk::DeviceSize const uvBufferSize {maxVertices * sizeof(glm::vec2)};
-    Buffer::create(
-        core.getPhysicalDevice(),
-        core.getDevice(),
-        uvBufferSize,
-        uvBufferUsage,
-        uvBufferMemoryProperties,
-        uvBuffer,
-        uvBufferMemory
-    );*/
 }
 
 void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & commandPool, std::string_view const modelPath) {
