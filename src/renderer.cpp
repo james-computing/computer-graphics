@@ -275,7 +275,6 @@ void Renderer::recordCommandBuffer(
     uint32_t const drawCount {numModels}; // number of models
     uint32_t constexpr stride {sizeof(vk::DrawIndexedIndirectCommand)};
     commandBuffer.drawIndexedIndirect(indirectDraw.buffers[frameIndex], offset, drawCount, stride);
-
     commandBuffer.endRendering();
 
     // After rendering, transition the swapchain image to PRESENT_SRC

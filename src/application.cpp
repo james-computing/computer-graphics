@@ -42,7 +42,6 @@ void Application::run() {
     while (renderer.step()) {
         currentTime = std::chrono::steady_clock::now();
         deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - previousTime).count();
-        
         camera.updateUniformBuffer(
             renderer.getFrameIndex(),
             renderer.getSwapChainExtentWidth(),

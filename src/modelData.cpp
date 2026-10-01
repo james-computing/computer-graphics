@@ -91,6 +91,7 @@ void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & c
 
     size_t triple_vertex_index;
     size_t double_texture_index;
+    size_t triple_normal_index;
     // Make a map to store a vertex and the index attribute to it in its first appearance
     std::unordered_map<Vertex, uint32_t> uniqueVertices {};
     uint32_t newVertexIndex;
@@ -119,8 +120,12 @@ void ModelData::loadVertices(ICore const & core, vk::raii::CommandPool const & c
                 1.0f - attrib.texcoords[double_texture_index + 1]
             };
 
-            // Do we need a color?
-            //vertex.color = {1.0f, 1.0f, 1.0f};
+            triple_normal_index = 3 * index.normal_index;
+            vertex.normal = {
+                attrib.normals[triple_normal_index + 1],
+                attrib.normals[triple_normal_index + 2],
+                attrib.normals[triple_normal_index ]
+            };
 
             // If the vertex is new, store it in uniqueVertices and give it an index
             if (uniqueVertices.count(vertex) == 0) {

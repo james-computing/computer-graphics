@@ -190,6 +190,7 @@ void Camera::updateUniformBuffer(
     // Update the uniform buffer
     CameraUBO ubo;
     ubo.pv = projection(swapChainExtentWidth, swapChainExtentHeight) * view();
+    ubo.location = location;
 
     // Copy the ubo to the corresponding uniform buffer memory.
     // It would be more efficient to use push constants.

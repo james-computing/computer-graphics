@@ -35,7 +35,7 @@ void Descriptor::createDescriptorSetLayouts(vk::raii::Device const & device) {
         .binding = 0,
         .descriptorType = vk::DescriptorType::eUniformBuffer,
         .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, // use in fragment shader for reflections with ray queries
         .pImmutableSamplers = nullptr
     };
 
