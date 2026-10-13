@@ -1,6 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++23 -O3
-LDFLAGS = -lglfw -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
+LDFLAGS = -lglfw -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi -I$$VULKAN_SDK/include -L$$VULKAN_SDK/lib -lvulkan
+
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = .
