@@ -1,6 +1,7 @@
 #include "../include/camera.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::translate
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
 #include <iostream>

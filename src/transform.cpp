@@ -6,6 +6,7 @@
 #endif
 #include <glm/glm.hpp> // for vectors and matrices for computer graphics
 #include <glm/gtc/matrix_transform.hpp> // for model view projection
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
 glm::mat4 Transform::getModelMatrix() const {
