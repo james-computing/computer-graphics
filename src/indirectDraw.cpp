@@ -1,6 +1,6 @@
-#include "include/indirectDraw.hpp"
+#include "../include/indirectDraw.hpp"
 
-#include "include/buffer.hpp"
+#include "../include/buffer.hpp"
 
 #include <iostream>
 
